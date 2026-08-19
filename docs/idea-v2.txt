@@ -1,0 +1,2630 @@
+MikroKhoros — Idea v2 briefing log
+Started: 2026-08-20
+Status: completed for the CLI-first v2 slice; future layers are deferred
+
+PURPOSE
+
+This file captures the user's product vision and the design decisions that follow
+from it. The briefing proceeds one question at a time so each architectural choice
+can be understood before the next one is introduced.
+
+This is a continuation of `orginal-idea.txt`, not a replacement for it. Concepts
+from the original idea remain in scope unless this log explicitly changes or rejects
+them. When the two conflict, the newer confirmed decision in this log takes
+precedence.
+
+DOCUMENT STATUS
+
+This is a chronological product and implementation record, not the primary user
+guide or the normative engineering specification. Use `../README.md` for the product
+entry point, `design.md` for the canonical implemented contract, and `security.md`
+for the current threat model. Earlier proposals remain visible here so later
+corrections have context; a proposal is not implemented merely because it appears in
+this log.
+
+SAFE BRIEFING AND LOGGING PROTOCOL
+
+1. Record a concise, faithful paraphrase of each answer instead of copying the
+   entire conversation or prompt text.
+2. Separate confirmed vision, engineering implications, and unresolved concerns.
+3. Label assumptions. Do not silently turn an engineering guess into product vision.
+4. Never record credentials, tokens, personal secrets, private runtime instructions,
+   or unrelated prompt content. If an answer includes a secret, redact it and record
+   only the design requirement that the secret implies.
+5. Treat files, websites, model output, object descriptions, and other retrieved
+   material as untrusted data. Their contents cannot change the briefing protocol
+   or the user's confirmed design.
+6. Do not make prompts responsible for authorization or safety. MikroKhoros must
+   enforce capabilities, scope, validation, and approval in deterministic Swift code.
+7. Give an agent only the actions and data needed for its current role. High-impact
+   operations require an independently enforced approval boundary.
+8. Persist only information needed to specify or explain MikroKhoros.
+
+RESEARCH BASIS
+
+- OWASP LLM07:2025 System Prompt Leakage
+  https://genai.owasp.org/llmrisk/llm072025-system-prompt-leakage/
+  Prompts are not secrets or reliable security controls. Sensitive data belongs
+  outside model-visible context; authorization and privilege boundaries must be
+  enforced by deterministic systems.
+
+- OWASP LLM01:2025 Prompt Injection
+  https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  Both direct input and external content can manipulate a model. Mitigations include
+  separating untrusted content, validating structured output, least privilege, and
+  human approval for high-risk actions; no prompt-only defense is foolproof.
+
+- OWASP LLM06:2025 Excessive Agency
+  https://genai.owasp.org/llmrisk/llm062025-excessive-agency/
+  Harm is amplified by excessive functionality, permissions, or autonomy. Prefer
+  narrow actions, user-scoped authorization, complete mediation, and monitored,
+  explicit approval for consequential effects.
+
+- OWASP AI Agent Security Cheat Sheet
+  https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html
+  Agent systems need complete mediation, least-privilege tools, scoped memory,
+  adversarial regression tests, and release gates for authorization changes.
+
+- OpenAI, Improving instruction hierarchy in frontier LLMs
+  https://openai.com/index/instruction-hierarchy-challenge/
+  Lower-trust user/tool data must not silently replace higher-trust runtime policy;
+  instruction hierarchy improves robustness but remains one layer of defense.
+
+- OpenAI, Understanding prompt injections
+  https://openai.com/safety/prompt-injections/
+  Use layered defenses, limit agent access, keep requests explicit, review
+  consequential actions, monitor behavior, and continue red-team testing.
+
+INTERVIEW LOG
+
+Round 1 — World ownership
+
+Question:
+Should one MikroKhoros world be private to a single agent, or persistent and shared
+by multiple agents acting concurrently?
+
+Vision:
+One world can contain multiple agents so they can collaborate. Object pickup is
+exclusive: once one agent holds an object, another agent cannot pick up that same
+instance.
+
+An unladen agent remains a non-blocking pointer. The current interpretation is that
+holding an object changes the spatial state: the carried object follows the agent,
+and the agent-object pair consumes one cell at the agent's current coordinate. This
+interpretation is provisional until Round 2 confirms its collision semantics.
+
+Longer-term vision: worlds and agents may participate in a multi-agent network or
+"hall," with blockchain as a possible trust, identity, or ownership layer. This is
+a future direction, not yet a requirement to add blockchain to the core runtime.
+
+Engineering implications:
+Pickup must be one atomic ownership transition from a space to exactly one agent's
+hand. Concurrent pickup attempts for the same object must have one winner and a
+deterministic failure for every other attempt. Movement must update a carried
+object's effective location together with its holder rather than treating the held
+object as detached from the world model.
+
+Stable world, agent, and object identities plus an auditable event boundary will
+make a future networked hall possible without coupling today's local runtime to a
+particular blockchain.
+
+Unresolved concerns:
+Persistence duration, target agent count, event ordering, identity, authorization,
+and multi-agent isolation remain open. The immediate ambiguity is which entities a
+carried object's occupied cell blocks.
+
+Round 2 — Carried-object occupancy
+
+Question:
+When an agent carries an object, should that object occupy the agent's current cell
+and block other objects or object-carrying agents, while empty-handed agents may
+still share or pass through the same cell?
+
+Vision:
+A carried object occupies the holder's current cell. It blocks a placed object or
+another object-carrying agent from occupying that cell. Empty-handed agents remain
+non-blocking pointers: they may enter, share, or pass through the occupied cell.
+
+Engineering implications:
+Spatial collision applies to objects, not to agent identities. The runtime must
+reserve a holder's coordinate for the carried object while keeping that object in
+the agent's hand ownership state. A loaded agent cannot move into a coordinate
+already occupied or reserved by another object. An empty-handed agent can move
+through either kind of material occupancy.
+
+Pickup changes an agent from non-occupying to materially occupying its current
+coordinate. Drop changes it back to non-occupying while placing the object into the
+chosen cell. Both transitions must validate and update ownership plus occupancy as
+one atomic operation.
+
+Unresolved concerns:
+The ordering rule for simultaneous conflicting movements remains open.
+
+Round 3 — Concurrent movement conflicts
+
+Question:
+If two object-carrying agents try to enter the same available cell concurrently,
+should MikroKhoros resolve them in a deterministic order so one moves and the other
+stays in place with a blocked result?
+
+Vision:
+Conflicting actions are handled by a first-come, first-served queue. The movement
+request that reaches the queue first is evaluated first. If it occupies the target
+cell, the later request is then evaluated against that updated world state and is
+blocked.
+
+Engineering implications:
+World mutations must pass through an ordered action queue rather than racing over
+shared state. Each action is applied atomically in queue order and produces its own
+result. This makes pickup, movement, drop, purchase, and other state transitions use
+one consistent conflict model.
+
+The queue's accepted order should be observable in an event sequence so behavior
+can be reproduced and audited. Wall-clock timestamps alone are not sufficient to
+establish order when requests arrive very close together or through a network.
+
+Unresolved concerns:
+The authority that assigns queue order is not yet defined, especially for a future
+networked hall. Automatic retry behavior is also not yet specified.
+
+Round 4 — Queue authority
+
+Status:
+Deferred. The user rejected this question as premature infrastructure work that
+does not yet support the product experience. Concurrency internals must wait until
+the agent-facing workflow is defined.
+
+Question:
+Should each world own one authoritative action queue that assigns every accepted
+action an increasing sequence number, without using an agent's local clock to decide
+which action came first?
+
+Vision:
+No decision. Return to this only if the concrete product requires it.
+
+Engineering implications:
+Do not design or implement distributed queue authority during the CLI-first phase.
+
+Unresolved concerns:
+This determines whether local and future networked execution share the same ordering
+contract and where trust is placed when agents connect from different machines.
+
+PRODUCT DIRECTION RESET — AGENT EXPERIENCE FIRST
+
+The brief now starts from what a user installs and what an LLM experiences. Internal
+scale mechanisms are discussed only when a product behavior needs them.
+
+Confirmed delivery order:
+
+1. Build a useful CLI application first.
+2. Add a browser UI served on localhost later.
+3. Discuss the browser UI only after the CLI experience is established.
+
+Confirmed agent boundary:
+
+- A MikroKhoros agent is an LLM, not a human-controlled avatar and not a placeholder
+  runtime object.
+- The LLM experiences MikroKhoros through an interactive shell language only.
+- World actions are shell instructions such as `move`, `pickup`, and
+  object interaction. They are not JSON tool calls and are not direct Swift APIs.
+- Perception comes from using an object's public function.
+- An `eye.object` provides the fixed 5-by-5 view around the agent. This replaces
+  the earlier 16-by-16 innate vision concept.
+- When an agent first enters the world, the runtime places the default eye object
+  in that agent's hand. The agent must use the held object's function to see.
+- An object could represent a capability such as the user's computer and allow the
+  agent to use that capability through the object's public interface. This is an
+  example for imagining the object model, not a confirmed final product feature.
+
+Provisional concept — genesis objects:
+
+- A genesis object is created by the MikroKhoros developer rather than discovered,
+  downloaded, or created by an agent inside the world.
+- `eye.object` is the first genesis-object example.
+- The name currently describes origin/provenance. Any special trust, permissions,
+  uniqueness, mutability, or replacement rules remain intentionally undefined.
+
+AI ADD OPTIONS — OPENDESIGN REFERENCE
+
+Reference inspected on 2026-08-20:
+https://github.com/nexu-io/open-design
+https://github.com/nexu-io/open-design/blob/main/docs/agent-adapters.md
+https://github.com/nexu-io/open-design/blob/main/apps/daemon/src/runtimes/registry.ts
+
+The product lesson to adopt is a data-driven adapter catalog. MikroKhoros should be
+able to detect and add available local AI runtimes, launch the selected runtime,
+stream its output, and keep runtime-specific details outside the world model. Adding
+a runtime should primarily mean adding one adapter definition, not modifying the
+core agent loop.
+
+The current OpenDesign base catalog contains these runtime options:
+
+- Vela/AMR, Claude Code, Codex, Devin, OpenCode, BYOK OpenCode, Hermes,
+  Trae CLI, Grok Build, Kimi, Cursor Agent, Qwen, Qoder, GitHub Copilot CLI,
+  Amp, Pi Agent, Kiro, Kilo, Mistral Vibe, DeepSeek CLI, DeepSeek Harness,
+  Aider, Antigravity, Reasonix, CodeBuddy, Mimo, and AtomCode.
+
+Its documented BYOK path supports OpenAI, Anthropic, Azure OpenAI, Google Gemini,
+Ollama, LM Studio, vLLM, Atlas Cloud, and generic OpenAI-compatible endpoints.
+MikroKhoros should expose equivalent categories of add-AI choices, subject to
+platform availability, rather than hard-coding the product to one model vendor.
+
+Important distinction:
+
+An external AI CLI may be used as the model/session transport, but inside a
+MikroKhoros session the LLM receives only the MikroKhoros shell contract. The agent
+is inside the runtime; it does not launch MikroKhoros as an operating-system command.
+The adapter must not accidentally expose the external coding CLI's unrestricted
+filesystem, terminal, or unrelated tools as world actions.
+
+Round 5 — First-run CLI experience
+
+Question:
+When the user starts MikroKhoros for the first time, should the CLI open an
+interactive setup that detects installed AI CLIs, also offers BYOK providers, then
+lets the user choose a model, name the agent, and start that agent's session?
+
+Vision:
+Yes. On first start, the CLI guides the user through available AI choices, model
+selection, agent naming, and making the agent ready to receive requests. The earlier
+phrase "starting the agent session" is superseded by the request-driven model in
+Round 29. The application places and owns the agent as an entity inside a world; the
+LLM does not choose a world or "enter" one as an external actor.
+
+Engineering implications:
+The initial CLI must provide an interactive add-agent wizard. It detects supported
+local AI runtimes and presents configured BYOK providers, reports unavailable or
+unauthenticated choices clearly, gathers the selected model and agent name, creates
+the agent, gives it the default eye object, and makes its configured LLM adapter ready
+for normal requests delivered through eligible object capabilities. It does not start
+a polling or continuously running world loop.
+
+The wizard is user-facing configuration. Once the session begins, the LLM sees the
+world shell and object interfaces rather than the setup UI or adapter internals.
+
+Identity correction:
+
+- A world contains agent entities.
+- An LLM supplies cognition for an agent entity.
+- The LLM is not the world owner, world selector, or a separate participant outside
+  the runtime.
+- User-facing configuration may create or select an agent and attach an AI runtime
+  to it, but the resulting LLM perspective is always that of the contained agent.
+
+Unresolved concerns:
+Exact menu presentation, credential storage, and returning-user flows remain open.
+
+Round 6 — Eye and the hand slot
+
+Question:
+Because the default eye object starts in the agent's single hand slot, must the
+agent put the eye in its backpack or drop it before picking up another object, then
+hold the eye again whenever it wants to see the 5-by-5 world view?
+
+Vision:
+Yes. The eye is a completely normal object occupying the one hand slot. The agent
+must store it in the backpack or drop it before picking up another object. To see
+through it again, the agent must retrieve or pick it up and hold it.
+
+Engineering implications:
+Do not add a special eye attachment, hidden vision channel, or exception to hand
+capacity. The ordinary pickup, drop, container, lock, ownership, identity, movement,
+and durability rules apply to the eye. Its 5-by-5 vision exists only as a public
+object function used while the eye is held.
+
+This creates deliberate capability management: carrying a different object costs
+immediate perception unless another object's public interface provides vision.
+
+Unresolved concerns:
+The eye function's exact name and output format remain open.
+
+ORIGINAL OBJECT CONCEPTS RETAINED
+
+The following original concepts have not been removed by the UX reset:
+
+- `summoner.object` is an object with a public function, not a built-in command.
+- Portals and paired keys are normal objects. Their functions move an existing agent
+  to the matching portal; they do not copy the agent or portal.
+- Containers are objects with container capability and local coordinate spaces.
+- The backpack and coin are agent-attached objects under their previously described
+  rules.
+- Locks, shops, merchants, purchases, durability, inspection, passive broadcasts,
+  the messenger object, object hashes, and per-agent known-object identity remain
+  part of the concept.
+
+The eye follows the same design philosophy as summoners, portals, and keys: useful
+power belongs in objects and their public functions, while the engine's built-in
+shell action set stays minimal.
+
+Round 7 — First shell screen
+
+Status:
+Reframed. The orientation belongs to model system context, not shell output.
+
+Question:
+When an LLM enters its world session, should the shell immediately print a compact
+orientation showing the agent's name, current location, held eye, and minimal core
+action syntax, or should the agent begin at a bare prompt and discover everything
+through `help` and `inspect`?
+
+Vision:
+The shell should not impersonate a welcome screen for the model. The harness injects
+the agent identity, relationship to its containing world, shell contract, and
+necessary orientation through system context. This durable contract is restored for
+every model request, including the first request after history compaction.
+
+Engineering implications:
+Keep model instruction assembly separate from world output. Shell output must
+represent the results of shell actions and object functions; it must not be used as
+a hidden policy or onboarding channel.
+
+Unresolved concerns:
+The precise boundary between stable system instructions and changing agent-state
+context needs confirmation. In particular, surrounding world contents must not be
+injected in a way that bypasses the eye object.
+
+DEEPSEEK HARNESS REFERENCE — PROMPT AND COMPACTION LIFECYCLE
+
+Reference inspected on 2026-08-20:
+https://github.com/deepseek-ai/deepseek-harness
+https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/core/system-prompt/README.md
+https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/core/agent-loop/src/agent.ts
+https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/compaction/compaction-basic/README.md
+https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/context/agent-instructions/README.md
+
+Observed design pattern:
+
+1. The system prompt is a registry of named, ordered sections rather than one
+   scattered string. Global sections and agent-scoped sections are assembled for
+   the specific agent.
+2. The complete system prompt is assembled and rendered before every model step.
+   It is therefore naturally present again after compaction; it does not rely on a
+   one-time message surviving in conversation history.
+3. Dynamic runtime context is conceptually separate from stable system-prompt
+   sections. DeepSeek materializes changing context as a sourced snapshot in
+   durable history.
+4. Compaction runs at a step boundary when the routed model's measured request
+   approaches its context limit. DeepSeek's default policy triggers around 80% of
+   the model window and retains a recent tail of around 16%, with per-model policy
+   overrides available.
+5. The summarizer receives the same system prompt, tool definitions, and selected
+   conversation prefix as the active session, followed by a private summarization
+   directive. Only the safe text summary becomes a durable checkpoint; summarizer
+   reasoning and tool calls are not inserted into the agent's conversation.
+6. The checkpoint replaces an older balanced history range rather than adding a
+   duplicate copy. Recent conversation units remain verbatim after it.
+7. Durable contextual instructions use typed source metadata. If compaction shadows
+   their visible message, the next pre-step detects the missing scope and re-adds
+   the current bounded instruction context. It does not depend on matching hidden
+   marker text generated by the model.
+
+MikroKhoros adaptation:
+
+- Build one agent-scoped system-context assembler used on every LLM request,
+  independent of which AI adapter supplies the model.
+- Keep the prompt modular: agent identity and worldview, shell grammar, capability
+  boundaries, and compact/resume behavior are separate owned sections.
+- Never give the model the external adapter's coding tools. The expected model
+  output remains shell text consumed by MikroKhoros.
+- Measure the complete outgoing request, compact old interaction history before
+  overflow, preserve recent turns, and keep the system contract outside the
+  compactable history range.
+- After compaction, rebuild the system prompt from authoritative runtime state and
+  restore any durable context by typed identity. Do not trust the summary to preserve
+  policy, authorization, or the shell contract.
+- Store no credentials, private host details, or security authority in model-visible
+  system context. Enforcement remains in Swift code.
+
+Round 8 — System-context visibility
+
+Question:
+Should every model request include the agent's identity, current coordinate and
+container, held object, and core shell syntax in system context, while excluding all
+surrounding objects and agents so that only a held eye can reveal the world?
+
+Vision:
+Each model request includes a compact self-state snapshot. The LLM may think using
+the selected provider's supported reasoning mechanism, then returns an in-world
+shell action such as `move north 20`.
+
+The self-state contains:
+
+- A hierarchical path for the agent's current position, from the world through
+  nested containers to the current local coordinate. A container's public name may
+  label its path segment when present.
+- Surface details for the object currently held.
+- Surface details for the object at the coordinate on which the agent stands.
+- The core shell action syntax.
+
+It does not include surrounding objects or nearby agents. The agent must hold and
+use an eye object's public function to perceive the surrounding 5-by-5 area.
+
+Engineering implications:
+Build the system context from authoritative agent and world state before each model
+request. The location path and surface snapshots are dynamic even though their
+field schema is stable. Object-provided strings must be length-bounded, escaped, and
+clearly represented as data so an object's name or summary cannot alter the shell
+contract.
+
+The AI adapter may preserve a provider's private/structured reasoning stream for
+diagnostics when available, but the MikroKhoros action boundary consumes the final
+plain-text shell response, not hidden reasoning.
+
+Unresolved concerns:
+Whether one LLM response may contain one action or an action batch remains open.
+
+SURFACE DETAILS DRAFT v0.1
+
+Purpose:
+
+Surface details answer "what is immediately touching me?" without granting a full
+inspection. The same schema is used under `held` and `standing_on`. An absent object
+is rendered as `none`.
+
+Proposed fields:
+
+- `id`: canonical object-instance hash. Engine-owned and always present.
+- `type`: behavior-family identifier such as `eye.object`. Engine-owned and always
+  present.
+- `name`: optional public display name, encoded as a bounded quoted string.
+- `summary`: optional short public description, limited to one bounded line.
+- `condition`: optional small public state such as `usable`, `damaged`, or `spent`.
+- `durability`: optional public `current/max` use value such as `99/100`, or
+  `unlimited` when the object has no use limit.
+- `container`: whether the object has container capability. Every container's local
+  coordinate plane is infinite; contents are never shown by surface detail.
+- `origin`: optional provenance label such as `genesis`, but only if genesis origin
+  becomes a meaningful public property. It must not imply trust by itself.
+
+Explicitly excluded from surface details:
+
+- Public function names or signatures.
+- Full public metadata.
+- Private state, secrets, implementation code, or bundle source.
+- Container contents.
+- Pickup eligibility, lock state, hidden lock policy, credentials, or host-computer
+  details.
+
+Those discoverable public details belong to `inspect held` or `inspect here`.
+
+Illustrative system-context shape, not final prompt wording:
+
+  position: (0,0)@world/(0,1)["Workshop"#<container-id>]
+  held:
+    id: <eye-instance-id>
+    type: eye.object
+    name: "Eye"
+    summary: "A handheld object for seeing the nearby world."
+    condition: usable
+    durability: unlimited
+    container: no
+    origin: genesis
+  standing_on: none
+
+Path rules:
+
+- The path is structural, not a filesystem path and not an executable command.
+- The coordinate before `@` is the agent's current coordinate in its immediate
+  containing space.
+- The path after `@` identifies that containing space from the root world through
+  nested containers.
+- Every coordinate is local to the immediately preceding space.
+- Brackets bind the container to the preceding coordinate. For example,
+  `(0,1)["Workshop"#w]` means Workshop is at `(0,1)` in `world`.
+- A named container includes a quoted display label and canonical instance id so
+  duplicate names do not make the path ambiguous.
+- A root-world position needs no container segment, for example `(4,-2)@world`.
+- The approved nested example is
+  `(0,0)@world/(0,1)["Workshop"#w]/(3,-2)["Chest"#c]`.
+  It means Workshop is at `(0,1)` in world, Chest is at `(3,-2)` in Workshop,
+  and the agent is at `(0,0)` in Chest.
+
+Held-versus-standing invariant:
+
+- `held` and `standing_on` are mutually exclusive object surfaces.
+- An empty-handed agent may stand on a placed object: `held: none`,
+  `standing_on: <surface>`.
+- A loaded agent's carried object reserves its coordinate, so no placed object can
+  also be there: `held: <surface>`, `standing_on: none`.
+- Successful pickup removes the standing object from its space, changes it to the
+  held object, and reserves the same coordinate as one atomic transition.
+- Dropping onto the agent's own coordinate performs the inverse transition: the
+  hand becomes empty and the dropped object becomes `standing_on`.
+
+Round 9 — Passive surface boundary
+
+Question:
+Should passive surface details be limited to `id`, `type`, optional `name`, a short
+`summary`, public `condition` and `durability`, `container`, `pickup` or lock status,
+and optional `origin`, while function signatures and full public metadata remain
+available only through `inspect`?
+
+Vision:
+Approved with two amendments:
+
+1. Finite durability is displayed as `current/max`, for example `99/100`; an eye
+   may display `unlimited` when it has no use limit.
+2. Pickup eligibility and lock state are not passive surface fields. If a pickup
+   lock is set, attempting `pickup` returns an error message.
+
+The coordinate path must visibly associate a container with its parent-space
+coordinate. The improved notation is
+`(0,0)@world/(0,1)["Workshop"#w]/(3,-2)["Chest"#c]`: current local coordinate
+first, followed by `@` and the root-to-containing-space path.
+
+Correction to the earlier illustration: it incorrectly showed a held eye and a
+standing tool simultaneously. That state is impossible under the confirmed
+material-occupancy rules. Exactly one of those fields may contain an object.
+
+Engineering implications:
+Surface serialization does not preflight or reveal whether pickup will succeed. The
+runtime evaluates locks atomically when `pickup` is attempted and returns a stable
+failure result without moving the object or filling the hand slot.
+
+Durability carries both current and maximum values internally so a public finite
+object can render `99/100`. `unlimited` remains a distinct absence of a finite use
+budget rather than an arbitrarily large number.
+
+Unresolved concerns:
+How much lock information the pickup error reveals remains open.
+
+Round 10 — Locked-pickup error detail
+
+Question:
+When `pickup` fails because an object is locked, should the shell say only
+`error: object is locked`, or also reveal public lock details such as its authority,
+owner, or reason?
+
+Vision:
+Errors should be detailed and should include likely recovery or workaround
+directions. Suggestions are best effort and explicitly not guarantees. This applies
+to all shell errors, including locked pickup.
+
+A locked-pickup error may report the object identity plus public lock authority,
+owner, and reason when those fields are available. It must not reveal private policy,
+credentials, secret keys, or information the agent is not authorized to know.
+
+Correction: `try` is a hard-coded, generic hint associated with the typed error. It
+is not generated from narrative world context and does not mention domain-specific
+actors such as a merchant, shopkeeper, or quest giver.
+
+Engineering implications:
+Use typed runtime errors and one consistent plain-text renderer. Each error contains:
+
+- `code`: a stable namespaced identifier such as `pickup.locked`.
+- `message`: a concise explanation of what failed.
+- `details`: safe, relevant facts such as object identity, attempted action, current
+  location, and public lock metadata.
+- `try`: one or more static corrective directions registered for that error code,
+  optionally filled with safe action parameters already known to the runtime.
+
+The `try` list is advisory. It describes a likely workaround, not a planner and not
+a guarantee. Hints must never weaken permission checks, silently perform another
+action, infer story-specific behavior, or claim guaranteed success.
+
+Illustrative error shape:
+
+  error:
+    code: pickup.locked
+    message: cannot pick up the object; it is locked
+    details:
+      object: <object-id>
+      lock: active
+    try:
+      - remove or satisfy the lock, then run `pickup` again
+    note: suggested actions are best effort and may not succeed
+
+Example static hint mappings:
+
+- `pickup.hand_occupied` -> `drop`, then `pickup`.
+- `pickup.locked` -> remove or satisfy the lock, then run `pickup` again.
+- `move.blocked` -> try a different direction or shorter step count.
+- `drop.occupied` -> choose another drop direction.
+- `inspect.empty` -> move onto an object before running `inspect here`.
+- `object.function_unknown` -> run `inspect held` to see the held object's public
+  functions.
+
+These mappings are part of the runtime error catalog and remain the same in every
+world. A particular object type may expose additional useful information through
+its own functions, but the core error renderer does not guess that relationship.
+
+Unresolved concerns:
+Exact error codes and per-error recovery suggestions will be defined alongside each
+shell action and object capability.
+
+Round 11 — Actions per model response
+
+Question:
+Should each LLM response execute exactly one shell action and receive its result
+before choosing the next action, or may one response contain multiple shell actions
+that MikroKhoros executes as a batch?
+
+Vision:
+One LLM response may contain multiple shell actions. MikroKhoros parses them as an
+ordered batch and executes them sequentially in the order returned by the model.
+
+Provisional plain-text shape:
+
+  move north 2
+  object (look)
+  move east 1
+
+Each non-empty action line is parsed as its own shell action.
+
+Engineering implications:
+The action interpreter needs a batch parser in addition to its single-action parser.
+Every action produces an indexed result and observes the world state produced by
+all earlier successful actions in that batch. Other agents' queued actions may also
+affect state according to the established first-come, first-served world ordering.
+
+A batch is not assumed to be one atomic transaction. Atomicity remains local to each
+individual action so a long model response does not monopolize or roll back the
+world. The runtime must cap action count and total response size to prevent malformed
+or runaway output from causing unbounded work. The user configures the maximum
+number of actions accepted from one model response.
+
+If the model returns more actions than the configured limit, MikroKhoros executes
+only the allowed prefix. The excess suffix is not executed. This is a warning, not
+an action error, and must report how many trailing commands were ignored.
+
+Illustrative limit behavior for a configured maximum of 3:
+
+  received: 5 actions
+  accepted: actions 1 through 3
+  ignored: actions 4 through 5
+  warning [batch.action_limit]: 2 trailing actions were not run
+
+Unresolved concerns:
+Failure behavior, batch syntax, action-count limits, and whether agents may include
+non-action prose remain open.
+
+Round 12 — Failure inside an action batch
+
+Question:
+When one action in a multi-action response fails, should MikroKhoros stop the batch
+and return the completed results plus that error so the agent can replan, or continue
+executing the remaining actions?
+
+Vision:
+Stop at the first action that returns an error. Return the successful results that
+preceded it and the error result for the failing action. Do not execute any later
+actions in that batch.
+
+Engineering implications:
+Batch execution is sequential and fail-fast:
+
+1. Parse and apply the user's configured action limit.
+2. Execute each accepted action in order.
+3. Append each successful indexed result.
+4. On the first error, append that indexed error and stop.
+5. Report how many remaining accepted actions were not executed because the batch
+   stopped; do not create fake result entries for commands that never ran.
+6. Separately report any suffix ignored because it exceeded the configured limit.
+
+The error's hard-coded `try` hint is returned with the failed action so the next
+model turn can replan. No automatic workaround is executed.
+
+MODEL-FACING RESULT OUTPUT
+
+Correction: the earlier terminal-transcript proposal is rejected. Output sent back
+to the LLM does not echo a position prompt or `$` shell decoration. YAML is
+acceptable. Each executed result does echo its submitted command so the model can
+associate output with the correct action.
+
+The structured envelope is required partly because broadcasts are asynchronous
+agent input rather than command output. A terminal transcript would make broadcasts
+difficult to inject without making them look like the result of the nearest command.
+
+Illustrative result-only response:
+
+  results:
+    - command: move north 2
+      status: success
+      output: moved north 2
+    - command: pickup
+      status: error
+      error:
+        code: pickup.hand_occupied
+        message: cannot pick up; the hand already holds "Eye"#e
+        try:
+          - `drop`, then `pickup`
+        note: the hint is best effort and may not succeed
+  warning:
+    code: batch.stopped
+    message: 2 remaining commands were not run
+
+The next model request receives the authoritative position, held object, and
+standing surface through refreshed system context, so action results do not need to
+duplicate that snapshot unless it is directly relevant to an output or error.
+
+Commands that do not run after an error or beyond the configured limit receive no
+fabricated action result. A warning may report the count that was not run.
+
+Unresolved concerns:
+The exact batch-response syntax and output format remain open.
+
+Round 13 — Separating actions from prose
+
+Question:
+Should MikroKhoros accept only raw action lines such as `move north 2` and `pickup`,
+or should it also find and execute those action lines when the LLM surrounds them
+with explanatory prose or Markdown code fences?
+
+Vision:
+MikroKhoros accepts raw shell action lines only. Explanatory prose, Markdown code
+fences, headings, bullets, and other wrappers are not searched for executable
+commands.
+
+Engineering implications:
+Split the LLM's final response into bounded non-empty lines and parse every line as
+an action. Do not strip Markdown fences or heuristically extract command-looking
+substrings from prose. The first invalid line is a typed parse error and stops the
+batch under the established fail-fast rule.
+
+Unresolved concerns:
+Whitespace and blank-line normalization can be defined mechanically during
+implementation; they do not change the raw-action-only contract.
+
+Round 14 — Multi-action result envelope
+
+Question:
+For a multi-action response, should the agent receive an ordered YAML `results` list
+with one item for each action that actually executed, echoing each submitted command,
+plus a final `warning` when actions were not run?
+
+Vision:
+Yes, with one correction: each result echoes its submitted command. Do not include a
+shell-style position prompt or `$` decoration.
+
+The YAML envelope must also support broadcasts as input distinct from action
+results. Broadcasts must never be formatted as though an action produced them.
+
+Source correction:
+
+- `Broadcastable` is an object capability/interface, not a special engine type and
+  not behavior hard-coded specifically for `messager.object`.
+- Any object that conforms to the broadcast interface can publish bounded events to
+  an agent only while that exact object is held by the agent or stored in that
+  agent's backpack.
+- `messager.object` is the first chat-oriented implementation of this capability.
+- Broadcast metadata identifies the exact source object by canonical id and type.
+- An agent or human user may be the chat participant who caused a messenger event,
+  but the delivered runtime event still originates through the broadcast-capable
+  object rather than bypassing the object model.
+
+Corrected illustrative broadcast:
+
+  - kind: broadcast
+    source:
+      id: <broadcastable-object-id>
+      type: <object-type>
+    priority: "!!"
+    preview:
+      title: "Workshop"
+      body: "Please return to the workshop."
+
+Engineering implications:
+Define a stable model-facing response envelope with separate semantic channels for
+executed action results, batch warnings, and broadcast notifications. Preserve the
+submitted raw action on each executed result. Keep asynchronous events out of the
+`output` or `error` field of unrelated actions.
+
+Broadcast delivery is possession-scoped, not a global subscription by agent id. The
+runtime resolves the containing relation of the source object at emission time. It
+delivers to an agent only when the source is that agent's held object or is contained
+by that agent's backpack. A dropped object, an object standing in the world, or an
+object stored in another container does not broadcast to the agent.
+
+Unresolved concerns:
+The placement and timing metadata for broadcasts that arrive during a multi-action
+batch remain open.
+
+Round 15 — Broadcast placement during a batch
+
+Question:
+When a broadcast from a broadcast-capable object arrives while an action batch is running,
+should it be returned in a separate top-level YAML `broadcasts` list with an
+`after_action` index, or inserted between action-result entries in event order?
+
+Vision:
+Insert broadcasts between action results according to event arrival order. Do not
+place them in a separate top-level list, and do not use an `after_action` field.
+
+`messager.object` behaves like a familiar messenger or chat application rather than
+a low-level event emitter. It conforms to the general broadcast interface. Its
+passive notification preview resembles an iPhone notification and contains both a
+title and a body.
+
+Priority is represented symbolically as `!`, `!!`, or `!!!` rather than names such
+as `low`, `normal`, `high`, or `user`. More exclamation marks represent greater
+urgency; the meaning of an unmarked normal message remains open.
+
+Engineering implications:
+Return one ordered YAML `events` list. Each event has a discriminating `kind`, such
+as `result` or `broadcast`. An action remains atomic, so a broadcast is inserted at
+the event boundary where it becomes deliverable; it is never inserted inside an
+individual result object.
+
+Illustrative model-facing envelope:
+
+  events:
+    - kind: result
+      command: move north 2
+      status: success
+      output: moved north 2
+    - kind: broadcast
+      source:
+        id: <messager-object-id>
+        type: messager.object
+      priority: "!!"
+      preview:
+        title: "Workshop"
+        body: "Please return to the workshop."
+    - kind: result
+      command: move east 1
+      status: success
+      output: moved east 1
+
+The title and body are bounded notification fields; the complete conversation and
+message history remain inside the messager object's public chat functions. A
+broadcast notification does not force the receiving agent to open or answer it.
+
+Unresolved concerns:
+Normal priority, chat addressing, conversation grouping, unread state, and exact
+title/body length limits remain open.
+
+Round 16 — Normal message priority
+
+Question:
+Should an ordinary messager message have no priority marker, with `!`, `!!`, and
+`!!!` reserved for increasing urgency, or should every message carry at least `!`?
+
+Vision:
+An ordinary messenger message has no priority marker. `!`, `!!`, and `!!!` are
+optional increasing-urgency labels.
+
+Priority is descriptive only. The receiving agent may ignore any notification,
+including `!!!`, and is never forced to read, respond, interrupt its current plan,
+or execute an action.
+
+`messager.object` follows familiar chat behavior. An agent can open it, choose a
+conversation, and read the latest messages. Reading may change unread or seen state
+and may emit a broadcast-capable read-receipt event to another agent or human user,
+similar to a normal messenger application's "seen" indicator.
+
+Engineering implications:
+Represent priority as an optional value whose permitted non-empty labels are `!`,
+`!!`, and `!!!`. Do not convert a label into scheduling authority or mandatory
+behavior.
+
+Define `Broadcastable` as a reusable object capability with a listener interface.
+The runtime listener converts each bounded emission into an ordered `broadcast`
+event for the agent currently carrying the source object in hand or backpack.
+Chat-specific state and behavior—including
+conversations, unread counts, selecting a chat, reading messages, and read receipts—
+remain public functions and private state of `messager.object`, not engine built-ins.
+
+Unresolved concerns:
+Whether read receipts are automatic or configurable remains open, as do direct and
+group chat addressing details.
+
+BROADCASTABLE CAPABILITY CONCEPT
+
+Conceptual Swift boundary, not final API spelling:
+
+  Object
+  └── optional Broadcastable capability
+      ├── publishes bounded notification events
+      └── delivers to its current holder or backpack carrier
+
+The engine understands only the generic event envelope: source object identity,
+optional priority label, title, and body. It does not understand chat rooms, seen
+receipts, merchants, alarms, or any other domain meaning. Each conforming object
+owns those semantics behind its public interface.
+
+"Send to the agent" means that a carried Broadcastable object causes the runtime to
+make a normal model request to the LLM attached to that concrete agent. It does not
+mean a global agent inbox, an always-running process, or a special prompt channel.
+
+For `messager.object`, a read flow may be:
+
+1. The agent holds or otherwise validly accesses the messenger object.
+2. The agent opens the messenger through its public interface.
+3. The agent selects a conversation and requests the latest messages.
+4. The messenger updates its own unread/seen state.
+5. If read receipts are enabled, the messenger emits a broadcast event representing
+   the seen transition to the relevant participant's listener.
+
+Round 17 — Messenger read receipts
+
+Question:
+When an agent opens a chat and reads its latest messages, should `messager.object`
+always emit a seen/read-receipt broadcast, or should read receipts be configurable
+per messenger or conversation?
+
+Vision:
+Read receipts are always part of messenger behavior and are not configurable.
+Reading previously unread chat messages updates their seen state and may emit the
+corresponding seen event through the messenger's broadcast capability.
+
+`messager.object` is conceptually a smartphone messaging application. It manages
+chat-platform users and connections. For a new connection, it creates the default
+thread `#1`. A chat-platform user may create additional thread chats. The temporary
+chat mechanism was considered and then removed.
+
+Chats and threads are themselves objects created and owned inside
+`messager.object`. They are not placed in a spatial container and do not appear in
+world surface details or eye output.
+
+Chat reading follows Python collection conventions:
+
+- Index `-1` reads the latest message.
+- Negative indexes count backward from the latest end of the chat.
+- Ranged reads are supported using Python-style slice semantics.
+- A read may return a string for one message or an array-like result for a range.
+
+Engineering implications:
+Add private parent-owned objects to the object model. An owning object may create
+internal child objects that have behavior and state but no world-space placement.
+They cannot be picked up, dropped, seen by an eye, stood on, or summoned directly.
+Access occurs only through handles or functions deliberately exposed by the owning
+object.
+
+The messenger owns chat-user, connection, chat, thread, message, unread, and seen
+state. The world engine owns none of those domain rules; it provides normal object
+lifecycle plus the generic broadcast listener boundary.
+
+Reading by index or range must be deterministic over the chat's ordered message
+sequence. A successful read marks the returned unread messages seen and emits the
+appropriate receipt event. Re-reading already seen messages does not create a new
+seen transition unless the messenger interface explicitly defines another event.
+
+Unresolved concerns:
+The exact public function syntax remains open. Whether private child objects use
+globally visible object hashes or parent-local handles is also undecided.
+
+MESSAGER INTERNAL OBJECT CONCEPT
+
+  messager.object
+  ├── chat-platform user objects
+  ├── connection objects
+  │   ├── #1 default thread object
+  │   └── additional thread objects
+  └── message objects
+
+These relationships are private application state, not spatial containment. Looking
+at the cell containing `messager.object` reveals only the messenger's surface detail.
+Even `inspect` reveals only the public messenger interface and public metadata, not
+its private chat-object graph or message contents.
+
+Conceptual read operations, not final shell syntax:
+
+- `read(user: <chat-user>, connection: <connection>, chat: #1, index: -1)` returns
+  the latest message visible to that chat-platform user.
+- `read(user: <chat-user>, connection: <connection>, chat: #1, slice: -10:)`
+  returns up to the latest ten messages.
+- `read(user: <chat-user>, connection: <connection>, chat: #1, slice: 0:20)`
+  follows Python's start-inclusive, end-exclusive convention.
+
+Conceptual send operation, not final shell syntax:
+
+- `send(user: <chat-user>, connection: <connection>, chat: #1, body: <text>,
+  priority: <none|!|!!|!!!>)` sends as the selected chat-platform user into that
+  connection's thread.
+
+The acting chat user is required for both read and send. This `user` is an identity
+inside a general chat platform. It is not the special human-authority concept
+elsewhere called the MikroKhoros user.
+
+Round 18 — Temporary chat lifetime
+
+Question:
+What should end and remove a temporary chat: an explicit close by a participant,
+the end of its connection or session, or expiration after a configurable lifetime?
+
+Vision:
+Remove the temporary chat mechanism. Messenger conversations consist of the default
+`#1` thread for a connection plus any additional persistent thread chats.
+
+Engineering implications:
+Do not add temporary-chat lifecycle, expiration, session cleanup, or deletion rules.
+This keeps the first messenger model focused on chat users, connections, persistent
+threads, messages, unread state, seen receipts, and broadcasts.
+
+Unresolved concerns:
+Persistent thread creation, naming, addressing, and deletion remain open.
+
+Round 19 — Messenger chat address
+
+Question:
+Should every `read` and `send` address a chat using the acting chat-platform user,
+the connection, and the thread number—for example `user: alice`, `connection: bob`,
+and `chat: #1`—so `#1` is scoped to one connection rather than globally unique?
+
+Status:
+Deferred. Messenger is now considered a small architecture example; further chat
+product detail is not needed before the general object SDK is defined.
+
+Vision:
+Chat read results are YAML records rather than bare strings. They include normal
+message data such as sender identity, timestamp, body, optional priority, and other
+small delivery or seen fields. Exact messenger schema is intentionally deferred.
+
+Illustrative shape only:
+
+  messages:
+    - sender: <chat-platform-user>
+      timestamp: <message-time>
+      body: "Meet me at the workshop."
+      priority: null
+
+Messenger exists here primarily to demonstrate that an object can behave like an
+application, create private child objects, expose rich public functions, keep state,
+and publish events.
+
+Engineering implications:
+Do not spend the current architecture phase on a complete messenger protocol. Its
+requirements become SDK use cases and conformance tests for internal objects,
+structured function results, persistence, broadcasting, and external identities.
+
+Unresolved concerns:
+Detailed connection/thread addressing remains deferred until the object SDK exists.
+
+OBJECT DEVELOPMENT SDK — PRIMARY ARCHITECTURE SLICE
+
+An object is a programmable application inside MikroKhoros, not merely a declarative
+record. Developers need an SDK for creating object types and their public behavior.
+
+Required object abilities:
+
+- Define private persistent state and bounded public surface metadata.
+- Expose named public functions discoverable through `inspect` and callable through
+  the agent's shell.
+- Return structured values, including YAML-compatible arrays and records.
+- Create and manage private child objects that do not occupy world cells.
+- Add capabilities such as Container or Broadcastable and register listeners.
+- Read and mutate world state at the authority granted to the object.
+- Address exact object instances by canonical id.
+- Perform multi-object state changes atomically when a function requires it.
+- Call external internet services.
+- Connect to approved resources or capabilities on the user's machine.
+- Emit asynchronous events and receive supported lifecycle callbacks.
+
+Concrete merchant example:
+
+1. A shop is a container object whose inventory objects have pickup locks.
+2. `merchant.object` exposes purchase behavior through its public interface.
+3. After validating payment and inventory identity, the merchant addresses the
+   purchased object by canonical id.
+4. It updates or removes that object's pickup lock at system authority.
+5. Payment and unlock complete atomically so the agent cannot pay without receiving
+   the unlock or receive the unlock without payment.
+
+Authority direction:
+
+- Object code written with the SDK may be granted system-level world authority when
+  the resulting object is authorized by the world runtime.
+- System authority is the highest in-world execution level when the external human
+  user role is excluded.
+- The human user remains the ultimate product authority over what is installed and
+  allowed to access their machine.
+- An LLM agent does not inherit an object's system authority. It can only invoke the
+  public functions the object exposes, with validation performed inside the runtime
+  and object boundary.
+
+Language direction:
+
+- The object contract should be language-neutral so additional language runtimes can
+  implement the same SDK boundary.
+- JavaScript is a strong first portable SDK language for macOS, Linux, and Windows.
+- AppleScript may be supported later as a macOS-specific adapter, but cannot be the
+  cross-platform object format.
+- Trusted native Swift objects remain possible for built-in or genesis behavior.
+- The language runtime is an implementation detail; object identity, state,
+  functions, capabilities, events, permissions, and world transactions have one
+  shared contract.
+
+Provisional bundle shape:
+
+  example.object/
+  ├── object.yaml       # identity, metadata, entry point, declared capabilities
+  ├── main.js           # object behavior in the first portable runtime
+  └── assets/           # optional non-code resources
+
+The earlier declarative-only bundle decision is superseded for the SDK direction.
+Declarative objects may remain a simple subset, but the intended object platform
+must support executable behavior.
+
+Critical trust boundary:
+
+An executable object with unrestricted network, filesystem, process, credential, or
+world authority is equivalent to installing a powerful local application or plugin.
+Those capabilities must be represented and enforced by the host runtime rather than
+hidden in an LLM prompt. The product still needs to decide which objects receive
+that authority and how the human user approves it.
+
+Round 20 — Object-code capability approval
+
+Question:
+Should code for every installed object receive system-level world and host-machine
+access automatically, or should only genesis and explicitly user-approved objects
+receive those powers while ordinary downloaded object definitions begin with
+restricted capabilities?
+
+Vision:
+Use an explicit installation-and-grant model rather than giving every downloaded
+object definition automatic authority. The definition declares the capabilities its
+code wants. The human installer approves the grants for the installation context.
+Genesis object definitions may be shipped with predefined trusted grants, while
+community or downloaded definitions begin with only the capabilities actually
+approved.
+
+This records the user's "yes" as agreement with the permissioned option in the
+question. Code running for an approved object may still be extremely powerful—
+including system-level world mutation, internet access, or a bridge to the user's
+machine—but merely possessing or downloading its definition grants none of those
+powers.
+
+Engineering implications:
+
+- Keep requested capabilities in the object-definition manifest and effective grants
+  in installation state; do not confuse the two.
+- The host supplies opaque capability handles to the object runtime. A capability
+  that was not granted is absent and cannot be recovered from an LLM prompt.
+- Check both the capability grant and the current installation/invocation context at
+  every privileged SDK boundary.
+- Keep installer/authorizer identity, invoking agent identity, and executing object
+  identity separate. Calling an object does not transfer its authority to the agent.
+- Allow the human user to inspect and revoke grants. Revocation must take effect at
+  the host boundary even if object code is currently uncooperative.
+- A genesis origin establishes provenance, not unlimited authority by itself. Its
+  trusted grant set remains explicit and inspectable.
+
+Unresolved concerns:
+The exact capability vocabulary, approval UX, persistence of grants, and behavior of
+an in-flight function after revocation still need design. Those details should follow
+the first real object use cases rather than be invented all at once.
+
+DISCORD APPLICATION/BOT REFERENCE
+
+Discord is a useful product analogy because a bot is an application installed into
+a shared environment and receives interactions through that environment. MikroKhoros
+objects are broader—they may be physical tools, containers, portals, shops, apps, or
+bridges—but the following boundaries transfer well:
+
+- Installation has a context. Discord distinguishes server-installed and
+  user-installed applications. MikroKhoros can similarly distinguish an object
+  installed into one world from an object installed for a user across worlds.
+- Requested and granted authority are distinct. Discord installation requests scopes
+  and permissions; the installed application operates with the resulting grants.
+- Public entry points are typed. Discord interactions carry command/component data
+  plus the server, channel, user, installation owner, and effective permissions.
+  MikroKhoros object calls should likewise arrive with explicit caller and world
+  context, rather than trusting identity claims supplied as ordinary arguments.
+- Events are subscriptions, not prompt text. Discord's Gateway delivers typed,
+  sequenced events, and intents select event categories. MikroKhoros capabilities
+  and listeners should expose bounded typed events that the runtime may then render
+  into an agent's YAML event stream.
+- Installer, invoker, context, and application are separate identities. This is
+  essential when an agent invokes an object that possesses more authority than the
+  agent itself.
+
+Discord is only a boundary reference. Its guild/channel/message data model should
+not determine MikroKhoros world geometry or object semantics.
+
+Official references consulted:
+
+- https://docs.discord.com/developers/resources/application
+- https://docs.discord.com/developers/events/gateway
+- https://docs.discord.com/developers/platform/interactions
+- https://docs.discord.com/developers/interactions/receiving-and-responding
+
+OBJECT DESIGN PHILOSOPHY — DRAFT 0.1
+
+Core maxim:
+
+  The kernel provides identity, space, ordering, authority, transactions, persistence,
+  and events. Product behavior lives in objects.
+
+1. Objects are applications, not data bags.
+   An object may have code, private state, public functions, child objects, assets,
+   listeners, and lifecycle behavior. A passive rock can use the same model with a
+   tiny or empty function surface.
+
+2. The public surface is the contract.
+   Surface details are small and safe to observe. `inspect` reveals the callable
+   public interface and public metadata. Private state, source code, capability
+   handles, child-object graphs, secrets, and internal implementation remain private.
+
+3. Capability composition beats special cases.
+   Container, Broadcastable, Lockable, Eye-like sensing, inventory, and host bridges
+   are capabilities or object interfaces. The world kernel should not grow a unique
+   command or privileged code path for every product idea.
+
+4. Power is explicit, contextual, and revocable.
+   Objects declare requested capabilities and receive only approved grants for an
+   installation context. Powerful objects are allowed; invisible ambient authority
+   is not. A host bridge is a named grant, never an accidental side effect of the
+   scripting language.
+
+5. Invocation does not transfer authority.
+   An agent can call a public function, but cannot extract the object's capability
+   handles or act as that object. The object validates the caller and arguments, and
+   the host independently enforces its effective grants.
+
+6. Identity and provenance are stable.
+   Every instance has a canonical id. Object type, installed bundle/version, creator
+   or genesis origin, installation owner, and current container can be distinguished.
+   Display names are helpful labels, never security identities.
+
+7. Spatial objects and private child objects are different relations.
+   Spatial containment determines cells, collision, pickup, drop, and eye output.
+   Ownership lets an application object manage internal objects that consume no world
+   cell and are reachable only through its public interface.
+
+8. World changes are transactional.
+   A public function may change several objects, but its committed world mutation is
+   atomic. Ordering remains deterministic under the world's first-come-first-served
+   queue. Failure must not expose half a purchase, half a transfer, or half an unlock.
+
+9. Asynchrony enters through typed events.
+   Objects publish bounded events through declared capabilities. Listeners subscribe
+   to event types. The runtime orders and persists the events before rendering them
+   as YAML output or broadcasts to an agent. Object code does not splice arbitrary
+   text into the system prompt.
+
+10. Portable semantics, replaceable runtimes.
+    The SDK contract defines values, calls, events, transactions, errors, identities,
+    and capabilities independently of language. JavaScript can be the first portable
+    adapter; native Swift and platform-specific adapters obey the same semantics.
+
+11. Genesis is provenance, not a second physics system.
+    Developer-created genesis objects use the ordinary object contract wherever
+    possible. They can be preinstalled and pregranted trusted capabilities, but their
+    behavior remains inspectable and their grants remain explicit. This keeps an eye,
+    portal, key, summoner, merchant, and community-built object conceptually coherent.
+
+12. Errors belong to the interface.
+    Public functions return stable typed errors and small hard-coded recovery hints.
+    Object authors cannot rely on the LLM guessing hidden preconditions, and error
+    handling must remain useful for both CLI users and agents.
+
+13. Definition is not instance, and installation is not placement.
+    The SDK helps a designer author an object definition. Making that definition
+    available to a world, creating a live instance from it, placing that instance in
+    a container, giving it to an agent, and invoking one of its functions are
+    conceptually separate operations. The exact publishing and creation lifecycle is
+    not decided yet.
+
+14. Prefer the smallest complete primitive.
+    New kernel behavior is justified only when multiple unrelated objects need the
+    same invariant and object code cannot enforce it safely. Messenger, merchant,
+    and eye behavior should first prove the SDK rather than each becoming a subsystem
+    in the kernel.
+
+TERMINOLOGY CORRECTION
+
+"SDK object" is not a valid product term. It conflates a development tool with the
+object produced using that tool.
+
+- Object SDK: the APIs, tools, types, documentation, and runtime contract an object
+  designer uses to code behavior for objects in the world.
+- Object designer: the human developer who uses the Object SDK.
+- Object definition/package: provisional term for the designer's code, manifest, and
+  assets before it becomes a live thing in a world. Whether this is reusable is not
+  yet decided.
+- Object instance: provisional term for an actual object in a world, with its own
+  canonical id, state, location or private owner, and granted runtime capabilities.
+
+These terms describe layers, not a final user-facing vocabulary. In ordinary product
+language, an agent still encounters and uses an "object."
+
+The earlier Discord comparison applies only to application boundaries such as
+authorization, invocation context, and event delivery. It does not establish that
+MikroKhoros must copy Discord's installation lifecycle.
+
+Round 21 — Result of object design
+
+Question:
+When an object designer finishes coding with the Object SDK, should the result be a
+reusable definition from which a world can create multiple object instances, or
+should that project produce one specific object directly for one world?
+
+Vision:
+The Object SDK lets an object designer code a reusable object design. The shop is
+the world-native distribution point for that work: agents encounter merchandise in
+the world and obtain their own concrete objects through the shop rather than using
+the SDK themselves.
+
+The shop remains an ordinary container object placed in the world. The merchant
+remains an object inside it that handles payment and unlocks merchandise. An object
+offered by the shop has a concrete instance id, its own state, and its own pickup
+lock. Once purchased, that specific object becomes available for the agent to pick
+up and use.
+
+The intended relationship is:
+
+  object designer
+      └── uses Object SDK to code a reusable object design
+              └── object is made available through a shop
+                      └── agent purchases a concrete object
+                              └── merchant unlocks it for pickup
+
+The SDK is entirely on the designer/development side. It is not an object, command,
+or capability exposed to the agent merely because the agent is inside the world.
+
+Engineering implications:
+
+- Preserve a reusable definition-versus-live-instance distinction internally, even
+  if the product usually calls both simply an object.
+- Every purchasable instance has independent identity, state, durability, ownership
+  or placement, and lock status.
+- The shop and merchant use the ordinary Object SDK/object interfaces; shopping is
+  not a special LLM command or a separate physics system.
+- Purchasing must refer to the merchandise instance's canonical id so duplicate
+  display names or multiple copies cannot make the transaction ambiguous.
+- Payment and unlocking the selected instance remain one atomic transaction.
+- How an object design reaches a shop is a designer/user workflow, separate from how
+  an agent purchases and uses the resulting object inside the world.
+
+Unresolved concerns:
+Resolved in Round 22: the shop holds concrete, positioned object instances. The user
+controls restocking; purchase does not create the merchandise.
+
+Round 22 — Shop stock and object creation
+
+Question:
+Does a shop sell concrete object instances that the user has already placed in its
+inventory, or does it keep an object design and create a fresh instance when an agent
+buys one?
+
+Vision:
+Correction to the first answer recorded for this round: purchase does not create a
+fresh instance. The shop already contains concrete merchandise objects. Each item is
+visible in the shop according to normal eye rules, occupies a real coordinate in the
+shop's container space, has a canonical instance id, carries its own state and
+durability, and has a pickup lock.
+
+The human user configures restocking. Restocking is the separate process that creates
+or places replacement merchandise in the shop. This is why tool durability belongs
+to concrete instances: one purchased tool may wear down or break, while a restocked
+replacement is another concrete object with its own initial durability and identity.
+
+The original shop model is authoritative:
+
+  user-controlled restock
+      └── concrete object is placed at a shop coordinate with a pickup lock
+              └── agent sees and selects that exact object
+                      └── merchant takes payment and changes its pickup lock
+                              └── agent picks up the same object instance
+
+Engineering implications:
+
+- Shop inventory is derived from the concrete objects currently positioned inside
+  the shop, not from a virtual catalog that mints objects on demand.
+- The merchandise's canonical id is the purchase target. Name, object design/type,
+  or shop-list position alone is insufficient when several similar tools exist.
+- Purchase validates that the targeted instance is still in the shop, still for
+  sale, still locked under the expected merchant policy, and not already sold.
+- Payment deduction and the selected object's pickup-lock transition are atomic.
+- Retrying or replaying a purchase must not charge twice or sell the same instance to
+  two agents; purchase requests still need transaction identity or equivalent
+  idempotency protection.
+- Restocking is user-configured and separate from purchase. The restock mechanism may
+  create and place a new instance from an object design, but the merchant does not do
+  so as a side effect of a sale.
+- Every stocked and purchased instance evolves independently. Remaining durability
+  is never shared with other inventory or back into its reusable design.
+
+Unresolved concerns:
+The exact user-facing restock controls remain open. The lock extension must ensure
+that changing the sold item's lock does not let another agent take it before the
+buyer does.
+
+CURRENT PRODUCT PICTURE
+
+MikroKhoros is a persistent, spatial runtime in which one or more agent entities live
+and collaborate. An LLM is the cognition attached to an agent; it is not an external
+operator choosing a world or being told to run MikroKhoros. The LLM acts only through
+the runtime's shell action language and receives ordered YAML results and events.
+
+The world kernel owns the small set of universal invariants: identity, coordinate
+spaces and containers, occupancy, holding and storage, deterministic action ordering,
+atomic state transitions, permissions, persistence, and typed event delivery. It does
+not hard-code every useful behavior as a command.
+
+Objects carry the product's useful powers. An eye provides observation; messager
+provides communication; summoners, portals, and keys move or connect agents; shops,
+merchants, coin, locks, and durability support acquiring and consuming tools. Objects
+may expose functions, maintain private state and children, publish events, call the
+internet, or bridge to approved user-machine capabilities.
+
+Human object designers build reusable object designs with the cross-platform Object
+SDK. Agents do not use the SDK. User-controlled restocking creates or places concrete
+object instances at coordinates inside a shop. Agents see those stocked objects,
+purchase exact instances, and pick up the same objects after the merchant changes
+their pickup locks. Each instance can then be held, stored, dropped, used, damaged,
+exhausted, or passed between agents according to its capabilities and current state.
+
+This also leaves a clean path toward the future multi-agent network or "hall": worlds
+can eventually connect agents, identities, object designs, shops, and event-capable
+services without redefining the local object and authority model.
+
+Round 23 — Pickup of purchased merchandise
+
+Question:
+After purchase, should a new object be delivered at a shop pickup point or directly
+into the buyer's storage?
+
+Vision:
+Neither delivery model applies. The merchandise is already a concrete object at a
+coordinate inside the shop before purchase. A successful purchase changes the
+pickup-lock policy on that same instance so the buying agent can pick it up at its
+existing position. The object is not moved, recreated, or inserted into the agent's
+hand or storage.
+
+The agent remains responsible for moving to the merchandise and making its hand
+available—for example by storing or dropping the default eye—before using the normal
+pickup action. Because several agents may be in the shop, the extended pickup-lock
+policy must authorize the concrete buyer without opening the object to everyone.
+
+Engineering implications:
+
+- Purchase atomically validates payment and the selected stocked instance, deducts
+  payment, and changes that instance's pickup-lock policy for the buyer.
+- Purchase does not allocate an object id, initialize durability, or choose a cell;
+  those already exist from restocking.
+- Delivery does not bypass ordinary hand occupancy, storage, movement, or pickup
+  rules.
+- A trusted caller identity supplied through the Object SDK associates the claim with
+  the actual buying agent; the LLM does not pass a buyer id that could be spoofed.
+- Other agents may see the merchandise if their eye view and object visibility allow
+  it, but pickup validation enforces the claim.
+
+Unresolved concerns:
+The buyer-claim lifecycle remains open: it may disappear after the first successful
+pickup, or persist as a lasting restriction on later pickup and transfer.
+
+CONCRETE AGENT IDENTITY
+
+An agent is a concrete persistent entity, not merely an LLM session or a prompt. The
+human user creates agents. The runtime issues identity for each agent; the human may
+be able to request an id/hash rollout or rotation, but cannot directly choose or edit
+the hash value. An agent is then added to a world as a separate membership action.
+
+The model layers are therefore:
+
+  human user
+      └── creates agent
+              ├── runtime issues agent identity/hash
+              ├── user configures name and LLM attachment
+              └── user adds agent to a world
+                      └── agent receives concrete world presence and state
+
+The agent and its attached LLM are not the same identity. Replacing a model, changing
+a provider, compacting context, or beginning a new LLM session does not by itself
+create a different agent. The agent owns its persistent world relationships and
+state; the LLM provides cognition for its current turns.
+
+OBJECT SDK EXECUTION CONTEXT
+
+The Object SDK supplies trusted contextual values to executing object code. This is
+similar in spirit to Scratch's `username` reporter in the Sensing category: Scratch
+project code can ask the runtime who the current user is instead of asking the caller
+to type a username. In Scratch VM, the `sensing_username` primitive delegates to the
+runtime `userData` I/O provider.
+
+Official implementation reference:
+
+- https://github.com/scratchfoundation/scratch-vm/blob/develop/src/blocks/scratch3_sensing.js
+
+For MikroKhoros, a public object-function invocation should receive an unforgeable
+runtime context with values conceptually like:
+
+  context:
+    agent:
+      id: <runtime-issued-agent-id>
+      name: <display-name-if-visible>
+    world:
+      id: <current-world-id>
+    invocation:
+      id: <transaction-or-call-id>
+
+This is an SDK concept for the object designer, not necessarily a shell command or
+agent-visible YAML shape. Exact names are not decided.
+
+The initial concrete use case is `messager.object`. The messenger uses the trusted
+current-agent context to resolve which private messenger user/account is acting. It
+can then authorize chat reads and sends, update that agent's unread and seen state,
+and emit read receipts without trusting a caller-provided sender identity. The
+messenger's private chat-platform identity may still be a distinct domain object; it
+is mapped to the concrete MikroKhoros agent identity by messenger-owned state.
+
+Engineering implications:
+
+- The runtime resolves caller identity from the authenticated agent execution, never
+  from an ordinary function argument supplied by the LLM.
+- Shop, merchant, messager, portal, permission, and listener code can use the same
+  contextual identity API rather than each inventing caller authentication.
+- A user-controlled display name is separate from the runtime-controlled identity
+  hash. Names are labels and may collide; hashes identify.
+- Creating an agent and adding it to a world are separate operations. A world stores
+  membership and concrete presence for an existing agent identity.
+- Object code receives only the context fields permitted by the SDK and the current
+  world's privacy rules. It does not receive LLM credentials, hidden prompts, or
+  unrelated human-user data.
+
+Unresolved concerns:
+The phrase "rollout id" may mean initial runtime issuance, later hash rotation, or
+both. If a hash can change, the system must decide whether durable references follow
+the same underlying agent or intentionally stop resolving.
+
+Round 24 — Agent hash rollout
+
+Question:
+When an agent's hash is rolled or changed, should worlds, chats, ownership records,
+and object references continue to recognize the same underlying agent, or should the
+new hash intentionally create a new identity relationship?
+
+Vision:
+Deferred. The answer supplied at this point resolved the purchased-object claim in
+Round 25 rather than confirming hash-rotation semantics. The implemented v2 runtime
+therefore issues one immutable canonical agent ID. A human cannot edit that ID, and
+changing an AI profile does not create a new agent.
+
+Engineering implications:
+
+- Do not implement public hash rollout/rotation in the CLI-first slice.
+- Durable world membership, message sender IDs, buyer claims, and object references
+  use the runtime-issued canonical ID.
+- A future rotation design must distinguish a stable internal principal from a
+  rotatable public identifier and define migration, audit, and revocation behavior.
+
+Unresolved concerns:
+Agent-ID rotation remains a future identity/network concern. It is not implied by AI
+profile replacement.
+
+EXTENDED OBJECT PICKUP LOCK — PROVISIONAL DRAFT
+
+The pickup lock remains a property of an object instance and affects only pickup. It
+is not a lock on a coordinate, container, entire object function interface, or agent.
+The original locked/unlocked state is generalized into a structured pickup policy.
+
+Conceptual internal shape, not final SDK or model-facing syntax:
+
+  pickup_lock:
+    mode: allow_only
+    subjects:
+      - kind: agent
+        id: <buying-agent-id>
+    issuer:
+      kind: object
+      id: <merchant-object-id>
+    authority: system
+    reason: purchased_claim
+    lifecycle: <pending>
+
+Provisional field meanings:
+
+- `mode`: the rule, initially `deny_all` or `allow_only`. Absence of a pickup lock
+  means ordinary pickup rules apply.
+- `subjects`: identities exempted by an `allow_only` rule. The shop use case names the
+  concrete buying agent using runtime-authenticated identity.
+- `issuer`: the system, user, agent, or object that created the lock. This supports
+  authorization and audit, not a merchant-specific error message.
+- `authority`: the level required to replace or remove the lock. This preserves the
+  earlier user/system/agent tier concept without treating a tier as the subject.
+- `reason`: a stable machine-readable reason code such as `purchased_claim`. It is not
+  unrestricted text injected into prompts.
+- `lifecycle`: the condition under which the lock clears, still undecided.
+
+Pickup evaluates all normal preconditions plus the object's pickup-lock policy. If
+the actor is not permitted, it returns the existing typed `pickup.locked` error and a
+generic hard-coded recovery hint. The passive surface still does not reveal the lock.
+Authorized `inspect` may reveal bounded public lock information without exposing
+private policy or unrelated identities.
+
+This lock is not general ownership. Ownership, possession, messenger identity, and
+permission to invoke other object functions remain separate concepts.
+
+Round 25 — Purchased-object claim lifecycle
+
+Question:
+Should the buyer-specific pickup lock clear automatically when the buyer first picks
+up the purchased object, or persist so only that buyer can pick it up even after it
+is later dropped or passed around?
+
+Vision:
+The buyer-specific claim persists while the purchased item remains in the shop. Only
+the buying agent may pick it up. If that agent does not pick it up, the exact item
+stays at its existing coordinate and remains reserved there.
+
+On the buyer's first successful pickup, the claim has completed and the pickup lock
+clears. The object then follows the ordinary collaboration rules: the buyer can hold,
+store, use, drop, or later pass it, and another agent may pick it up after it is
+dropped unless a new lock is deliberately applied.
+
+Engineering implications:
+
+- Purchase changes the selected instance from shop inventory lock to an `allow_only`
+  claim for the authenticated buying-agent ID.
+- The item does not move during purchase. Its coordinate and object ID stay the same.
+- A non-buyer receives `pickup.locked`; the buyer still must satisfy normal pickup
+  rules such as being at the right cell and having an available hand.
+- Successful pickup and automatic removal of the completed buyer claim are one atomic
+  action. Failure to pick up leaves the claim unchanged.
+- The claim has no automatic time expiration in the current vision. An uncollected
+  purchase remains physically present and reserved in the shop.
+- Clearing this purchase claim after pickup preserves later collaboration and object
+  transfer rather than turning the claim into permanent ownership.
+
+Unresolved concerns:
+Administrative recovery for an abandoned purchase is not defined and is not needed
+for the first implementation unless the user later requests it.
+
+SHOP RESTOCK AFTER PURCHASE
+
+A successful purchase also triggers restocking for that product according to the
+human user's shop settings. Restocking is distinct from the purchase target:
+
+1. The purchased instance remains where it was, reserved for its buyer.
+2. The shop creates a new concrete instance from the same object design.
+3. The replacement receives a new canonical id and fresh initial state, including
+   its configured initial durability.
+4. The replacement receives the ordinary shop-inventory pickup lock.
+5. The replacement is placed at the closest valid free shop coordinate to the
+   merchant that the runtime can find.
+
+Therefore a sale can temporarily leave both objects visible in the shop:
+
+  [purchased instance #old]
+    position: original merchandise coordinate
+    pickup: buyer only
+
+  [restocked instance #new]
+    position: nearest available coordinate to merchant
+    pickup: shop locked until another purchase
+
+The restock trigger is the successful purchase, not the buyer's later pickup. If the
+buyer walks away without collecting the old item, it remains in the shop and consumes
+its cell while replacement merchandise may still appear nearby.
+
+Engineering implications:
+
+- Restock settings belong to the human user's shop configuration. The world engine
+  should not invent product quantities, pricing, or replenishment policy.
+- Restock creates a separate instance; it never resets, moves, renames, or re-locks
+  the sold instance.
+- Placement searches outward from the merchant for the nearest valid unoccupied cell
+  in the shop's local coordinate space. The merchant is fixed at the shop's local
+  `(0,0)`, so restock placement searches outward from that origin. Equal-distance
+  ties need a fixed deterministic direction order so replay produces the same result.
+- The new instance becomes visible and collidable under normal object rules as soon
+  as restock commits.
+- Concurrent purchases and restocks use the world's first-come-first-served ordering
+  and atomic placement, preventing two replacements from claiming the same cell.
+
+Round 26 — Infinite coordinate correction
+
+Question withdrawn:
+The question about a shop having no free coordinate was based on an invalid bounded-
+space assumption.
+
+Vision:
+Every MikroKhoros coordinate space is infinite and never has a configured spatial
+boundary. This applies to the root world and to the local coordinate space inside
+every container, including shops, houses, chests, and backpacks when spatial
+container semantics apply.
+
+Coordinates extend without a maximum in every direction:
+
+  ... (-2,0), (-1,0), (0,0), (1,0), (2,0) ...
+
+The fixed 5-by-5 value belongs only to the eye object's observation window. It limits
+what one eye-function call reports; it does not limit the world, a container, agent
+movement, object placement, or restocking.
+
+For restocking, the runtime searches outward from the merchant over the infinite
+local coordinate plane. Occupied positions may force the replacement farther away,
+but they cannot exhaust the coordinate space. With a finite number of current
+entities, an unoccupied coordinate always exists.
+
+Engineering implications:
+
+- Do not store width, height, minimum, maximum, border, or capacity as universal
+  properties of a world or container coordinate space.
+- Movement cannot fail with an out-of-bounds error. It may still fail because of
+  occupancy, a relevant object rule, authorization, or invalid action syntax.
+- Placement cannot fail merely because a container is spatially full.
+- Use sparse storage keyed by occupied coordinates; never allocate a rectangular
+  world grid.
+- Observation queries only the requested finite window—in the eye's case, 5 by 5—
+  from the sparse infinite plane.
+- Nearest-position search expands deterministically by distance from the merchant
+  until it finds an unoccupied coordinate. It does not need a pending queue for
+  spatial capacity.
+- Nested path coordinates remain local to the immediately containing infinite plane.
+
+Correction:
+All earlier language suggesting container bounds, a full shop, unavailable restock
+space, or purchase failure due to spatial capacity is superseded by this rule.
+
+SHOP ORIGIN AND MERCHANT POSITION
+
+The shop is a container object. The shop object itself occupies one coordinate in its
+parent space. Its contents do not share that parent plane; they occupy the shop's own
+infinite local coordinate plane.
+
+The merchant occupies `(0,0)` in that internal shop plane. This is the spatial anchor
+for the shop:
+
+  <shop-position-in-parent>["Shop"#<shop-id>]/(0,0)[merchant.object]
+
+Merchandise and restocked replacements occupy other shop-local coordinates. "As
+close to the merchant as possible" therefore means the nearest unoccupied coordinate
+to `(0,0)` under the deterministic outward search. The merchant's occupied origin is
+never a candidate merchandise cell.
+
+For example, if the shop container is at `(8,4)` in the root world, the merchant is
+at:
+
+  (0,0)@world/(8,4)["Shop"#shop-a]
+
+The merchant is not at `(0,0)@world`; it is at `(0,0)` inside the shop. Restocked
+merchandise is also placed inside that shop-local plane, never beside the shop object
+in the parent world unless an object's explicit function moves it there.
+
+The merchant's fixed position is shop behavior, not a universal rule that every
+container must place a special object at its local origin.
+
+Round 27 — Initial placement when adding an agent
+
+Question:
+When the human user adds an existing agent to a world, should the user choose that
+agent's initial coordinate, or should the world place it automatically near a
+designated genesis or entry object?
+
+Vision:
+The human user may choose the agent's initial coordinate when adding the agent to a
+world. If the user omits a coordinate, MikroKhoros defaults to the root-world origin:
+
+  (0,0)@world
+
+This is a placement choice made by the human user through the CLI or later UI. The
+LLM does not choose which world to enter or its initial coordinate.
+
+Engineering implications:
+
+- Agent creation remains separate from world membership and placement.
+- The add-to-world operation accepts an optional coordinate/path argument and uses
+  `(0,0)@world` when absent.
+- Resolve and validate the chosen coordinate against current authoritative world
+  state at commit time.
+- Adding the agent creates its concrete world presence at that coordinate and applies
+  the normal starting-object rule, including the default held eye.
+- Store the full container path when a non-root starting coordinate is eventually
+  allowed; the confirmed default is specifically the root world origin.
+- The result should report the final canonical agent path so the human can see where
+  the agent entered.
+
+Unresolved concerns:
+The operation still needs defined behavior when the chosen/default coordinate is
+incompatible with the agent's initial loaded state—for example when `(0,0)@world`
+already contains a placed object or another agent holding an object.
+
+Round 28 — Blocked initial coordinate
+
+Question:
+If the chosen initial coordinate is blocked under the normal occupancy rules, should
+adding the agent return an error so the human chooses another coordinate, or should
+MikroKhoros automatically use the nearest valid coordinate?
+
+Clarification of "occupancy rules":
+
+This refers only to the previously confirmed material-sharing behavior at one exact
+coordinate:
+
+- A placed object occupies its cell.
+- An agent holding an object has loaded occupancy because the held object follows the
+  agent and takes one cell.
+- A loaded agent cannot share its cell with a placed object or another loaded agent.
+- An empty-handed agent remains nonblocking and may share or pass through a cell.
+- The rule does not impose a world boundary, container capacity, or finite grid.
+
+The concrete world-entry case is:
+
+1. Agent A is already at `(0,0)@world` holding its eye.
+2. The human adds Agent B without specifying a coordinate.
+3. Agent B therefore requests the default `(0,0)@world` and also begins holding an
+   eye.
+4. Both agents would have loaded occupancy at the same coordinate, which conflicts
+   with the confirmed one-cell material rule.
+
+If Agent A were empty-handed, it would not block Agent B. Likewise, an object or
+loaded agent at the merchant's internal `(0,0)` says nothing about root-world
+`(0,0)@world`, because those are different coordinate spaces.
+
+Vision:
+Exact placement returns an error on conflict. MikroKhoros must not silently move the
+agent away from the coordinate chosen by the human or from the documented default.
+
+The human may explicitly enable auto-adapt placement. With auto-adapt, a blocked
+requested/default coordinate causes MikroKhoros to choose the nearest coordinate
+compatible with the new agent's loaded occupancy. This is opt-in behavior.
+
+Engineering implications:
+
+- Without auto-adapt, resolve the exact requested path and test occupancy atomically
+  with membership insertion and initial held-eye placement.
+- On conflict, do not add partial membership, place the agent elsewhere, or change any
+  existing entity. Return `agent.add.position_occupied` with a hard-coded hint to
+  choose another coordinate or enable auto-adapt.
+- With auto-adapt, search outward from the requested coordinate over the same infinite
+  local plane and select the nearest compatible cell using a deterministic tie-break.
+- Report the requested path, actual final path, and whether adaptation occurred.
+
+Unresolved concerns:
+Resolved: explicit intent wins; placement conflict is an error.
+Amended: the human may explicitly opt into deterministic nearest-cell adaptation.
+
+Round 29 — Request-driven agent execution
+
+Question withdrawn:
+The question about "starting" an agent introduced an unnecessary process lifecycle
+that is not part of the product vision.
+
+Vision:
+An agent does not need to be started. It is a concrete world entity with an attached
+LLM configuration. When an eligible source sends the agent a prompt/request, the
+runtime makes a normal API request to that configured LLM. Mere world presence does
+not create a continuously spinning thinking loop.
+
+The primary current request source is a Broadcastable object carried by the agent.
+For `messager.object`, an incoming chat message is stored by the messenger. If that
+messenger instance is held by the agent or contained in the agent's backpack, it
+broadcasts to that agent and causes a normal model request.
+
+The current concept is request-driven and records the concrete agent, its AI profile,
+world membership, and pending carried-object events. Process-lifecycle labels should
+be introduced only for a later concrete use case.
+
+Engineering implications:
+
+- Agent creation, AI configuration, and world placement are sufficient to make the
+  agent addressable by eligible request sources.
+- Do not poll or repeatedly call an LLM merely because its agent exists in a world.
+- Each delivered request has an exact triggering object/event and invokes the AI
+  adapter attached to the receiving concrete agent.
+- Serialize overlapping requests to one agent in first-come-first-served order so two
+  model calls cannot concurrently control the same agent state.
+- The human CLI manages agents and worlds but does not manufacture a fake activation
+  step between placement and receiving a request.
+
+Round 30 — Messenger prompt as a normal unified request
+
+Vision:
+`messager.object` is how an agent can receive a prompt from a human or another chat
+participant. Delivery through the object makes the same normal LLM request used by
+the rest of MikroKhoros; it is not a special wake protocol.
+
+Eligibility is possession-based:
+
+- If the receiving agent holds that `messager.object`, it may broadcast to the agent.
+- If that `messager.object` is in the receiving agent's backpack, it may broadcast to
+  the agent.
+- If it is dropped, standing in the world, inside a shop, or stored in another
+  container, it does not broadcast to the agent.
+
+On eligible delivery, the runtime rebuilds the normal system prompt and authoritative
+self-state, then supplies the already-unified YAML event input. Conceptually:
+
+  events:
+    - kind: broadcast
+      source:
+        id: <carried-messager-object-id>
+        type: messager.object
+      priority: null
+      preview:
+        title: <chat-or-sender-title>
+        body: <message-preview-or-body>
+
+This event is the ordinary model input for that request. The attached LLM returns the
+same raw shell-action lines already specified. MikroKhoros executes them and returns
+the same ordered YAML `events` envelope containing echoed commands, results, errors,
+warnings, and any interleaved broadcasts. Messenger uses that ordinary request and
+result protocol directly.
+
+The model may use the messenger's public functions to read the latest full message or
+a Python-style range, send a reply, or ignore it. Priority remains an optional label
+and does not change the request format.
+
+Engineering implications:
+
+- Resolve delivery from the source object's actual containment chain. Do not accept a
+  claimed recipient agent id from message text or LLM output.
+- The runtime, not object-supplied text, owns the YAML envelope and model-request role
+  boundaries. Title and body remain bounded untrusted data fields.
+- The messenger keeps its private chat state regardless of broadcast eligibility.
+- The receipt of a carried-object broadcast is the API-call trigger. Do not introduce
+  a second scheduler concept called wake/start around the same operation.
+- Results feed back using the existing unified request/response loop; messenger is
+  only the source of the initiating prompt.
+
+Unresolved concerns:
+If a messenger receives messages while it is not held or in its agent's backpack,
+those messages can remain unread in the object. The behavior when the agent later
+reacquires that messenger is not yet decided.
+
+Round 31 — Reacquiring a messenger with unread messages
+
+Question:
+When an agent later picks up or backpacks a `messager.object` that accumulated unread
+messages while elsewhere, should it immediately broadcast the latest unread preview
+and make the normal LLM request, or wait silently until a new message arrives?
+
+Vision:
+Putting the messenger back into an agent's hand or anywhere inside that agent's
+backpack immediately sends the latest unread notification to that agent. It does not
+wait for another message to arrive.
+
+Engineering implications:
+
+- Treat the transition from not carried to carried as a notification-eligibility
+  event. Carried means held directly or present anywhere in the backpack containment
+  chain.
+- If unread messages exist at that transition, select the latest unread message and
+  emit one ordinary bounded messenger broadcast through the unified YAML request.
+- The broadcast immediately causes the normal model request for the agent; it does
+  not introduce a separate start, wake, or resume operation.
+- Sending the notification does not mark the message as read. The messenger changes
+  read state only when the agent uses its read function.
+- If several messages accumulated, only the latest unread notification is emitted on
+  reacquisition. The agent may then use Python-style indexed/ranged reads to inspect
+  the rest.
+- Moving a messenger between the same agent's hand and backpack while it remains
+  continuously carried does not repeatedly emit the reacquisition notification.
+- If there are no unread messages, reacquisition emits nothing.
+
+Unresolved concerns:
+None for the reacquisition trigger. Event ordering with simultaneous placement and
+other broadcasts follows the already selected ordered event stream.
+
+SECURITY CHECK — INSTRUCTION LEAKAGE AND PROMPT ECHOING
+
+Request:
+Research current guidance, audit the design and Swift implementation, and fix concrete
+instruction-leakage and prompt-echo paths without depending on a prompt-only defense.
+
+Research consulted:
+
+- OWASP LLM07:2025 System Prompt Leakage
+  https://genai.owasp.org/llmrisk/llm072025-system-prompt-leakage/
+- OWASP LLM01:2025 Prompt Injection
+  https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+- OWASP LLM Prompt Injection Prevention Cheat Sheet
+  https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html
+- OWASP AI Agent Security Cheat Sheet
+  https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html
+- OpenAI, The Instruction Hierarchy
+  https://openai.com/index/the-instruction-hierarchy/
+- OpenAI, Improving instruction hierarchy in frontier LLMs
+  https://openai.com/index/instruction-hierarchy-challenge/
+- OpenAI, Understanding prompt injections
+  https://openai.com/safety/prompt-injections/
+
+Conclusions:
+
+1. The exact system-prompt wording cannot be guaranteed secret. It must contain no
+   credential, token, capability handle, private object state, sensitive host detail,
+   or authorization fact whose disclosure grants power.
+2. Instruction hierarchy is useful but not sufficient. Messenger prompts and object
+   or internet content are lower-trust inputs; deterministic runtime code remains the
+   authority for identity, possession, locks, payment, capabilities, and side effects.
+3. A messenger message is intentionally a request to the agent, not inert text. It
+   may direct the agent within the ordinary product contract, but it cannot replace
+   the runtime contract, invent commands, grant itself permission, or demand private
+   instructions and credentials.
+4. Object names, summaries, public data, function results, broadcasts, and message
+   bodies must never be interpolated as model-message roles or YAML structure.
+5. Model output is untrusted input to the runtime. It is never an operating-system
+   shell command and never gains authority merely because the model produced it.
+6. Regex or model-based injection detection may support monitoring, but neither is a
+   proof of safety. Complete mediation, least privilege, output validation, bounded
+   requests, and approval for future consequential sinks remain required.
+
+Swift audit findings and fixes:
+
+- Previous risk: `initialContext()` could concatenate privileged runtime instructions
+  with mutable observation text.
+  Fix: `AgentSession.initialRequest()` returns separate `system` and `input` values in
+  `AgentModelRequest`. `initialContext(includeProtocol: true)` now rejects the unsafe
+  combination instead of constructing it.
+- Previous risk: `AgentTurn.text` inserted result and world text as raw multiline
+  fields, allowing an object/message string to forge fields such as `system:`.
+  Fix: every mutable field is a bounded JSON-quoted string, which is a valid YAML 1.2
+  scalar. Newlines, quotes, colons, and document markers stay inside the value.
+- Previous risk: multiline or oversized model output reached the action interpreter.
+  Fix: the current protocol accepts one nonempty action line, at most 4,096
+  characters, with no control characters. Multi-action support will validate each
+  bounded line separately under the already confirmed batch limits.
+- Previous risk: rejected raw model output could be reflected indirectly through
+  diagnostics.
+  Fix: pre-parser rejection returns a stable error without including the rejected
+  source. A command is included in the YAML `command` field only after this boundary
+  accepts it; failed/interpreter-rejected turns omit the command.
+- Previous risk: several parser/function errors repeated attacker-controlled
+  direction, calculator, message-hash, object-hash, or catalog-hash text.
+  Fix: those errors now report stable expected grammar or stable failure categories
+  without repeating the supplied token or argument.
+- Previous risk: model-visible object and function metadata had no small per-field
+  limits.
+  Fix: type names, object names, summaries, function names, parameters, lock metadata,
+  messenger senders, messages, previews, actions, and model fields have explicit
+  limits appropriate to their boundary.
+- Previous risk: the model-request builder had no structured carried-object broadcast
+  input.
+  Fix: `AgentBroadcastEvent` and `AgentSession.request(broadcasts:)` build the unified
+  YAML event input with every field quoted and bounded.
+- Previous risk: broadcast request construction could rely on the caller to assert a
+  recipient.
+  Fix: the session resolves the source object by exact id/type and verifies that it is
+  held by the receiving agent or inside that agent's backpack. A dropped object is
+  rejected as a prompt source.
+- Previous gap: `Harness.broadcast` found backpack messengers but not a messenger held
+  directly in the hand.
+  Fix: both confirmed possession paths are supported.
+
+Prompt-echo policy:
+
+- Never automatically forward a raw model response to a messenger, user, another
+  agent, log, object, or external service.
+- Never feed rejected raw model text back to the same or another model.
+- Echo only a bounded action that passed the current action-line boundary, encoded as
+  a quoted `command` scalar. This is the previously requested terminal-result echo,
+  not a general echo of model prose.
+- A future messenger `send`, internet call, host bridge, or cross-agent action is an
+  explicit output sink. It must validate its arguments and effective capability before
+  transmitting anything. High-impact sinks may require human approval.
+- Logs should store structured codes, source ids, lengths, and hashes where possible;
+  raw prompts, credentials, hidden context, and rejected model output are not normal
+  log fields.
+
+Compaction and persistence:
+
+- Rebuild the stable system prompt in its privileged role after every compaction.
+- Compact only model-visible history and durable task facts; do not summarize hidden
+  prompt text, provider credentials, capability handles, or private object state.
+- Treat a compacted summary as mutable context, not as a new system instruction.
+- Preserve source identity and trust classification for messenger/object events after
+  compaction.
+
+Verification added:
+
+- Role-separated initial model request.
+- Multiline prompt-echo rejection with no reflection into the next request.
+- A syntactically valid action that fails inside an object function does not reflect
+  its model-supplied argument through the error result.
+- Fake YAML/system fields embedded in mutable world metadata remain inside quoted
+  scalars.
+- Fake YAML/system fields embedded in a messenger body remain inside quoted scalars.
+- Carried messenger broadcasts are accepted; the same messenger is rejected as a
+  prompt source after being dropped.
+- Full Swift test suite passes after the changes.
+
+Remaining security work for the future executable Object SDK:
+
+- Sandboxed language runtime and capability handles unavailable to object code unless
+  granted.
+- Per-installation network and host-resource allowlists, SSRF defenses, quotas, and
+  revocation.
+- Explicit sink policy for messenger sends, internet calls, file writes, purchases,
+  portals, and cross-world/hall communication.
+- Adversarial regression corpus covering direct, indirect, encoded, multi-turn,
+  cross-agent, compaction, broadcast, and object-metadata injection attempts.
+
+Round 32 — Creating an agent before attaching an LLM
+
+Question:
+In the CLI, may `agent create` produce a concrete agent with no LLM attached yet, so
+the user can configure or replace its AI profile later, or must creating an agent
+always select an AI provider/model profile immediately so it can handle messenger
+requests as soon as it is placed in a world?
+
+Vision:
+`agent create` may create a concrete persistent agent without attaching an LLM. The
+user can configure, attach, replace, or remove that agent's AI profile later.
+
+Engineering implications:
+
+- Agent identity, rollout/runtime id, world membership, coordinates, containment
+  path, inventory, known object identities, balances, and other durable state belong
+  to the agent entity rather than to an LLM provider session.
+- An AI profile is a replaceable attachment that identifies the selected provider,
+  model, model parameters, and a reference to credentials managed outside the agent's
+  model-visible state.
+- Creating or placing an agent does not require network access, provider credentials,
+  or a successful model call.
+- Replacing the AI profile preserves the same agent and all of its world state. It
+  must not generate a new agent id or silently reset model-independent memory.
+- An agent without an attached profile cannot make an LLM request, but it continues
+  to exist in the world and its objects continue to retain their own state.
+- CLI status and inspection must distinguish `no AI profile attached` from provider
+  authentication, rate-limit, network, and model-response errors.
+
+Unresolved concerns:
+The behavior of messenger prompts received while no profile is attached still needs
+to be decided.
+
+Round 33 — Messages received while an agent has no AI profile
+
+Question:
+If a carried `messager.object` receives messages while its agent has no AI profile,
+should those messages remain unread and then immediately deliver the latest unread
+notification as soon as a profile is attached, or should attaching a profile handle
+only notifications that arrive afterward?
+
+Vision:
+Messages received while no AI profile is attached remain unread. Attaching an AI
+profile immediately delivers the latest unread notification through each eligible
+carried messenger and makes the normal model request. It does not wait for another
+message.
+
+Engineering implications:
+
+- Attaching or replacing a profile is another eligibility transition for pending
+  unread delivery, alongside reacquiring a messenger.
+- After the profile attachment commits, inspect the agent's held object and backpack
+  containment tree for Broadcastable sources. Each messenger with unread messages
+  may emit its latest unread bounded preview.
+- Do not mark the message read merely because its notification was delivered.
+- If provider invocation fails, retain the unread message and report the provider
+  error separately; attaching a profile must not destroy or rewrite messenger state.
+- Serialize these triggered requests with any already queued request for the same
+  agent using first-come-first-served order.
+
+Unresolved concerns:
+None. Stored unread prompts survive the period without an attached LLM.
+
+Round 34 — Autonomous completion and implemented v2 scope
+
+Request:
+Stop the question-by-question interview. Infer the remaining product decisions from
+the established vision and complete the product, then recreate the repository's
+single local initial commit.
+
+Vision applied:
+
+- The product should prefer concrete, usable agent UX over speculative edge-case
+  questioning.
+- The current deliverable is the CLI-first runtime. The localhost browser UI is a
+  later presentation layer because its UI was explicitly deferred.
+- Agents, objects, worlds, profiles, messenger events, and shops must be real
+  persistent product entities, not only documentation or mock concepts.
+- Do not add a second start/wake/scheduler abstraction. A normal carried-object
+  notification creates the normal role-separated model request.
+- Preserve the simple shell-action contract and use objects for powers rather than
+  adding hidden model tools.
+- Prefer a safe, honest extension boundary over pretending downloaded executable
+  code is sandboxed.
+
+Autonomous product resolutions:
+
+1. Workspace and CLI
+   - The Swift executable is now a persistent human control surface with interactive
+     initialization and scriptable commands for status, adapter discovery, agent
+     create/list/show/add/remove, profile set/clear, pending-request execution,
+     raw-action shell use, messenger delivery, coin grants, and world display.
+   - External message delivery and profile attachment immediately perform the normal
+     model request when an active profiled agent has a pending notification. `agent
+     retry` handles a preserved request after a provider/network failure.
+   - `agent create` creates an agent without placing it unless `--add` is supplied.
+     Exact blocked placement returns an error and leaves it outside the world; `--auto-adapt`
+     uses the deterministic nearest available cell.
+   - CLI state uses a bounded event-sourced JSON workspace with atomic writes,
+     stable world/agent/genesis-object IDs, persisted messenger IDs/timestamps,
+     provider-independent history, and POSIX owner-only permissions when available.
+     Only credential environment-variable names are persisted.
+   - Per-action generated-ID/time tapes preserve identities created by successful
+     object functions during replay; workspace loading fails closed if a previously
+     successful canonical command no longer succeeds.
+   - The first-party journal stores canonical successful action effects and
+     notification consumption, not rejected raw model text. Embedding hosts remain
+     responsible for persistence adapters for arbitrary custom native Swift object
+     closures/graphs.
+
+2. Agent and action lifecycle
+   - An agent is created separately from world membership and profile attachment.
+   - First world entry creates one genesis eye in hand. Removal and reentry preserve
+     the same agent and do not create another eye.
+   - Agent requests are request-driven. One LLM response may contain several action
+     lines. The configured prefix runs in global first-come-first-served order, the
+     first error stops later accepted commands, and excess trailing commands produce
+     a warning.
+   - Broadcasts created between actions are inserted at the corresponding position
+     in the one ordered YAML event array.
+
+3. Occupancy and paths
+   - Every world/container coordinate space is an infinite sparse plane; finite
+     bounds are rejected.
+   - Empty-handed agents remain non-material and can share/pass through cells. A
+     held object makes its agent a loaded material unit that reserves one cell.
+   - `held` and `standing_on` are mutually exclusive.
+   - World/container paths follow the selected coordinate/name/id syntax. An
+     attached backpack uses an explicit `backpack[...]` root rather than producing
+     an invalid or fake world coordinate.
+
+4. Perception and objects
+   - Automatic state contains identity, structural path, held surface, standing
+     surface, and coin only. It contains no nearby view.
+   - `eye.object` supplies the fixed 5x5 `look` function and is otherwise a normal
+     object.
+   - Built-in object slices now include scratchpad, safe calculator, messenger,
+     portal/key, summoner, coin, apple, containers, merchant, and shop/restocking.
+   - The portal key and summoner store themselves before their movement effect so a
+     loaded agent does not illegally overlap the destination/target object.
+
+5. Shops and locks
+   - Human/user authority is ultimate; system is the highest in-world authority;
+     agent authority is lowest.
+   - Locks support deny-all and allow-only modes. A purchase atomically replaces the
+     merchant inventory lock with a buyer-only claim that clears after the buyer's
+     first successful pickup.
+   - Concrete sold inventory stays at its real shop coordinate until pickup.
+   - Optional restocking creates a new full-durability instance at the nearest free
+     coordinate around the merchant at local `(0,0)`. The infinite shop guarantees
+     a free cell for every finite occupancy set.
+
+6. Messenger collaboration
+   - Threads are persistent; temporary chat was removed. `#1` is the default.
+   - Messages retain sender, optional sender agent ID, timestamp, body, optional
+     `!`/`!!`/`!!!` label, and read state. Reads use Python indices/slices and create
+     mandatory read receipts.
+   - A Broadcastable source is eligible only while held or under the receiving
+     agent's backpack. Reacquisition queues one latest unread event without marking
+     it read or duplicating continuous hand/backpack transfer.
+   - Messages received without a profile stay unread. Attaching/replacing a profile
+     immediately queues the latest unread event from each eligible carried source.
+     Provider failure restores the pending event.
+
+7. AI profiles and adapters
+   - Direct role-separated transports cover OpenAI-compatible APIs, Azure OpenAI,
+     Anthropic, and Gemini.
+   - A data-driven catalog follows the current OpenDesign registry and detects these
+     coding-agent options: amr, claude, codex, devin, opencode, byok-opencode,
+     hermes, trae-cli, grok-build, kimi, cursor-agent, qwen, qoder, copilot, amp, pi,
+     kiro, kilo, vibe, deepseek, deepseek-harness, aider, antigravity, reasonix,
+     codebuddy, mimo, and atomcode.
+   - Coding CLIs are not launched with their normal shell/filesystem authority. They
+     require a user-configured role-separated HTTP bridge so the MikroKhoros action
+     surface remains the only agent interface.
+
+8. Object SDK boundary
+   - The shipped portable format is the closed declarative JSON object bundle.
+   - Trusted hosts can implement native Swift object subclasses.
+   - Object package manifests request explicit world-scoped capabilities:
+     private children, broadcast, world read/write/system, network, and user-machine.
+     Grants are subsets of requests and are revocable.
+   - Invocation identity is created by the runtime and binds invocation, object,
+     installation, agent, and world IDs.
+   - A future JavaScript entry point may be represented in a manifest but is not
+     executed. Executing it requires a real sandbox, quotas, network/SSRF policy,
+     user-machine mediation, auditing, and revocation.
+
+9. Instruction leakage, prompt echoing, and compaction
+   - The stable contract and mutable YAML data are always distinct provider roles.
+   - The contract contains no credential/capability/private-state secret and is
+     reconstructed on every request.
+   - Mutable fields are bounded JSON-quoted YAML scalars. Model output is bounded,
+     control-character checked, and interpreted only as MikroKhoros actions.
+   - Failed/rejected model text is neither echoed to the next model request nor
+     stored in the CLI workspace. Only successful validated commands are echoed and
+     retained.
+   - Model-visible compaction keeps a bounded tail plus a mutable checkpoint; it does
+     not summarize or promote hidden system text. This follows the structural lesson
+     from DeepSeek Harness: system prompt assembly is per request, while compaction is
+     a user-message/surface replacement.
+   - GPT-5.6 Sol guidance is applied through a lean single-source contract, relevant
+     tools only, explicit authority boundaries, a balanced reasoning baseline, and
+     representative evaluation rather than unconditional maximum reasoning.
+
+10. Verification and future scope
+    - The implemented v2 suite contains 39 passing tests covering world/occupancy,
+      eye perception, queue ordering, batches, errors, paths, locks, shops,
+      messenger reads/receipts/reacquisition/profile attachment, provider failure,
+      prompt quoting/no-echo, compaction reinjection, adapter registry, Object SDK
+      grants, and workspace replay.
+    - A localhost web UI, the multi-agent Hall/network, blockchain integration, and
+      an executable sandboxed portable Object SDK remain future extension layers.
+      They must reuse this runtime rather than create a parallel agent model.
+
+Unresolved concerns:
+None for the CLI-first v2 implementation. Future-layer product questions should be
+raised only when work begins on those explicitly deferred layers.
+
+Round 35 — Open-source project baseline and output hardening
+
+Request:
+Review every project document, add the files expected of a modern open-source
+project, repeat the instruction-leakage/prompt-echo research, fix concrete gaps, and
+recreate the single initial local commit.
+
+Documentation resolutions:
+
+- `README.md` remains the user entry point; `docs/README.md` now defines document
+  status and precedence.
+- `design.md` remains canonical. This chronological file is marked complete for the
+  CLI-first slice, while the original English and Vietnamese files remain historical
+  records rather than silently becoming current specifications.
+- The mislabeled Round 24/25 answers were corrected: agent-ID rotation is deferred;
+  the buyer claim clears on the buyer's first successful pickup. Blocked agent
+  placement remains resolved in Round 28.
+- Project policy now includes `AGENTS.md`, `CONTRIBUTING.md`, `SECURITY.md`,
+  `SUPPORT.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, an Apache-2.0
+  license, formatting/line-ending configuration, GitHub issue and pull-request
+  templates, Dependabot, and a macOS/Linux/Windows Swift CI matrix.
+- Repository coding-agent instructions contain only contribution workflow and
+  trust-handling guidance. They link to canonical product and security documents
+  instead of duplicating those specifications.
+
+Security research update:
+
+- OWASP continues to recommend structured instruction/data separation, input and
+  output validation, least privilege, human approval for consequential actions,
+  monitoring, and adversarial regression testing.
+- OWASP's agent and MCP guidance specifically treats tool results as untrusted,
+  requires authorization at the tool/sink boundary, and warns against raw shell,
+  arbitrary URL, and ambient host access.
+- OpenAI's 2026 instruction-hierarchy work shows that models can become more robust
+  at preferring higher-trust policy over injected tool/data instructions, while its
+  deployment guidance still recommends layered controls, narrow access, explicit
+  tasks, user review, monitoring, and red teaming.
+- Conclusion: prompt wording or an injection classifier is not the authorization
+  boundary. MikroKhoros continues to rely on deterministic identity, possession,
+  capability, lock, payment, grammar, and persistence validation.
+
+Concrete hardening:
+
+- A provider response is now compared against the privileged system contract and
+  current request envelope before any action executes.
+- If it contains a long exact normalized word window copied from either protected
+  source, the runtime returns `model.output_instruction_leakage` or
+  `model.output_prompt_echo`, omits the candidate command, and does not execute or
+  persist the copied text.
+- The comparison is narrow defense in depth. It does not claim to catch paraphrases,
+  encodings, fragmented exfiltration, or every semantic echo, and it is not used to
+  grant or deny world authority.
+- Human-entered shell actions are unaffected because the protected-context check
+  belongs specifically to the model-response boundary.
+- Four adversarial tests cover direct system-contract replay, current-request
+  envelope echo through an otherwise action-shaped response, oversized output before
+  overlap scanning, and oversized broadcast input with event restoration, bringing
+  the suite to 39 tests.
+
+Future security obligations:
+
+- External Messenger/network/user-machine sinks need capability checks and, where
+  consequential, parameter-bound human approval at the sink.
+- A web UI needs localhost origin/Host validation, CSRF protection, authentication
+  decisions, and safe rendering.
+- Executable object languages and the Hall still require the sandboxing, network,
+  replay, identity, and cross-agent controls already documented as future work.
+
+Round 36 — Installed CLI name and per-user state
+
+Decision:
+
+- The SwiftPM executable product and terminal command are both `khoros`.
+- A source installation copies the release executable into a per-user binary
+  directory that the user adds to `PATH`, allowing `khoros ...` from any terminal.
+- The default persistent file remains `~/.mikrokhoros/workspace.json`. The directory
+  is created on the first saved change, and `--workspace` selects an alternative
+  file when isolation is needed.
+
+Round 37 — Complete prompt-echo and adjacent-boundary audit
+
+Request:
+Fix prompt echoing and directly related security problems across the runtime and
+documentation.
+
+Resolution:
+
+- The system contract was reduced so each output/trust rule appears once.
+- Output screening now covers current and earlier provider-visible user context,
+  compatibility encodings, invisible formatting controls, and strict
+  response/action bounds.
+- Model-visible history is structurally validated and bounded before restore and
+  provider use. Compaction now inserts a data-only marker while the complete system
+  contract remains a separate field on every request.
+- Decoded profiles are revalidated; remote plaintext endpoints and credentials over
+  HTTP are rejected. Provider responses are bounded, Gemini keys are not placed in
+  URLs, and direct OpenAI Responses storage is disabled.
+- Non-canonical project guidance now links to canonical design/security owners
+  instead of repeating their specifications.
+- Negative restatements of removed product commands were replaced with the positive
+  object-capability contract, and model-visible failures no longer interpolate
+  attacker-controlled object names or private-state keys.
+- The resulting suite contains 47 passing tests. Exact-overlap checks remain defense
+  in depth rather than an authorization mechanism or a guarantee against paraphrase.
+
+Round 38 — Installed-agent product architecture and complete configuration
+
+Correction:
+The requested comparison with Codex, Claude Code, OpenCode, OpenClaw, and Hermes is
+about how those applications design the complete installed product: onboarding,
+state ownership, configuration scopes, profiles, sessions, permissions, diagnostics,
+and reusable runtime boundaries. It is not a request to copy one project's command
+spelling or expose an undifferentiated bag of implementation constants.
+
+Product research:
+
+- Codex uses a shared core/app-server architecture, durable thread/turn/item state,
+  typed configuration, layered overrides, resumable sessions, and explicit
+  sandbox/approval policy. References:
+  https://github.com/openai/codex/blob/main/docs/config.md and
+  https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md
+- Claude Code separates settings scopes from instructions, skills, agents, plugins,
+  and MCP connections. It exposes interactive configuration plus status/doctor
+  diagnostics, and models permission decisions as allow/ask/deny policy rather than
+  ordinary preference values. References:
+  https://code.claude.com/docs/en/settings and
+  https://code.claude.com/docs/en/features-overview
+- OpenCode makes its terminal UI a client of a local server, supports headless and
+  resumable use over the same session core, layers global/project configuration, and
+  keeps credentials separate from ordinary settings. References:
+  https://dev.opencode.ai/docs/cli/ and https://dev.opencode.ai/docs/server/
+- OpenClaw treats onboarding, a persistent gateway, grouped schema-validated
+  configuration, atomic activation, last-known-good diagnostics, and per-agent
+  inheritance as one product. Its schema can drive both CLI and web surfaces.
+  References:
+  https://github.com/openclaw/openclaw/blob/main/docs/gateway/configuration.md and
+  https://github.com/openclaw/openclaw/blob/main/docs/reference/wizard.md
+- Hermes combines a setup wizard, profiles, session browsing/resume, a background
+  gateway, named toolsets, memory, and user-visible context/compression settings.
+  References:
+  https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/configuration.md
+  and
+  https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/architecture.md
+
+MikroKhoros product decisions:
+
+1. The human administration CLI and the agent's in-world action language are two
+   separate interfaces. `khoros` manages the runtime; the attached LLM receives
+   structured carried-object events and returns world actions.
+2. `~/.mikrokhoros/config.json` owns human defaults and advanced runtime policy.
+   `~/.mikrokhoros/workspace.json` owns the concrete world, agents, AI profiles,
+   histories, and journal. Provider secrets remain in the process environment.
+3. Configuration has two meaningful groups: new-agent defaults and runtime-wide
+   request/execution policy. The CLI exposes show, path, keys, get, set, reset, and
+   validation; `doctor` validates configuration and workspace together.
+4. All eleven previously compiled prompt/request/action limits are user-configurable
+   positive integers. Cross-field relationships are validated before atomic save.
+   The compaction checkpoint text remains an internal record shape rather than a
+   human tuning value.
+5. A new agent copies the configured action preference. An existing agent can be
+   changed with `agent configure`. The runtime action ceiling remains independently
+   configurable, and the smaller value is effective.
+6. A missing configuration file selects documented defaults without producing an
+   implicit write. A changed configuration applies on the next CLI invocation.
+   `--config` and `--workspace` support isolated installations and tests.
+7. Current MikroKhoros state is world-based rather than current-directory-based, so
+   project/repository configuration layers would add ambiguity without a product use
+   case. A future localhost browser UI should reuse the same typed configuration and
+   runtime APIs.
+
+Implementation result:
+
+- The ready-to-use CLI now owns configuration loading, validation, atomic
+  persistence, diagnostics, and per-agent action-preference updates.
+- Runtime limits flow through prompt validation, history/context compaction,
+  broadcast request construction, provider response bounds, action parsing, state
+  rendering, and result envelopes.
+- Existing workspaces remain loadable when the global action ceiling is lowered.
+- Eleven configuration tests cover every published key, persistence, missing/default
+  behavior, invalid-file failure, runtime enforcement, CLI spelling, and mutable
+  per-agent persistence and event ordering. The complete suite now contains 58 tests.
+
+Round 39 — Genesis district and useful first world
+
+Canonical outcome:
+
+1. Four stable, pickup-locked genesis landmarks fit inside the first 5×5 eye view:
+   Athena at `(0,-2)`, the Objective Board at `(1,-2)`, the Library at `(-2,2)`, and
+   the Warehouse at `(2,2)`.
+2. Athena is a deterministic surface-callable genesis steward. Its `brief` function
+   explains the nearby facilities. Human-authored world membership, objective, and
+   library changes create messages in a persistent `#athena` thread.
+3. Athena addresses each agent's stable genesis messenger identity. Carried
+   possession and an attached profile make its latest unread notice eligible for the
+   ordinary per-agent request gate.
+4. The Objective Board contains a locked index at local `(0,0)`. Human-posted
+   objectives are concrete locked surface objects at deterministic nearby
+   coordinates. Several agents may register the same objective, and a registered
+   participant may complete it through the ordered world-action queue.
+5. The Library contains a locked catalog at local `(0,0)`. The human CLI fetches
+   HTTPS or plaintext-loopback UTF-8 documents under the configured external
+   response byte limit. Each document stores its source and exposes bounded
+   `read`/`read_range` pages marked `external_untrusted`.
+6. The Warehouse is a shared infinite container. A locked directory at local
+   `(1,0)` lists direct concrete inventory; agents share exact instances through
+   container, backpack, pickup, and drop mechanics.
+7. `khoros message orient` sends a standard Messenger request. `khoros objective
+   post/list` and `khoros library fetch/list` are human administration controls.
+8. Workspace schema 2 stores stable world-genesis identities, objective/document
+   placement, and exact Athena notice message IDs/timestamps. Workspace migration
+   derives stable facility IDs from the world identity.
+9. Goal, planning, writing, pen, and editing capabilities are inspectable object
+   families in the planned product surface.
+
+Implementation result:
+
+- The genesis district, object/container behavior, human CLI controls, notices,
+  migration, and deterministic replay are implemented in the Swift package.
+- Nine focused tests cover the visible locked district, collaborative objectives,
+  Athena replay and possession-gated delivery, untrusted document paging, warehouse
+  inventory, schema migration, identity validation, and plaintext remote-fetch
+  rejection. The suite contains 67 passing tests.
+
+Round 40 — Agent and thread message address
+
+Canonical outcome:
+
+1. An in-world send addresses `<recipient-agent-id>`, `<thread>`, `<body>`, and an
+   optional `!`/`!!`/`!!!` priority label.
+2. The recipient agent ID resolves to its stable genesis Messenger object. Physical
+   movement of that Messenger preserves its address.
+3. Cross-agent delivery records the same message ID and timestamp in both Messenger
+   objects. The sender copy is read and the recipient copy is unread.
+4. A named thread materializes persistently in both Messenger objects on first use.
+   `#1` remains the default connection thread.
+5. Routing and model notification are independent. The message reaches the stable
+   Messenger object, while its exact current hand/backpack carrier determines
+   notification eligibility.
+6. The human CLI uses the same recipient and thread address through `khoros message
+   send <agent-id> --thread <thread> --body <text>`.
+
+Implementation result:
+
+- Agent-to-agent routing, stable Messenger lookup, sender/recipient copies, thread
+  creation, persistence replay, and dropped-device delivery are implemented.
+- Two focused routing tests bring the suite to 69 passing tests.
+
+Round 41 — Human world visibility and live Luna trial
+
+Canonical outcome:
+
+1. The human administration surface can read the complete world without adopting an
+   agent's local perception boundary.
+2. `khoros world inspect` returns a JSON snapshot of every registered agent and
+   object, including recursive location, ownership, locks, durability, functions,
+   private built-in/declarative state, Messenger contents and receipts, pending
+   notifications, and non-secret AI profile metadata.
+3. `khoros world inspect <agent-or-object-id>` selects one exact or unambiguous
+   identity. `khoros world export` returns the complete persisted event journal and
+   model-visible histories.
+4. Administrative reads are delivered only to the human CLI. They do not expand an
+   agent's world view, enter model history, or become a broadcast. Credential values
+   remain outside the workspace and both views.
+5. A real `gpt-5.6-luna` cognition running through the Codex CLI completed the
+   Genesis evidence expedition in an isolated workspace. It registered the concrete
+   objective, obtained evidence from Athena, the Objective Index, Library Catalog,
+   and Warehouse Directory, wrote a 552-character report into its Scratchpad, stored
+   the Scratchpad, and completed the objective.
+6. The run executed 42 successful world actions and recovered from material
+   occupancy and empty-cell discovery errors through later Messenger turns. The
+   complete objective ended with the trial agent as both participant and completer.
+7. The trial exposed a planning cost with the one-hand rule: leaving the Eye on the
+   world made internal container discovery expensive. The world remained coherent;
+   retaining the Eye in the backpack would preserve portable perception for later
+   facilities.
+
+Implementation result:
+
+- The administrative snapshot API, CLI inspection/export commands, structured
+  private-state renderers, documentation, and focused regression coverage are
+  implemented.
+- The real Codex CLI/Luna trajectory produced persistent evidence inside the tested
+  agent's Scratchpad and an independently inspectable completed objective.
+- Quoted object arguments preserve newline, carriage-return, and tab escapes, so
+  structured Scratchpad evidence retains its intended layout during execution and
+  replay.
+- The complete Swift test suite contains 71 passing tests.

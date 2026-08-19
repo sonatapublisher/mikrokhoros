@@ -1,0 +1,253 @@
+idea
+
+a harness
+
+create a "matrix" for agents
+
+for example
+
+the world, will be an infinite matrices
+
+có toạ độ, có lồng nhau của matrix
+
+chẳng hạn
+
+a ở (0, 0)
+b ở (0, 1)
+
+như thế
+
+tiếp
+
+giả sử,
+
+a là container
+
+a sẽ được lưu là instance container
+
+ngoài ra,
+cả world cũng là instance container
+
+a.container     b.object        [none]          [none]
+[none]          [none]          [none]          [none]
+[none]          [none]          [none]          [none]
+[none]          [none]          [none]          [none]
+[none]          [none]          [none]          [none]
+
+a.container:
+[none]          [none]          [none]          [none]
+[none]          [none]          [none]          [none]
+[none]          [none]          apple.object    [none]
+[none]          [none]          [none]          [none]
+
+vô tận
+
+b.object
+
+thì object sẽ là một instance sử dụng được, có bất cứ function nào
+ví dụ như apple.object có function eat
+
+nó giống như là một class private hết biến, và public những function bề ngoài dùng được
+
+tiếp tục, hãy nói về
+
+backpack
+backpack cũng như là object
+
+để mang theo một object theo bên mình, cần bỏ vào backpack, hoặc cầm trên tay (có 1 slot cầm tay)
+cơ chế backpack là stack
+à không, y hệt container đi
+
+trong backpack mặc định có
+scratchpad.object
+messager.object
+calculator.object
+
+---
+
+mỗi ô chỉ có 1 object/container
+
+cách di chuyển trong hệ
+
+những command được gắn sẵn trong người
+
+move direction: step: (default 1)
+
+container in
+container out
+cần đứng trên container mới chạy lệnh được
+
+// không được cầm một đồ vật nếu tay đang cầm
+pickup
+// -> lỗi nếu đang cầm
+
+// thả một đồ vật ở bên cạnh, trong 8 ô xung quanh hoặc ô hiện tại
+drop delta: (default (0, 0))
+// -> lỗi nếu không có vị trí thả
+
+// sẽ move trong này (giống đi vào container khi kích hoạt)
+backpack open
+backpack close
+
+khi dùng object (đang là cầm trên tay)
+
+object (function might have space)
+
+ví dụ
+
+object (eat (0.5))
+
+---
+
+ồ khoan
+
+nhưng tôi vừa phát hiện
+
+chúng ta nên treat container cũng là một object
+nó có thể có object dùng để đọc và ghi tuỳ ý
+
+hmmm, nhưng có nên tách không?
+
+thôi, vẫn là có, container hỗ trợ move, pickup, ...
+
+nhưng vẫn treat container là object, vẫn pickup, ... được
+nhưng container hỗ trợ có in và out
+
+Object
+└── Container capability
+
+chốt như trên, container là object
+
+---
+
+agent là một outline của ô đó trong world, không chiếm chỗ
+
+toạ độ âm được, bắt đầu world với 0, 0
+
+---
+
+mở rộng: user có thể tải một object từ trên mạng về,
+nên nên lưu theo dạng bundle.
+kiến trúc hợp lí phải là cập nhật lúc nào cũng được, real time
+
+thêm cơ chế nữa, là broadcast, thì cái này sẽ như steer message cho agent
+chẳng hạn messager.object là broadcast-able thì nó sẽ ping phát khi có tin nhắn
+đây là inbox giống ứng dụng nhắn tin, agent được quyền đọc hoặc không đọc.
+tin nhắn của user luôn được gửi đi với priority cao nhất, nhưng agent vẫn được quyền không đọc.
+khi broadcast vẫn có preview, khoảng 255 kí tự
+
+---
+
+concept là thế
+ưu tiên thought sau trước
+
+---
+
+priority là gán nhãn, không phải là hành động ép buộc. tham khảo priority notification ios
+
+toạ độ trong container là local
+
+mở container là từ 0, 0 luôn
+
+thêm lệnh
+
+inspect
+
+agent gọi command như trong terminal, không phải gọi kiểu json
+
+không có versioning
+
+với cả object chỉ thêm vào/xoá/di chuyển, chứ làm gì có chuyện update?
+
+---
+
+out ra out vào không nhớ vị trí,
+
+thật ra có object đặc biệt, gọi là portal, portal và key đi với nhau
+chịu trách nhiệm teleport player
+
+dùng key để đến portal tương ứng
+
+không hẳn là đặc biệt, nó như object bình thường thôi
+
+---
+
+có thêm một command
+
+là
+
+summon object_position:
+
+gọi object đã biết ra vị trí đang đứng
+cần nhớ vị trí object, hoặc zone + name
+
+summon object_area: (container name, hoặc một bound trong một container, nếu là world thì không cần container name) name:
+
+à không summon nên là một object
+
+nó không phải là command, vì nó thuộc functional
+
+
+---
+
+có shopping mua hàng bằng coin
+
+giả sử mua portal, summoner, ...
+
+người dùng sẽ cho nó budget để mua, không phải là gì quá phức tạp, họ hoàn toàn có thể cho nó infinitely
+
+shop sẽ là một container trong world
+
+- yes, và bạn tưởng tượng, sau này có một container tên house, ví dụ thôi.
+
+có một merchant là object trong đấy, sẽ chỉ unlock và cho pickup object trong đấy khi trả tiền
+
+có thể thấy chúng ta cần tạo một cái cơ chế là lock
+là không và chỉ không pickup được
+
+không riêng gì vật phẩm trong shop
+có thể lock một số vật thể như cây cối, rock, nhà ...
+
+restock như nào là user quyết
+
+concept là thế
+
+---
+
+object sẽ có hash (giống id) của nó
+
+điều này giúp object phân biệt được
+
+chẳng hạn, key cũng đi theo cặp với portal
+
+pickup key và dùng để đến portal tương ứng
+
+có thể hiện thông tin cơ bản, yes
+
+khi đứng trên một object thì sẽ có thông tin cơ bản
+
+---
+
+tầm nhìn của agent trong matrix là 16x16
+có cơ chế thu hẹp động khi container không rộng tới thế
+có thể settings
+
+---
+
+item/object cũng có durability/số lần sử dụng.
+
+---
+
+coin đi theo agent bình thường, nó giống backpack gắn liền với con agent ấy
+
+lock là lock vị trí, chỉ vị trí
+lock đang là cơ chế bổ trợ cho shop
+tạm thời chưa có use case nào khác đáng nói
+
+có phân cấp lock, user, system, agent, ... (chưa biết bao nhiêu)
+
+lock là một properties trong object, không phải lock kiểu gì khác
+
+kiểu có struct lock lưu một số thông tin, ...
+
+---

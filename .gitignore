@@ -1,0 +1,13 @@
+.build/
+.swiftpm/
+DerivedData/
+*.xcresult
+*.profdata
+xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+.mikrokhoros/
+.venv/
+.env
+.env.*
+.DS_Store

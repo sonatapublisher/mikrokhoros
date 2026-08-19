@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Swift format
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Set up Swift 6.0
+        uses: swift-actions/setup-swift@65540b95f51493d65f5e59e97dcef9629ddf11bf # v2
+        with:
+          swift-version: "6.0"
+      - name: Verify formatting
+        run: swift format lint --strict --recursive --parallel Sources Tests Package.swift
+
+  test:
+    name: Swift 6.0 / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Set up Swift 6.0
+        uses: swift-actions/setup-swift@65540b95f51493d65f5e59e97dcef9629ddf11bf # v2
+        with:
+          swift-version: "6.0"
+      - name: Show toolchain
+        run: swift --version
+      - name: Run tests
+        run: swift test
+      - name: Build release
+        run: swift build -c release
+      - name: Smoke-test CLI product
+        run: swift run -c release khoros --help

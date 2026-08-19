@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "name": "Debug khoros",
+      "target": "khoros",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug khoros"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "name": "Release khoros",
+      "target": "khoros",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release khoros"
+    }
+  ]
+}

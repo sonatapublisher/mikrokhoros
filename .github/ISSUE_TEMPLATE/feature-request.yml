@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose a focused addition or product change.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Product problem
+      description: What concrete user or agent experience is missing?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe observable behavior, not only an implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: fit
+    attributes:
+      label: Fit with the current design
+      description: Which existing object, capability, CLI flow, or design invariant should this reuse?
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Authority and security impact
+      description: Note new data sources, output sinks, permissions, external access, or human approvals.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I read the canonical runtime design and searched existing issues.
+          required: true
+        - label: I distinguished current CLI scope from explicitly deferred future layers.
+          required: true

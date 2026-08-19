@@ -1,0 +1,31 @@
+{
+  "type": "lamp.object",
+  "name": "lamp",
+  "description": "A declarative lamp with private on/off state.",
+  "public": {
+    "color": "warm"
+  },
+  "state": {
+    "on": false
+  },
+  "durability": 100,
+  "functions": {
+    "status": {
+      "description": "Show whether the lamp is on.",
+      "parameters": [],
+      "action": {
+        "kind": "get",
+        "key": "on"
+      }
+    },
+    "switch": {
+      "description": "Toggle the lamp.",
+      "parameters": [],
+      "durability_cost": 1,
+      "action": {
+        "kind": "toggle",
+        "key": "on"
+      }
+    }
+  }
+}
