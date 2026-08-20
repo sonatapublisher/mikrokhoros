@@ -7,6 +7,8 @@ follow [Semantic Versioning](https://semver.org/) once numbered releases begin.
 
 ### Added
 
+- Classic project badges in the README, plus a note on the Ancient Greek roots of
+  the MikroKhoros name.
 - Dependency-free Swift 6 library and installable `khoros` CLI product for macOS,
   Linux, and Windows.
 - Infinite sparse worlds and containers, material occupancy, nested paths, ordered

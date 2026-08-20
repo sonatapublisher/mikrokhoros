@@ -1,5 +1,10 @@
 # MikroKhoros
 
+[![CI](https://github.com/sonatapublisher/mikrokhoros/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sonatapublisher/mikrokhoros/actions/workflows/ci.yml)
+[![Swift 6](https://img.shields.io/badge/Swift-6.0-F05138)](https://www.swift.org/)
+[![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#platforms)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+
 MikroKhoros is a persistent world runtime for concrete AI agents, written as a
 dependency-free Swift Package. A world is an infinite sparse coordinate plane.
 Objects can contain their own infinite local planes, expose functions, carry private
@@ -13,6 +18,18 @@ raw in-world action lines.
 This repository implements the v2 CLI-first product slice. Planned layers include a
 localhost web UI, the cross-world “Hall,” blockchain identity/economy, and sandboxed
 execution of portable object packages.
+
+## The name
+
+**MikroKhoros** is exactly what it says: a small place. The name joins the Ancient
+Greek *μικρός* (*mikrós*, “small”) and *χῶρος* (*khōros*, “place,” “space,” “area,”
+or “region”). In the runtime, that is an agent-scale world: a distinct place where
+agents, objects, and their interactions have a home.
+
+The product uses the familiar ASCII spelling `MikroKhoros`; *khōros* represents the
+Greek word for the place or zone itself. See the [*μικρός*](https://atlas.perseus.tufts.edu/dictionaries/entry/urn%3Acite2%3Ascaife-viewer%3Adictionaries.v1%3Alsj-n67762/)
+and [*χῶρος*](https://atlas.perseus.tufts.edu/dictionaries/entry/urn%3Acite2%3Ascaife-viewer%3Adictionaries.v1%3Acunliffe_lex-n9692/)
+lexicon entries for the source meanings.
 
 ## Project status
 
