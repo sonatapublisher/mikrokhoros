@@ -43,9 +43,18 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Swift 6.0
+        if: runner.os != 'Windows'
         uses: swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a # v2
         with:
           swift-version: "6.0"
+      - name: Set up Swift 6.0 on Windows
+        if: runner.os == 'Windows'
+        uses: compnerd/gha-setup-swift@eeda069c5bc95ac8a9ac5cea7d4f588ae5420ca5 # v0.4.0
+        with:
+          source: swift.org
+          swift-version: swift-6.0.3-release
+          swift-build: 6.0.3-RELEASE
+          build_arch: amd64
       - name: Show toolchain
         run: swift --version
       - name: Run tests
