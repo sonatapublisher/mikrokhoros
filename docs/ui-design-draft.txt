@@ -1,0 +1,816 @@
+mikrokhoros ui design specification
+
+Status: Approved visual direction
+Version: 1.1
+Scope: UI design specification. Runtime behavior remains governed by docs/design.md.
+
+
+1. COLOR SYSTEM
+
+The palette begins with the live Google Labs page background. On 2026-08-20,
+the computed background of the page's main .home-page surface was:
+
+  rgb(243, 239, 234) = #F3EFEA
+
+This exact warm off-white is the mikrokhoros app canvas. White is reserved for
+raised content surfaces so that the three-column structure remains visible without
+heavy borders or shadows.
+
+
+1.1 FOUNDATION COLORS
+
+Token                  Value     Intended use
+---------------------  ---------  ----------------------------------------------
+canvas                 #F3EFEA   Main app background; sampled from labs.google
+surface-subtle         #F8F5F1   Quiet inset regions and secondary sidebars
+surface-primary        #FFFFFF   Chat pane, inspectors, menus, floating controls
+surface-hover          #ECE7E1   Neutral hover state on the warm canvas
+surface-selected       #E4E8FF   Selected thread, agent, cell, or navigation item
+border-subtle          #DED8D1   Column dividers and low-emphasis outlines
+border-strong          #BEB6AE   Focused controls and important boundaries
+text-primary           #25221F   Titles, body text, values, and primary labels
+text-secondary         #625C55   Metadata, timestamps, descriptions, and hints
+text-tertiary          #857E76   Placeholder and disabled-supporting text only
+icon-muted             #756F68   Inactive monochrome icons
+
+
+1.2 INTERACTION AND FEEDBACK COLORS
+
+Token                  Value      Intended use
+---------------------  ---------  ----------------------------------------------
+accent                 #4057D6   Primary action, link, unread marker, active focus
+accent-soft            #E4E8FF   Selected backgrounds and quiet accent regions
+button-glass           transparent Canvas shows through unchanged at rest
+button-glass-text      #25221F   Dark label on the warm canvas
+button-glass-hover     #FFFFFF2E 18% white hover/focus wash
+button-glass-pressed   #25221F0F 6% dark pressed wash
+button-glass-edge      #25221F29 16% dark edge against the warm canvas
+button-rim-light       #FFFFFFD9 85% white upper-left rim highlight
+button-rim-shade       #25221F38 22% dark lower-right rim definition
+success                #13795B   Connected, complete, healthy, usable
+success-soft           #DBF1E8   Success badge background
+warning                #A84F00   Waiting, degraded, attention needed
+warning-soft           #FCE8D0   Warning badge background
+danger                 #C0362C   Failed, blocked, destructive, disconnected
+danger-soft            #F7DDD9   Error badge or destructive-hover background
+focus-ring             #4057D6   Keyboard focus ring; never color-only
+
+
+1.3 WORLD SYMBOL COLORS
+
+The world has no visible grid. Empty positions are quiet dots; objects and agents
+replace those dots with compact SVG symbols.
+
+Neutral token           Hex       Intended use
+----------------------  --------  -----------------------------------------------
+dot-empty               #D4CEC7   Small empty-cell dot
+symbol-selected-ring    #25221F   Ring around the selected world symbol
+symbol-unknown          #756F68   Unknown or intentionally undisclosed state
+symbol-contrast-dark    #151515   Dark glyph chosen over a bright agent color
+symbol-contrast-light   #FFFFFF   Light glyph chosen over a dark agent color
+
+Stable bright palette
+
+Index  Token            Hex       Contrast use
+-----  ---------------  --------  -----------------------------------------------
+0      bright-blue      #246BFE   White foreground
+1      bright-violet    #6C4DFF   White foreground
+2      bright-purple    #A33CFF   White foreground
+3      bright-magenta   #D82D86   White foreground
+4      bright-red       #E54D42   Dark foreground
+5      bright-orange    #E26400   Dark foreground
+6      bright-amber     #9A6A00   White foreground
+7      bright-lime      #5E7F00   White foreground
+8      bright-green     #009B65   Dark foreground
+9      bright-teal      #00969B   Dark foreground
+10     bright-cyan      #007DB3   White foreground
+11     bright-indigo    #4A57D1   White foreground
+
+Every palette color has at least 3:1 graphical contrast against canvas (#F3EFEA).
+For a black-or-white foreground, the listed choice reaches at least 4.5:1. The
+implementation still calculates both contrast ratios and chooses the better result;
+the table is an auditable expectation, not a shortcut around the calculation.
+
+
+1.4 MESSENGER COLORS
+
+Token                  Hex       Intended use
+---------------------  --------  -----------------------------------------------
+thread-unread          #4057D6   Unread count and unread dot
+message-own            #E4E8FF   Message sent by the selected agent
+message-other          #FFFFFF   Message received from a human or another agent
+message-system         #F8F5F1   Runtime/Athena informational message surface
+receipt-read           #13795B   Read-receipt confirmation
+priority-one           #625C55   "!" descriptive priority label
+priority-two           #A84F00   "!!" descriptive priority label
+priority-three         #C0362C   "!!!" descriptive priority label
+
+Priority color is descriptive metadata only. It must never visually imply that a
+message has authority over the user, runtime, or agent.
+
+
+1.5 CONTRAST GUARDRAILS
+
+- text-primary on canvas: approximately 13.8:1.
+- text-secondary on canvas: approximately 5.8:1.
+- accent on canvas: approximately 5.2:1.
+- success, warning, and danger on canvas: each above 4.5:1.
+- text-tertiary is not for body copy because it is intentionally lower contrast.
+- White text on accent, success, warning, and danger is above 5:1.
+- button-glass-text is approximately 13.8:1 over the canvas visible through the
+  transparent button and remains above 13:1 with button-glass-hover applied.
+  Transparent buttons may not overlay arbitrary imagery or colors without
+  rechecking the actual composited contrast.
+- Status, priority, selection, and world occupancy must never depend on color alone.
+
+
+2. CONFIRMED UI DIRECTION
+
+Platform
+
+- A local application served in the browser.
+
+Primary layout
+
+- The product uses a calm three-region desktop composition with restrained visual
+  density and efficient use of the viewport.
+- Left: a narrow collapsible sidebar with a world dropdown, a persistent compact
+  agent list, an add-agent control, and Settings anchored at the bottom.
+- Center: agent-oriented chat whose persistent Messenger threads are selected from
+  one compact dropdown in the header.
+- Right: the selected agent's world view.
+- The right world view has no grid or cell outlines. Empty cells are small dots;
+  occupied cells replace the dot with an SVG object or agent symbol.
+
+
+3. TYPOGRAPHY
+
+Display and interface type
+
+- Google Sans Flex from Google Fonts.
+- Set the font's rounded variable axis to 100%:
+
+  font-variation-settings: "ROND" 100;
+
+- The rounded axis remains at 100 for all Google Sans Flex weights and interface
+  sizes; do not reduce it for headings, buttons, navigation, or labels.
+- Use for the product name, screen titles, navigation labels, tabs, buttons, and
+  compact interface headings.
+
+Body and chat type
+
+- Native system UI stack, led by Apple's system font on Apple platforms.
+- Proposed CSS stack:
+
+  -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+
+- Use for message bodies, long descriptions, metadata-rich rows, form values, and
+  other reading-heavy content.
+
+Monospace
+
+- Reserve the system monospace stack for coordinates, IDs, object types, exact paths,
+  and raw actions. It is not the default chat font.
+
+
+4. BUTTON STYLE — TRANSPARENT GLASS ON THE WARM CANVAS
+
+Reference
+
+- Visual source: the live Project Genie footer calls to action at
+  https://labs.google/projectgenie, inspected on 2026-08-20.
+- Project Genie's transparent capsule construction supplies the directional rim,
+  soft illumination, and glass behavior.
+
+Core construction
+
+- Fully pill shaped: border-radius: 9999px.
+- Routine button height: 32...36px with 8px 14px internal padding.
+- Routine label size: 14px with weight 500.
+- Large primary call-to-action height: approximately 52px with 14px 24px internal
+  padding.
+- Label font: Google Sans Flex with "ROND" 100.
+- Base surface: fully transparent. Canvas (#F3EFEA) shows through unchanged.
+- Label color: button-glass-text (#25221F).
+- Hover and focus-visible surface: button-glass-hover, an 18% white translucent wash.
+- Pressed surface: button-glass-pressed, a 6% warm-dark translucent wash.
+- Transition: 100ms ease-in-out.
+- Outer wrapper uses the same pill radius, overflow clipping, and Project Genie's
+  20px backdrop blur.
+
+Adapted rim and light behavior
+
+- Keep Project Genie's directional glass construction, but change one side from a
+  white highlight to a warm-dark edge so the transparent pill remains legible on a
+  light background.
+- Add a restrained one-pixel inner highlight using approximately:
+
+  inset 0 0 1px 1px rgba(255, 255, 255, 0.35)
+
+- Blur the inner highlight by approximately 1px.
+- Build the outer rim from two directional one-pixel gradients:
+  - top-left highlight begins near rgba(255, 255, 255, 0.85) and fades to transparent;
+  - bottom-right definition begins near rgba(37, 34, 31, 0.22) and fades to
+    transparent.
+- The two highlights are masked around the pill edge. They are not a uniform border.
+- Add a quiet one-pixel dark edge, approximately rgba(37, 34, 31, 0.16), where the
+  directional rim alone does not provide continuous affordance.
+- Do not add a conventional drop shadow. Translucency, the light/shade rim pair, and
+  the inner highlight provide the boundary.
+
+Canvas treatment
+
+The warm canvas remains visible through every resting glass capsule. Dark text, a
+light upper-left rim, a warm-dark lower-right rim, and a small translucent wash during
+interaction keep the capsule legible on light surfaces.
+
+Button hierarchy
+
+- Primary: fully transparent pill, dark label, full light/shade rim pair, and
+  20px backdrop blur.
+- Secondary: fully transparent pill, dark label, quieter button-glass-edge, and a
+  reduced rim. Hover may use half the primary hover opacity.
+- Tertiary: dark label with no persistent container; hover reveals a quiet
+  translucent pill.
+- Compact icon controls: small rounded rectangles or short pills using the same
+  radius and highlight logic, not miniature large CTAs.
+- Destructive actions retain the same geometry but use danger semantics only after
+  the action is explicitly identified as destructive.
+- Disabled buttons reduce contrast and remove the glow; they must remain legible and
+  must not look selected or loading.
+
+Interaction states
+
+- Hover: use the hierarchy's translucent hover wash; keep the rim steady rather than
+  making it flash brighter.
+- Keyboard focus: retain the translucent hover wash and add a two-pixel accent ring
+  with a two-pixel canvas-colored offset.
+- Pressed: use button-glass-pressed, reduce highlight intensity, and move the
+  label/glass content down by no more than one pixel.
+- Loading: preserve the button width, replace or accompany the label with a progress
+  indicator, and expose the state in accessible text.
+- Never encode state only through glow or color.
+
+
+5. SVG WORLD SYMBOL SYSTEM
+
+Principles
+
+- Every object symbol is a real SVG with a shared 24 by 24 viewBox.
+- Do not use emoji, Unicode dingbats, raster sprites, icon fonts, CSS-drawn shapes,
+  or text characters as object symbols.
+- Silhouettes are abstract identity markers, not semantic claims about object type.
+- All paths use smooth curves or rounded joins. No sharp mitered corners.
+- Filled and outline variants come from the same SVG geometry.
+- SVGs use currentColor so state and contrast can change without replacing assets.
+- Standard outline treatment uses round caps, round joins, and a 1.75-unit stroke in
+  the 24-unit viewBox.
+- Keep the optical drawing inside approximately 2...22 on both axes so different
+  shapes appear equal in visual mass.
+
+Easy-to-reproduce shape set
+
+Only eight silhouettes are selected from the visual reference. They are distinct at
+small sizes, generic enough for arbitrary objects, and straightforward to reproduce
+as smooth SVG paths.
+
+Leading hash byte  Shape index  SVG silhouette
+-----------------  -----------  -----------------------------------------------
+00...1F            0            Rounded shield
+20...3F            1            Rounded square
+40...5F            2            Rounded triangle
+60...7F            3            Rounded pentagon
+80...9F            4            Rounded hexagon
+A0...BF            5            Four-point rounded sparkle
+C0...DF            6            Soft five-point star
+E0...FF            7            Four-lobe clover
+
+Shape selection
+
+- Decode the first byte of the canonical object hash as an integer from 0 to 255.
+- Divide by 32 using integer division to obtain shape index 0...7.
+- Do not rotate, mirror, or mutate the selected silhouette at render time.
+- The same object must keep the same SVG silhouette in the world, chat references,
+  inspectors, lists, and every later session.
+
+Color selection
+
+- Decode the second byte of the canonical object hash.
+- Choose palette index: secondByte modulo 12.
+- This is pseudo-random presentation derived from identity, not fresh runtime
+  randomness. The same object must keep the same color across renders and sessions.
+- Agent colors use the same audited palette but are derived from the agent's own
+  stable identity.
+- Shape and color use different hash bytes so their selections are not coupled.
+- If a future identifier cannot expose canonical bytes, the runtime must supply a
+  stable presentation seed. The UI must never use a process-random hash function.
+
+Contrast selection for a held object
+
+- When an agent holds an object, the agent's material marker keeps the agent color.
+- The held object's filled SVG is placed inside that marker.
+- The object's normal hash color is temporarily replaced with either
+  symbol-contrast-dark (#151515) or symbol-contrast-light (#FFFFFF).
+- Calculate WCAG relative-luminance contrast between the agent color and both
+  candidates. Use whichever ratio is higher.
+- The audited palette guarantees that the chosen candidate reaches at least 4.5:1.
+- The object's identity remains visible through its deterministic silhouette and
+  accessible label even while its normal color is suppressed.
+
+World state grammar
+
+State                    Visible treatment
+-----------------------  ------------------------------------------------------
+Empty cell               A quiet 3px dot in dot-empty; no cell boundary
+Placed object            14px filled SVG in the object's stable hash color
+Agent, empty hand        18px material marker in the agent's stable color
+Agent standing on object Object SVG as a 20px colored outline, with a smaller
+                         agent-material core centered inside it
+Agent holding object     20px agent-material marker containing the object's filled
+                         SVG in calculated black or white
+Selected cell            A separate outer ring; do not recolor the identity symbol
+Error or blocked target  Shape plus explicit error indicator; never red alone
+
+Within an agent-occupied cell, outline means standing on that object and fill means
+holding that object. These states are mutually exclusive under current occupancy
+rules: a loaded agent holding an object does not also stand on a placed object.
+
+Material treatment for agents
+
+- Empty cells and placed objects remain visually flat and precise.
+- Agents carry more visual material: a softly convex SVG surface, subtle internal
+  highlight, and low-contrast lower edge using the agent's assigned bright color.
+- Keep material restrained. Avoid large shadows, chrome effects, or skeuomorphic
+  texture.
+- The active agent is slightly larger or more optically weighted than other agents,
+  but size must not change the implied coordinate.
+- The agent color is identity. Do not replace it with a global selected color.
+
+Gridless spatial behavior
+
+- Do not draw grid lines, checkerboards, square tiles, or visible cell containers.
+- Dot and symbol centers communicate coordinate spacing.
+- Empty dots should recede until the user needs orientation; occupied positions and
+  the active agent remain dominant.
+- Preserve a transparent interaction target around each tiny dot so it remains
+  keyboard and pointer accessible without drawing a visible tile.
+- Coordinates, paths, and inspection details appear on focus/selection, not as a
+  permanent label on every position.
+
+
+6. DENSITY, DROPDOWNS, AND SHAPE LANGUAGE
+
+Design character
+
+- Combine the discipline, compactness, and respect for negative space associated
+  with Japanese information design with the friendly geometry and bright clarity of
+  modern Google product design.
+- Use bright color deliberately against the warm neutral canvas; avoid turning every
+  surface into a colored card.
+- Space is functional. Preserve room for the world and conversation instead of
+  spending it on decorative padding or nested containers.
+
+Corner rules
+
+- Every control and surface corner must be visibly smooth and rounded.
+- Compact controls: 8px radius.
+- Rows, inputs, menus, and small cards: 12px radius.
+- Primary panes and large floating surfaces: 16px radius.
+- Expressive buttons and chips: full pill radius, 9999px.
+- Icon SVG paths use curved geometry or round joins; a rounded container must not
+  hide a sharp icon inside it.
+
+Compact spacing scale
+
+Token       Value  Typical use
+----------  -----  ------------------------------------------------------------
+space-1     4px    Icon-label gap, micro inset, compact status separation
+space-2     6px    Dense row vertical inset
+space-3     8px    Standard control gap and compact horizontal inset
+space-4     12px   Pane edge, message separation, normal control horizontal inset
+space-5     16px   Major grouping only
+space-6     24px   Section break; use sparingly
+
+Density rules
+
+- Prefer 28...32px routine controls; reserve the 54...56px Project Genie scale for
+  primary calls to action.
+- Default pane padding is 8px; 12px is allowed only around reading-heavy message
+  content. Do not use 24px or 32px pane padding.
+- Avoid cards inside cards. Use alignment, type, and one divider before adding
+  another padded surface.
+- Keep icon-to-label gaps at 4px or 6px.
+- Use whitespace to establish rhythm, but do not create large inactive margins that
+  reduce the visible world or conversation.
+- Smooth corners and compact padding must coexist; rounded does not mean oversized.
+
+Dropdown control system
+
+- World selection, thread selection, view mode, zoom, profile, inspection mode, and
+  overflow actions are dropdowns. Agent access uses compact visible sidebar rows for
+  one-click selection and chat toggling.
+- The closed control is a content-sized transparent-glass capsule containing only
+  the selected value, an optional 14...16px SVG icon, and a small chevron.
+- A closed dropdown is 28...32px high. Use 6px vertical and 10px horizontal padding,
+  a 4...6px icon/label gap, and border-radius: 9999px.
+- Do not stretch a dropdown to fill a pane unless its selected value genuinely needs
+  the width. Controls should occupy only the space required by their content.
+- Opening a dropdown reveals one anchored floating menu. The menu uses
+  surface-primary, a 14...16px outer radius, a restrained directional glass rim,
+  6px outer padding, and no nested cards.
+- Menu rows are 28...32px high with 6px vertical and 8...10px horizontal padding.
+  Rows are capsule-shaped on hover and selection.
+- The current value is identified with a checkmark and non-color emphasis. Unread
+  counts or statuses remain compact trailing metadata.
+- Use short dividers only between meaningfully different command groups. Do not
+  divide every row.
+- Only one dropdown or inspection popover is open at a time. Escape and an outside
+  click close it; choosing a value closes it and returns focus to its trigger.
+- Menus may scroll internally after eight visible rows. The closed control never
+  grows to show more options.
+- Each selectable context has one control location. Closed dropdowns keep option
+  lists out of the layout until requested.
+- Send remains a direct capsule button because it executes the already-composed
+  message. Tiny spatial cells and objects are direct world targets, not dropdowns.
+
+Split dropdowns and bound quick actions
+
+- A dropdown may become a split capsule when one command deserves fast repetition.
+  The capsule remains one visual object with a subtle internal split, not two
+  separate pills.
+- The primary segment executes the currently bound quick action. The compact
+  chevron segment opens the full menu without running the action.
+- Before the user chooses an action, the primary segment runs a clearly documented,
+  safe default. After a menu action is chosen, that action becomes the bound quick
+  action for the same control.
+- Persist the most recently chosen action per control and per user. Do not share the
+  binding across unrelated controls, agents, or worlds when that could change its
+  meaning.
+- The primary segment must show the bound action's SVG icon and accessible label or
+  tooltip. The chevron segment keeps its own accessible name, such as "Open view
+  menu".
+- Rebinding occurs only after the user explicitly chooses a menu item. Merely
+  opening or dismissing a menu does not change the quick action.
+- If the previous action is unavailable in the current context, fall back to the
+  safe default and announce the change in accessible status text.
+- Initial split controls in Scene 01:
+  - View: default Recenter; later repeats the latest chosen view action.
+  - Add agent: default opens the standard blank-agent flow; later repeats the latest
+    chosen creation preset when that preset remains available.
+- Thread selection is not a split action. Its capsule always opens the thread menu
+  because selecting a thread is navigational rather than a repeated command.
+
+
+7. MESSENGER BEHAVIOR TO EXPRESS IN THE UI
+
+The center pane is not one global assistant chat. It presents the selected agent's
+carried messager.object as a persistent, agent-oriented messaging application.
+
+- Each agent has its own Messenger state.
+- Thread #1 exists by default; additional threads are persistent.
+- The runtime may create a persistent #athena thread for Athena notices.
+- Threads expose titles and unread counts.
+- Messages carry exact identity, sender name, optional sender agent identity,
+  timestamp, body, optional ! / !! / !!! priority, and read state.
+- Incoming messages begin unread; messages sent by the agent are already read.
+- Opening/reading an unread message creates a read receipt.
+- Receiving a notification does not itself mark the message read.
+- Priority is a label, not an instruction or authority signal.
+- The UI should preserve agent orientation: selecting an agent changes both the
+  center Messenger context and the right-hand world context together.
+
+
+8. COMPOSITION
+
+Left — Worlds
+
+- The selected world uses one compact capsule dropdown.
+- Agents remain visible as a dense list beneath the world selector.
+- A compact add-agent split capsule follows the list.
+- A sidebar-collapse capsule button sits at the top edge.
+- Settings fills the available sidebar width at the bottom and contains runtime and
+  workspace details.
+
+Center — Agent threads and chat
+
+- Thread navigation uses one dropdown in the chat header.
+- The closed thread selector shows the current thread only, for example
+  "#1 Messages" plus a chevron. Its menu contains persistent threads, unread counts,
+  Athena labels, and the create-thread action.
+- The current agent must stay visibly named in the pane header.
+- Unread, priority, sender identity, timestamp, and read receipt have quiet but
+  discoverable treatments.
+
+Right — Agent world
+
+- A gridless spatial field of small empty dots and SVG symbols represents the
+  selected agent's visible cells.
+- The selected agent remains the visual anchor through its stable bright identity
+  color and restrained material treatment.
+- Placed, standing-on, and held-object states follow the SVG state grammar above.
+- Cell inspection may open a lightweight details layer without replacing the world.
+- View, zoom, recenter, and inspection options use compact capsule dropdowns or
+  grouped capsule menus.
+- Panning, zoom, nested spaces, paths, and unknown/unseen cells remain open decisions.
+
+
+9. DESIGN CONTRACT
+
+- Local browser app.
+- Three persistent regions: compact sidebar, agent Messenger, selected agent
+  world.
+- Google Labs warm background: #F3EFEA.
+- Google Sans Flex with its "ROND" axis fixed at 100 for display/interface text.
+- Native Apple/system UI font for chat and body text.
+- Project Genie-inspired transparent pills: the warm canvas shows through, dark text
+  replaces the source's light text, and a light/shade rim defines the glass edge.
+- The world is gridless; empty cells are small dots.
+- Object identities use one of eight deterministic rounded SVG silhouettes selected
+  from equal leading-hash-byte ranges.
+- Object and agent colors come from a stable, hash-derived 12-color bright palette.
+- Standing-on objects use an outline; held objects use a filled glyph inside the
+  agent's material marker with calculated black-or-white contrast.
+- Agents have more material weight than empty cells and placed objects.
+- All UI geometry is smoothly rounded and compact, using a 4...24px spacing scale.
+- Chat is persistent-thread and agent oriented.
+- Worlds, Messenger threads, view settings, runtime detail, and inspection actions
+  use dropdowns. Agents remain a visible compact sidebar list.
+- The product name is rendered as lowercase `mikrokhoros` in every visible UI label.
+- Settings spans the sidebar content width at the bottom.
+- Selecting the active agent toggles the Messenger pane; selecting another agent
+  switches context and opens Messenger.
+- Selected split dropdowns bind their primary segment to the latest chosen action,
+  with a safe default before the first choice.
+- The Messenger composer contains a leading plus button, message input, and Send.
+  The plus menu contains attachment, world-reference, priority, and additional
+  actions.
+
+
+10. IMPLEMENTATION TARGET
+
+Scene 01 is the canonical desktop reference for implementation. Its palette,
+transparent button model, typography, Messenger behavior, and SVG world grammar apply
+throughout the local browser application.
+
+
+11. SCENE 01 — ACTIVE AGENT IN THE GENESIS WORLD
+
+Scene purpose
+
+The human can answer three questions without changing screens:
+
+1. Which world and agent am I looking at?
+2. What is happening in that agent's Messenger thread?
+3. What does that agent currently perceive and carry in the world?
+
+This scene presents the normal active state. Names and message copy define realistic
+visual density for the reference state.
+
+Viewport and overall composition
+
+- Target scene: local browser app at 1440 by 900 CSS pixels.
+- Full-page canvas: canvas (#F3EFEA).
+- No decorative outer card and no oversized global header.
+- Three full-height regions share the viewport without persistent hard divider
+  lines. Subtle surface color, a narrow edge fade, and restrained backdrop blur
+  separate them.
+- Left sidebar: 176px fixed starting width.
+- Center Messenger pane: 360px resizable starting width.
+- Right agent-world pane: flexible remainder, approximately 902px at this viewport.
+- Pane padding: 8px. Message reading content may use 12px. Dense controls use 6px
+  vertical and 10px horizontal insets.
+- Resizing preserves minimum widths of 152px left, 320px center, and 520px
+  right.
+
+Scene state
+
+- Selected world: Genesis.
+- Selected agent: Sol.
+- Sol's identity color: bright-blue (#246BFE).
+- Selected thread: #1, titled Messages.
+- Sol is in the world and has an attached profile.
+- Sol is holding one object, so the right pane uses the held-object visual grammar.
+- The agent is not standing on another object while holding.
+
+
+11.1 LEFT SIDEBAR — WORLD AND AGENT CONTEXT
+
+Surface
+
+- Use a translucent surface-subtle tint over canvas, approximately #F8F5F1CC, with
+  16...20px backdrop blur.
+- Separate the sidebar from Messenger with a soft 12px edge fade and a slight color
+  shift, not a full-height rule.
+- The sidebar is intentionally narrow and compact even though agents stay visible.
+
+Header
+
+- Lowercase `mikrokhoros` wordmark in Google Sans Flex with "ROND" 100.
+- A compact sidebar-collapse button sits at the trailing edge. It uses the familiar
+  two-pane SVG icon and the selected transparent-glass capsule construction.
+- World-level creation and management live in the world dropdown.
+- Header height is approximately 34px.
+
+World dropdown
+
+- Closed state: a content-sized transparent-glass capsule reading "Genesis" with a
+  globe SVG and chevron.
+- Open state: an anchored menu lists worlds in 28...32px rows. Genesis is checked;
+  create, import, and world settings appear in one separated command group.
+- The world list appears inside the anchored menu while the dropdown is open.
+
+Agent list
+
+- Agents are always visible beneath the world selector as one dense list.
+- Rows are 28px high with 4px vertical and 8px horizontal inset, 10px radius, a
+  14...16px identity SVG, agent name, and optional 3px status dot.
+- Sol, Builder, and Archivist are the illustrative rows. Sol is selected.
+- Avoid a capsule outline around every resting row. Use a translucent selected tint
+  and a short blurred color bloom derived from the agent color; hover reveals a
+  quiet rounded wash.
+- Selecting another agent updates both the center Messenger pane and right world pane
+  in one action.
+- Clicking the already-selected agent toggles the Messenger pane closed. Clicking it
+  again restores the pane and its last width and thread.
+- Clicking a different agent selects that agent and opens Messenger if it is hidden.
+- A compact add-agent split capsule follows the list. Its primary segment runs the
+  bound creation action; its chevron opens presets and agent-management commands.
+
+Sidebar footer
+
+- A full-width Settings capsule is pinned to the bottom. It fills the sidebar's
+  available content width, uses a 14px settings SVG, and places the label "Settings"
+  at the leading edge.
+- The capsule is 30...32px high with 10px horizontal inset and a full pill radius.
+  Its dropdown contains appearance, runtime health, workspace, diagnostics, and
+  preferences.
+
+
+11.2 CENTER PANE — SOL'S MESSENGER
+
+Surface
+
+- Use surface-primary (#FFFFFF) for sustained message readability.
+- The pane is structurally flat: compact header, message history, and composer.
+  Do not wrap each region in another card.
+
+Agent header
+
+- A compact agent-context capsule shows Sol's identity marker and name. Its dropdown
+  contains Active status, attached profile, and agent-level actions.
+- A separate compact thread capsule beside it shows "#1 Messages" and a chevron.
+- Header height is approximately 36px.
+- When Messenger is hidden, its surface collapses completely rather than leaving an
+  empty column. The world expands into the released width; the sidebar remains.
+
+Persistent thread dropdown
+
+- The closed selector displays only "#1 Messages", its unread count when nonzero,
+  and a chevron.
+- Opening the selector reveals these persistent threads:
+  - #1 Messages — selected, two unread before opening;
+  - #athena — no unread messages;
+  - #3 Workshop plan — one unread message.
+- Each thread is one compact menu row. The selected thread uses a checkmark and
+  softly rounded surface-selected hover/selection treatment.
+- Unread counts use thread-unread as small trailing metadata.
+- "New thread" is the final command in the same menu.
+
+Message history
+
+- Body text uses the Apple/system UI stack.
+- Message groups use 8px vertical separation; related consecutive messages use 4px.
+- Received message surfaces use message-other (#FFFFFF) only when a boundary is
+  needed; otherwise alignment and sender metadata provide structure.
+- Sol's sent messages use message-own (#E4E8FF) with a smooth 12px radius.
+- Timestamps and sender identities use text-secondary.
+- Priority labels remain small metadata chips and never resemble authority badges.
+
+Illustrative exchange
+
+- User, ordinary priority:
+  "Please inspect the object east of you."
+- Sol:
+  "I can see a container east of my position. I will inspect it next."
+- The read receipt appears quietly beside the message metadata after Sol reads the
+  incoming message.
+
+Composer
+
+- Anchored at the bottom without floating far above the pane edge.
+- One smoothly rounded input, approximately 40px high before multiline growth.
+- Horizontal padding is 8px; text uses the system UI font.
+- A single leading plus button opens the composer action menu. The plus is a 16px SVG
+  inside a compact 28px interaction target integrated into the input capsule.
+- While the menu is open, the plus changes to a close SVG and receives a quiet
+  translucent hover/active wash.
+- The action menu is anchored above the leading edge of the composer. It uses a
+  14...16px outer radius, 6px outer padding, dense 30px rows, 14...16px leading SVGs,
+  and short dividers between action groups.
+- The menu contains Attach file, Reference world object, Set priority, and More
+  actions. Set priority and More actions may open aligned submenus.
+- The closed composer contains the leading plus button, message text area, and Send.
+- Send is a transparent-glass pill. The white Messenger surface remains visible
+  through it; the rim uses a light upper-left edge and warm-dark lower-right edge.
+- The composer sends to Sol's currently selected persistent thread.
+
+
+11.3 RIGHT PANE — SOL'S WORLD
+
+Surface
+
+- Use the uncovered canvas (#F3EFEA).
+- Do not place the world inside another white card.
+- Do not draw a grid, tiles, cell borders, axes, or a checkerboard.
+
+World header
+
+- Left side: one compact context dropdown reading "Sol · Genesis"; its menu exposes
+  the structural path and recent agent/world contexts.
+- Right side: one split "View" capsule. Its primary segment executes the latest bound
+  view action, defaulting to Recenter; its chevron opens zoom, recenter, visibility,
+  and display options. Inspection actions appear only after a world target is
+  selected.
+- Coordinates and paths use the system monospace stack.
+- Header controls remain 28...32px high in one aligned row.
+
+Spatial field
+
+- Center a five-by-five visible neighborhood in the available space for this scene.
+- Positions are implied only by symbol centers with approximately 52px center-to-
+  center spacing at the default zoom.
+- Each empty visible cell is a 3px dot in dot-empty (#D4CEC7).
+- Empty dots have transparent 28px interaction targets for focus and pointer access.
+- No permanent coordinate labels appear beside empty dots.
+
+Active agent cell
+
+- Sol occupies the center position.
+- The marker is a 20px softly convex material surface in Sol's bright-blue identity
+  color (#246BFE).
+- Sol is holding an object. Its hash-selected filled SVG appears inside the material
+  marker.
+- White is chosen for the held-object glyph because it has better contrast against
+  Sol's bright-blue agent color.
+- A quiet outer selection ring indicates that Sol is the current focal cell without
+  replacing the agent color.
+
+Other visible positions
+
+- East of Sol: one placed container shown as a 14px filled hash-selected SVG in its
+  stable bright-green color.
+- Northwest of Sol: one placed object shown as a 14px filled hash-selected SVG in its
+  stable bright-magenta color.
+- Remaining visible positions are quiet empty dots.
+- No circle is used as an object silhouette; the only circular marks are the explicit
+  tiny empty-cell dots.
+
+Inspection behavior
+
+- Hover or keyboard focus reveals a small coordinate label near the position.
+- Selecting the eastern container adds a distinct outer ring and opens a compact
+  object dropdown/popover anchored beside the selected SVG or its header trigger.
+- The popover shows object name, SVG identity symbol, type, condition, and available
+  public actions without becoming a persistent lower-right card.
+- Popover padding is 6px; information rows are 28...32px high and separated by
+  alignment before dividers.
+- Closing the inspector restores the full field without changing the selected agent
+  or Messenger thread.
+
+
+11.4 VISUAL BALANCE
+
+- The right pane carries the most negative space because spatial orientation is its
+  job; the left and center panes remain information-dense.
+- Persistent full-height divider lines are removed. The sidebar uses a warm
+  translucent tint and blur; Messenger uses a slightly cooler translucent white;
+  their narrow edge fades provide sufficient separation from the warm world.
+- Bright colors appear primarily in agent identities, world symbols, unread markers,
+  and true semantic states.
+- Transparent buttons inherit the surface beneath them: warm canvas in the world
+  pane, white in Messenger, and warm-white in the world list.
+- Button rims adapt their light/shade contrast to the underlying surface instead of
+  introducing an opaque fill.
+- Smooth radii appear throughout, but compact padding keeps the scene disciplined.
+- There are no large decorative illustrations, gradients behind the entire app, or
+  padded card stacks.
+
+
+11.5 CORE INTERACTION SEQUENCE
+
+1. The human selects Sol from the persistent compact agent list under Genesis.
+2. The center pane changes to Sol's Messenger and preserves Sol's last selected
+   thread.
+3. The right pane recenters on Sol and displays Sol's visible neighborhood.
+4. The human opens the thread dropdown and chooses #1 to inspect the conversation.
+   Human UI viewing does not mark the
+   agent's message read and does not forge a receipt on Sol's behalf.
+5. When Sol reads the message through the normal Messenger behavior, the receipt
+   appears in the conversation metadata.
+6. The human selects the bright-green eastern container in the world.
+7. A compact object dropdown/popover appears while the conversation and world remain
+   visible.
+8. The human may send a follow-up message to Sol without losing the selected world
+   position.
+9. Clicking Sol's selected sidebar row collapses Messenger and expands the world;
+   clicking Sol again restores Messenger with #1 still selected.
