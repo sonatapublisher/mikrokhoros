@@ -1,0 +1,748 @@
+mikrokhoros web application design v2
+
+Status: canonical browser-interface brief
+Command: khoros web
+Platforms: macOS, Linux, and native Windows
+Canonical visual: assets/design-v2-template-view.png
+Runtime authority: ../README.md, design.md, security.md, and the exhaustive
+human command catalog
+Visual authority: ui-design-draft.txt plus the values fixed in this document
+
+
+1. PRODUCT MODEL
+
+mikrokhoros is one installed product containing:
+
+- a user-global world catalog;
+- user-global agent identities, profiles, and assignments;
+- user-global object packages;
+- user-global Inventory folders and source objects;
+- trusted user-global world-template definitions;
+- exact-world journals containing concrete agents, objects, deployments, template
+  applications, listeners, reports, restock rules, objectives, Library documents,
+  events, and model histories; and
+- user-global configuration and host adapter availability.
+
+The current world is a default command target. It is not a workspace, tenant,
+ownership boundary, or global filter.
+
+The browser is a graphical projection of the existing human command and management
+contracts. It uses typed application services and exact runtime identities. The
+exhaustive human command catalog and presentation-neutral results remain the single
+definition shared with the CLI.
+
+
+2. APPLICATION SHELL
+
+The desktop browser application has two persistent regions:
+
+1. a narrow left sidebar; and
+2. the active product view filling the remaining viewport.
+
+The sidebar has three independently laid-out zones:
+
+- fixed header: product name, sidebar toggle, and app-view dropdown;
+- scrollable middle: content belonging to the active app view; and
+- fixed footer: Settings.
+
+The visible product name is always lowercase mikrokhoros.
+
+The canonical 1536 by 1024 state uses an expanded 304px sidebar. It may narrow at
+compact desktop widths or collapse to a rail. The active view uses the remaining
+width. A warm translucent tint, a narrow edge fade, and restrained backdrop blur
+separate the two regions.
+
+
+2.1 APP-VIEW BUTTON AND DROPDOWN
+
+The first control below the product name is one 32px-high transparent-glass button:
+
+  [ selected app view  v ]
+
+It is a custom button and one anchored dropdown menu. Its closed state contains only
+the current view icon, current view label, and chevron. Opening it reveals these
+32px-high rows:
+
+1. World
+2. Agent Manager
+3. Inventory
+4. Packages
+5. Templates
+
+The current row has a checkmark and a restrained selected tint. The menu has 6px
+outer padding and one warm-white translucent surface. Selecting a row closes the
+menu and returns focus to the button.
+
+Settings remains the fixed footer control.
+
+
+2.2 CONTEXT CONTROL SLOT
+
+The row immediately below the app-view button belongs to the selected view.
+
+World
+  Shows the world picker.
+
+Agent Manager
+  Begins the user-global agent list.
+
+Inventory
+  Begins the user-global Inventory folder and source tree.
+
+Packages
+  Begins the user-global package list and filters.
+
+Templates
+  Begins the trusted template catalog.
+
+Settings
+  Opens from the fixed footer and has its own settings navigation.
+
+Only World owns a persistent world picker.
+
+Action forms choose an exact target world when the action requires one. That choice
+is scoped to the submitted action and has the same meaning as a temporary --world
+selection. It does not change the saved current-world pointer.
+
+
+3. VIEW AND SCOPE MAP
+
+
+3.1 WORLD
+
+Scope
+  One exact route-selected world plus the user-global world catalog.
+
+Sidebar header
+  App-view button: World.
+  World picker directly below it.
+
+World-picker behavior
+  The closed button shows the viewed world name, a globe icon, and a chevron.
+  The menu lists managed worlds by display name and exact ID.
+  A checkmark identifies the world displayed by this browser view.
+  A compact Current label identifies the saved current-world pointer.
+  Choosing a world changes the viewed route only.
+  Make current invokes world use explicitly.
+  Create, Import, Rename, Delete, Inspect, and Export are contextual commands in
+  meaningful menu groups.
+  World creation and import follow their implemented selection semantics.
+  Destructive world deletion identifies the complete world ID and uses the
+  canonical confirmation.
+
+Scrollable sidebar middle
+
+Agents
+  Show the focused agent first and the nearest active agents in the displayed
+  container until three rows are visible.
+  Distance is Manhattan distance from the focus position.
+  Equal distances sort by complete agent ID.
+  A typed application service supplies the ordered projection to the browser.
+  Other agents opens one custom dropdown containing the remaining registered agents.
+  Clicking an agent focuses it and makes the world follow that agent.
+  Manual panning suspends following until the human focuses an agent again.
+
+Objects
+  Inventory is the first 32px row and navigates to the global Inventory view.
+  Exact world-level pinned objects follow it directly in the same Objects section.
+  A pin stores only the complete world-object ID under the exact world ID.
+  Clicking a pin focuses the same object and opens the same generic interface as
+  direct selection in the world.
+
+World header
+  Left: the complete structural path of the currently shown container or focused
+  entity, using the CLI grammar and system monospace.
+  Right: Notifications immediately followed by View.
+  Header controls remain 32px high and the header stays tight to the top edge.
+
+Structural path
+  Example:
+  (0,0)@world/(0,1)["Workshop"#7a2f4d8c1b6e4a0f9c3d2e5b8a7f1c04]
+
+  Complete 32-character lowercase IDs remain visible and selectable.
+  Long paths reveal horizontally without inventing a browser-only breadcrumb.
+
+Notifications
+  The closed 32px control shows a bell, an unread indicator with accessible text,
+  and one line from the latest stored human object report in this world.
+  Overflow ends with an ellipsis.
+  Opening it reveals one anchored report popover scoped to the viewed world.
+  Rows retain exact report, object, Inventory, package, deployment, and world
+  lineage.
+  Selecting a report opens its generic human-management detail.
+
+View
+  One 32px transparent-glass button and one anchored custom dropdown.
+  The menu contains zoom, recenter, visibility, display, and context-valid
+  inspection actions.
+  Choosing an action runs it, closes the menu, and restores focus to View.
+
+World field
+  The world has no visible grid, tiles, cell borders, axes, or checkerboard.
+  Empty visible positions are quiet 3px dots.
+  Objects and agents replace the dot with their deterministic SVG symbol.
+  Agent identity, held-object, standing-object, and selection states use the
+  canonical symbol grammar from docs/ui-design-draft.txt.
+
+Cell hover
+  Hover or keyboard focus opens one small overlay above and to the right of the
+  pointer or focus target.
+  The overlay contains local grid coordinates and one short information line.
+  It uses 8px padding, system monospace for coordinates, system sans for the
+  description, and a warm-white translucent surface.
+
+Object selection
+  Selecting an exact object opens the generic object human interface.
+  The world remains visible and visually recedes behind the interface.
+
+World capability coverage
+  World catalog operations; exact world show/inspect/export; concrete object
+  list/show/interface/action/view/move; exact-world objectives and Library
+  operations; concrete listeners, reports, copies, restock state, and template
+  application state are reached from the world, an exact object, or a corresponding
+  contextual action.
+
+
+3.2 AGENT MANAGER
+
+Scope
+  The complete user-global agent identity catalog.
+
+Sidebar
+  App-view button: Agent Manager.
+  The next row begins the agent list.
+  Each row shows identity, name, assignment state, and active/inactive presence.
+  Filters may describe assignment or activity; they do not rescope the product.
+
+Agent detail
+  Complete agent ID.
+  Name and creation metadata.
+  Maximum actions per response.
+  Initial/current coin presentation.
+  Attached AI profile and adapter metadata.
+  Exact assigned-world link when assigned.
+  Active-world presence, structural path, hand, backpack, and genesis equipment
+  when concrete state exists.
+  Unread or retryable notification state.
+
+Actions
+  Create identity.
+  Configure maximum actions.
+  Add an unassigned agent to a chosen world and coordinate.
+  Remove an active agent from its assigned world surface.
+  Set, replace, or clear its AI profile.
+  Retry the latest eligible unread notification.
+  Submit a Messenger request with body, sender, thread, and priority.
+  Submit the built-in orientation request.
+  Grant finite or infinite coin.
+  Open the bounded in-world action controller for the assigned agent.
+
+The Add to world form contains an explicit World field. An assigned agent shows its
+fixed exact-world link; its commands follow that assignment and cannot be redirected
+by a free world switcher.
+
+Equipment is an exact read-only view of agent lifecycle state. It is not an equipment
+editor.
+
+Provider attachment can trigger immediate work when unread input exists. The UI
+shows committed profile state separately from the resulting provider task and world
+action results.
+
+
+3.3 INVENTORY
+
+Scope
+  User-global folders, source objects, source revisions, typed configuration,
+  credential handles, capability grants, package lineage, and management state.
+
+Sidebar
+  App-view button: Inventory.
+  The next row begins the permanent folder/source tree.
+  Folder expansion, source selection, and filters operate on the global catalog.
+  World-bound forks remain visible in this global tree and carry a Bound to world
+  badge with their complete exact-world identity available in detail.
+
+Source detail
+  Exact Inventory ID and revision.
+  Package ID, version, and content hash.
+  Folder and fork provenance.
+  Optional exact-world binding.
+  Readiness, missing fields, missing credential handles, and missing grants.
+  Redacted configuration.
+  Requested and granted capabilities.
+  Runtime-owned base management interface.
+  Package-declared fields, actions, views, and report definitions.
+
+Inventory actions
+  Create, list, show, move, and logically delete a source.
+  Create, list, show, rename, move, and delete folders.
+  Configure typed non-secret fields.
+  Set and clear write-only secret references.
+  List, grant, and revoke capabilities.
+  Run declared Inventory-scoped actions.
+  Render declared Inventory-scoped views.
+  Fork a source for one explicitly selected world.
+  Deploy a ready source to one explicitly selected world and destination.
+
+Exact-world subsections
+  Copies, listeners, reports, and restock rules are shown inside a clearly labelled
+  World activity section for one locally chosen exact world.
+  Every value in this section is labelled with and computed from that chosen exact
+  world.
+  Its world choice is local to the subsection or action.
+  A world-bound fork locks this choice to its bound world.
+
+Copy deletion preserves dry-run, recursive containment preview, exact affected IDs,
+canonical confirmation, and revalidation at commit.
+
+Report rows and results remain bounded untrusted structured data and render as text
+and typed values, never executable markup.
+
+
+3.4 PACKAGES
+
+Scope
+  The user-global package catalog and retained package artifacts.
+
+Sidebar
+  App-view button: Packages.
+  The next row begins Available and Installed package lists.
+
+Package detail
+  Package ID and semantic version.
+  Content hash, runtime kind, installation policy, package graph, requested
+  capabilities, management schema, agent/object function declarations, and retained
+  usage.
+
+Actions
+  Install from a bounded local file or validated URL.
+  Show available first-party packages.
+  List and inspect installed versions.
+  Remove one visible catalog entry using the canonical confirmation.
+
+Package administration is user-global. Package removal leaves retained sources and
+world copies intact.
+
+
+3.5 TEMPLATES
+
+Scope
+  Trusted host-registered template definitions.
+
+Sidebar
+  App-view button: Templates.
+  The next row begins the template catalog.
+  The host catalog contains default-khoros@1.0.0.
+
+Template definition
+  Template ID and version.
+  Exact package identities.
+  Canonical source roles.
+  All template-deployed objects as individual rows.
+  Parent space and requested local coordinate for every object.
+
+default-khoros objects
+
+  Athena                org.mikrokhoros.athena            world (0,-2)
+  Objective Board       org.mikrokhoros.objective-board   world (1,-2)
+  Objective Index       org.mikrokhoros.objective-board   Objective Board (0,0)
+  Library               org.mikrokhoros.library           world (-2,2)
+  Library Catalog       org.mikrokhoros.library           Library (0,0)
+  Warehouse             org.mikrokhoros.warehouse         world (2,2)
+  Warehouse Directory   org.mikrokhoros.warehouse         Warehouse (1,0)
+  Marketplace           org.mikrokhoros.marketplace       world (0,2)
+  Merchant              org.mikrokhoros.marketplace       Marketplace (0,0)
+
+Actions
+  Check status in world...
+  Apply to world...
+  Overflow menu: Create world from template... and contextual template help.
+
+Check status in world opens a compact target form with one required World field and
+then renders exact component health, requested/actual coordinates, and lineage for
+that world.
+
+Apply to world opens a compact target form containing:
+
+- World;
+- Auto-adapt;
+- Preview; and
+- Apply.
+
+Preview performs the canonical dry run. Apply uses the fingerprinted plan. The
+aggregate confirmation appears only when the plan adds packages, canonical Inventory
+sources, or folders. Healthy components retain their identities and only missing
+components are repaired.
+
+Create world from template collects the new world name and template creation
+options. The resulting new world follows the implemented current-world semantics.
+
+Template definitions are not authored, imported, renamed, or deleted in this
+interface.
+
+
+3.6 SETTINGS
+
+Scope
+  User-global product configuration, status, diagnostics, and host capabilities.
+
+Settings remains one fixed full-sidebar-width 32px capsule.
+
+Sections
+
+Product
+  Initialization state and khoros init.
+  Selected/current-world pointer.
+  Product status.
+
+Diagnostics
+  khoros doctor across global state and every managed world.
+  Interrupted transaction recovery state.
+  Configuration, catalog, package, Inventory, credential-handle, assignment,
+  lineage, listener, report, restock, and template validation.
+
+Agent defaults
+  Default maximum actions per response.
+
+Runtime limits
+  Action, response, provider, model context/history, broadcast, package, agent,
+  Inventory, world, report, retention, folder, invocation, mount, projection, and
+  user-file limits.
+
+AI adapters
+  Hosted providers, local servers, and local bridge definitions.
+  Availability is labelled Declared or Detected and means host presence only.
+
+Terminal
+  Guided-console limits and CLI output, color, and Unicode preferences.
+  These settings are labelled as terminal behavior.
+
+Advanced
+  Effective configuration values.
+  Configuration keys, path, reset, and validate.
+  Product-root and host diagnostics as read-only information.
+
+4. GENERIC OBJECT HUMAN INTERFACE
+
+Every package and concrete object uses one host-owned interface shell. The selected
+entity supplies structured management metadata and values.
+
+The shell contains:
+
+- deterministic SVG identity symbol;
+- display name;
+- exact object type;
+- complete Inventory or concrete world-object ID;
+- scope and revision;
+- package/source/deployment lineage;
+- host-owned base details;
+- generated fields;
+- declared management actions;
+- declared management views; and
+- declared report definitions and report results.
+
+Navigation is generated from available content:
+
+- Overview is always present.
+- Configuration appears when applicable fields exist.
+- Credentials appears when secret fields exist and exposes presence/usability only.
+- Capabilities appears when the package requests capabilities.
+- Each declared view is rendered from its ID, summary, scope, and typed result.
+- Each declared action is rendered from its ID, summary, scope, typed inputs,
+  mutating flag, required capabilities, and typed result.
+- Copies, listening, reports, deployment, and restock appear only when the
+  runtime-owned base interface makes them applicable.
+
+Inventory scope changes one source revision.
+World scope changes one exact concrete instance revision.
+Both scopes render the action only in the selected interface where it is valid.
+
+Supported management field controls:
+
+  text       bounded text field
+  integer    bounded integer field
+  decimal    bounded decimal field
+  boolean    switch
+  choice     custom dropdown
+  url        validated URL field
+  path       human-only path field
+  secret     write-only secure field
+
+Package content supplies bounded structured management data. The host supplies all
+controls, layout, icons, encoding, focus behavior, validation presentation,
+confirmation behavior, and exact service calls.
+
+The interface is a centered substantial surface with 32px outer corner radius. It
+uses spacing, alignment, tint, and blur rather than a straight internal divider.
+All interface buttons and selectable navigation rows are 32px high.
+
+
+5. VISUAL SYSTEM
+
+
+5.1 COLOR TOKENS
+
+canvas                 #F3EFEA
+surface-subtle         #F8F5F1
+surface-primary        #FFFFFF
+surface-hover          #ECE7E1
+surface-selected       #E4E8FF
+border-subtle          #DED8D1
+border-strong          #BEB6AE
+text-primary           #25221F
+text-secondary         #625C55
+text-tertiary          #857E76
+icon-muted             #756F68
+accent                 #4057D6
+accent-soft            #E4E8FF
+success                #13795B
+success-soft           #DBF1E8
+warning                #A84F00
+warning-soft           #FCE8D0
+danger                 #C0362C
+danger-soft            #F7DDD9
+dot-empty               #D4CEC7
+
+The warm canvas remains visible through resting transparent-glass controls.
+Semantic colors communicate real state and always have a non-color cue.
+
+
+5.2 TYPOGRAPHY
+
+Interface
+  Google Sans Flex.
+  font-variation-settings: "ROND" 100;
+  Use for wordmark, app chrome, headings, buttons, dropdowns, tabs, and labels.
+
+Body
+  Native system UI sans:
+  -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+  Use for descriptions, form values, reports, notification previews, and
+  reading-heavy content.
+
+Monospace
+  Native system monospace.
+  Use for structural paths, coordinates, complete IDs, package identifiers, object
+  types, CLI commands, raw actions, and structured data.
+
+
+5.3 GEOMETRY AND DENSITY
+
+- Every routine button, dropdown trigger, selectable sidebar row, tab, and compact
+  action is exactly 32px high.
+- Every routine icon-only control is 32px by 32px.
+- Capsule controls use the 48px corner-radius token.
+- Major overlays use a 32px radius.
+- Menus and compact floating surfaces use a 16px radius.
+- Standard pane padding is 8px.
+- Reading-heavy content may use 12px.
+- The spacing scale is 4, 6, 8, 12, 16, and 24px.
+- Icons are 14 to 16px with round caps and joins.
+- Controls grow horizontally for content and retain their 32px height.
+- Headers are content-tight with 6px vertical inset around 32px controls.
+- Nested cards are replaced by alignment, spacing, and subtle tonal regions.
+
+
+5.4 TRANSPARENT-GLASS CONTROL
+
+Rest
+  Transparent surface.
+  Dark label.
+  Light upper-left rim.
+  Warm-dark lower-right rim.
+  Restrained one-pixel inner highlight.
+  Approximately 20px backdrop blur.
+
+Hover
+  #FFFFFF2E translucent wash.
+
+Pressed
+  #25221F0F translucent wash and at most 1px content movement.
+
+Focus
+  Two-pixel accent ring with a two-pixel canvas-colored offset.
+
+Controls use no conventional drop shadow.
+
+
+5.5 DROPDOWNS AND POPOVERS
+
+- Custom rendered throughout.
+- One 32px trigger opens one anchored surface.
+- Surface-primary with 16px radius, directional rim, and 6px padding.
+- Rows are 32px high.
+- Current selection uses a checkmark plus selected tint.
+- Escape and outside click close the surface.
+- Selection closes the surface and restores focus.
+- Only one dropdown, report popover, or object inspection popover is open at a time.
+- Menus scroll internally after eight visible rows.
+- Dividers appear only between distinct command groups and remain short and soft.
+
+
+6. COMMAND-COVERAGE MAP
+
+Application and settings
+  help                         contextual help generated from CommandCatalog
+  init                         Settings > Product / first-run setup
+  status                       Settings > Product
+  doctor                       Settings > Diagnostics
+  config show/path/keys/get    Settings > Advanced
+  config set/reset/validate    Settings sections and Advanced
+  adapters                     Settings > AI adapters
+
+Agents
+  agent create/list/show/configure
+  agent add/remove
+  agent profile set/clear
+  agent retry
+  shell
+  message send/orient
+  coin grant
+  These belong to Agent Manager and exact-agent action forms.
+
+World facilities
+  objective post/list
+  library fetch/list
+  These are exact-world operations exposed through the corresponding exact facility
+  interface and runtime-owned management controls.
+
+Packages
+  inventory install
+  inventory package available/list/show/remove
+  These belong to Packages.
+
+Inventory sources
+  inventory create/list/show/interface/configure/delete
+  inventory move/fork
+  inventory secret set/clear
+  inventory capability list/grant/revoke
+  inventory action list/run
+  inventory view list/show
+  inventory deploy
+  These belong to Inventory and its generated object interfaces.
+
+Inventory folders
+  inventory folder create/list/show/rename/move/delete
+  These belong to the Inventory tree.
+
+Exact-world Inventory descendants
+  inventory copies list/show/delete
+  inventory listen enable/disable/list
+  inventory reports list/show/follow
+  inventory restock create/list/show/set/run/delete
+  These belong to one source's labelled World activity, an exact world object, or
+  the World notification/object interface.
+
+World catalog and templates
+  world list/use/create/rename/delete/import
+  These belong to the World picker and world-management actions.
+  world template list/show
+  These belong to Templates.
+  world template status/apply
+  These belong to template action forms with an explicit target world.
+
+Exact world and objects
+  world show/inspect/export
+  world object list/show/interface
+  world object action list/run
+  world object view list/show
+  world object move
+  These belong to World and the generic exact-object interface.
+
+
+7. WEB HOST AND PLATFORM CONTRACT
+
+khoros web starts the local browser host.
+
+The browser transport is a thin adapter around typed application services. Domain
+behavior stays independent of HTTP routing and frontend presentation.
+
+The host transport stays dependency-free and keeps a small platform-neutral Swift
+boundary. Native Windows, macOS, and Linux behavior is verified without binding
+product semantics to a server framework. Any future transport dependency requires
+license review, a concrete product need, Swift-version compatibility, and passing
+macOS/Linux/Windows CI before adoption.
+
+Host requirements:
+
+- bind loopback interfaces only by default;
+- validate Host and Origin;
+- use an explicit local-session authentication decision;
+- protect every mutation against CSRF;
+- serve versioned local static assets with restrictive content security policy;
+- encode all untrusted content as data;
+- keep credentials write-only and out of browser persistence;
+- resolve selectors to complete runtime IDs before authorization or mutation;
+- use the existing product lock and recoverable transactions;
+- stream report-follow data from the host without browser filesystem polling; and
+- preserve the same cancellation, validation, confirmation, error, and mutation
+  boundaries as the CLI.
+
+The Windows build is a native Swift executable and uses no Unix shell or Darwin-only
+runtime path.
+
+
+8. CANONICAL DESKTOP STATES
+
+
+8.1 WORLD STATE
+
+Sidebar:
+  mikrokhoros
+  World app-view button
+  Genesis world picker
+  Agents: Sol, Builder, Archivist, Other agents
+  Objects: Inventory, then exact pinned objects
+  Settings fixed at the bottom
+
+Main:
+  complete CLI structural path
+  gridless dot-and-symbol world
+  one-line Notifications control immediately left of View
+  cursor-adjacent coordinate/information hover layer
+  generic object interface when an object is selected
+
+
+8.2 TEMPLATE CATALOG STATE
+
+Sidebar:
+  mikrokhoros
+  Templates app-view button
+  trusted template list beginning immediately below
+  Settings fixed at the bottom
+
+Main:
+  default-khoros
+  default-khoros@1.0.0 in system monospace
+  all nine object definitions with package and placement
+  Check status in world...
+  Apply to world...
+  compact overflow menu containing Create world from template...
+
+Opening the app-view button shows one compact menu containing World, Agent Manager,
+Inventory, Packages, and Templates. The template catalog remains user-global.
+
+
+9. ACCEPTANCE CRITERIA
+
+- App-view selection is one button and one dropdown.
+- World selection appears as persistent chrome only in World.
+- User-global catalogs remain complete and unfiltered by a hidden world context.
+- Exact-world action forms make their target world explicit.
+- Templates renders trusted definitions and chooses a world inside status/apply.
+- Agents follows exact assignment semantics.
+- Inventory separates global source state from labelled one-world activity.
+- Every object-specific form, action, and view comes from the typed management
+  contract plus the runtime-owned base interface.
+- Every routine control is 32px high.
+- Capsules use the 48px radius token.
+- Major overlays use a 32px radius.
+- Typography, palette, transparent-glass rims, blur separation, gridless world,
+  deterministic SVG identity, and system-monospace raw data match the canonical
+  visual contract.
+- Notifications precedes View and provides a one-line ellipsized report preview.
+- Complete paths and IDs remain selectable and authoritative.
+- Every implemented human command has one browser placement.
+- khoros web remains native on macOS, Linux, and Windows.
+- Browser actions preserve existing security, locking, transaction, confirmation,
+  capability, credential, and error semantics.

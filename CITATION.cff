@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: If you use MikroKhoros in research, please cite the software using this metadata.
+title: MikroKhoros
+type: software
+authors:
+  - name: MikroKhoros contributors
+license: Apache-2.0
+abstract: A persistent, object-capability world runtime for concrete AI agents.
+keywords:
+  - AI agents
+  - multi-agent systems
+  - Swift
+  - object capabilities

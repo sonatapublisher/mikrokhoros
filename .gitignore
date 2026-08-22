@@ -1,0 +1,35 @@
+# SwiftPM and Xcode build products
+.build/
+.swiftpm/
+DerivedData/
+*.dSYM/
+*.dSYM.zip
+*.xcresult
+*.profdata
+xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Local MikroKhoros state and repository tooling
+.mikrokhoros/
+.gitnexus/
+
+# Python tooling used by the terminal smoke test
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local configuration and credentials
+.env
+.env.*
+
+# Editor and operating-system metadata
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini

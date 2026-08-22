@@ -1,0 +1,141 @@
+{
+  "schema": 1,
+  "id": "org.mikrokhoros.example.lamp",
+  "version": "1.0.0",
+  "display_name": "Connected Lamp",
+  "runtime": "declarative",
+  "requested_capabilities": [
+    "network"
+  ],
+  "installation": {
+    "on_install": "create_inventory_object",
+    "additional_inventory_objects": "allow"
+  },
+  "object": {
+    "type": "lamp.object",
+    "name": "lamp",
+    "summary": "A configurable lamp that can publish human-facing status reports.",
+    "public": {
+      "color": "warm"
+    },
+    "state": {
+      "on": false,
+      "checks": 0
+    },
+    "durability": 100,
+    "container": false,
+    "invocation_access": "held",
+    "functions": {
+      "status": {
+        "summary": "Show whether the lamp is on.",
+        "parameters": [],
+        "durability_cost": 0,
+        "action": {
+          "kind": "get",
+          "key": "on"
+        }
+      },
+      "switch": {
+        "summary": "Toggle the lamp.",
+        "parameters": [],
+        "durability_cost": 1,
+        "action": {
+          "kind": "toggle",
+          "key": "on"
+        }
+      },
+      "publish": {
+        "summary": "Publish a status report when a human listener is enabled.",
+        "parameters": [],
+        "durability_cost": 0,
+        "action": {
+          "kind": "report",
+          "key": "status",
+          "value": {
+            "source": "lamp"
+          }
+        }
+      }
+    }
+  },
+  "management": {
+    "fields": [
+      {
+        "id": "room",
+        "label": "Room",
+        "summary": "Room label copied into future world instances.",
+        "kind": "text",
+        "required": true,
+        "deployable": true,
+        "default": "workshop",
+        "choices": [],
+        "minimum_characters": 1,
+        "maximum_characters": 128
+      },
+      {
+        "id": "service_url",
+        "label": "Service URL",
+        "summary": "HTTPS service used by a future network runtime action.",
+        "kind": "url",
+        "required": true,
+        "deployable": true,
+        "default": "https://example.com/lamps",
+        "choices": [],
+        "maximum_characters": 2048
+      },
+      {
+        "id": "api_key",
+        "label": "API key",
+        "summary": "Write-only credential for the configured service.",
+        "kind": "secret",
+        "required": true,
+        "deployable": true,
+        "choices": [],
+        "minimum_characters": 1,
+        "maximum_characters": 4096
+      }
+    ],
+    "actions": [
+      {
+        "id": "record_check",
+        "summary": "Increment the source object's management check counter.",
+        "parameters": [
+          "amount"
+        ],
+        "input_types": {
+          "amount": "decimal"
+        },
+        "mutating": true,
+        "required_capabilities": [
+          "network"
+        ],
+        "action": {
+          "kind": "increment",
+          "key": "checks",
+          "argument": 0
+        }
+      }
+    ],
+    "views": [
+      {
+        "id": "dashboard",
+        "summary": "Show management state or one selected world copy's state.",
+        "source": "state",
+        "world_object_scope": true,
+        "result": {}
+      }
+    ],
+    "reports": [
+      {
+        "type": "status",
+        "summary": "A lamp status notification for the human listener.",
+        "maximum_title_characters": 128,
+        "maximum_body_characters": 2048,
+        "maximum_payload_bytes": 4096,
+        "payload": {
+          "source": "text"
+        }
+      }
+    ]
+  }
+}

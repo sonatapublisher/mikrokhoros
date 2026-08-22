@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Swift format
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Swift 6.1
+        uses: swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a # v2
+        with:
+          swift-version: "6.1.0"
+      - name: Verify formatting and license headers
+        run: make preflight
+      - name: Check shell scripts
+        run: shellcheck scripts/*.sh
+
+  test:
+    name: Swift 6.1 / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Swift 6.1
+        if: runner.os != 'Windows'
+        uses: swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a # v2
+        with:
+          swift-version: "6.1.0"
+      - name: Set up Swift 6.1 on Windows
+        if: runner.os == 'Windows'
+        uses: compnerd/gha-setup-swift@eeda069c5bc95ac8a9ac5cea7d4f588ae5420ca5 # v0.4.0
+        with:
+          source: swift.org
+          swift-version: swift-6.1-release
+          swift-build: 6.1-RELEASE
+          build_arch: amd64
+          # Apply Swift's compatibility maps for the Windows SDK on this runner.
+          update-sdk-modules: true
+      - name: Show toolchain
+        run: swift --version
+      - name: Run tests
+        run: swift test -Xswiftc -warnings-as-errors
+      - name: Build release
+        run: swift build -c release -Xswiftc -warnings-as-errors
+      - name: Exercise interactive terminal
+        if: runner.os != 'Windows'
+        shell: bash
+        run: KHOROS_BIN="$(swift build -c release --show-bin-path)/khoros" ./scripts/test-terminal.sh
+      - name: Smoke-test CLI product
+        run: swift run -c release khoros --help
