@@ -2824,6 +2824,14 @@ final class WebBackendTests: XCTestCase {
     let firstURL = try XCTUnwrap(nextLaunch)
     let port = try XCTUnwrap(firstURL.port)
 
+    let probeGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+    let classification = await WebListenerProbe.classify(port: port, group: probeGroup)
+    try? await probeGroup.shutdownGracefully()
+    XCTAssertEqual(
+      classification,
+      .mikroKhoros
+    )
+
     let second = KhorosWebServer()
     let secondRequest = WebLaunchRequest(
       canonicalRoot: URL(

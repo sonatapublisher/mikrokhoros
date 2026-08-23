@@ -16,7 +16,11 @@ jobs:
   format:
     name: Swift format
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # `make preflight` also builds the release CLI to verify generated command
+    # reference output. A cold SwiftNIO build can legitimately outlast ten
+    # minutes on an Ubuntu runner, so give this complete validation lane the
+    # same budget as the platform test lanes.
+    timeout-minutes: 20
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

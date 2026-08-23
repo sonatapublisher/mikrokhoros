@@ -19,10 +19,6 @@ import NIOCore
 import NIOHTTP1
 import NIOPosix
 
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
-
 // This guard runs before the route is classified.  It must retain the
 // web capability gateway's documented 64 KiB budget; the World command route
 // applies its stricter 8 KiB limit only after classification in `asyncRoute`.
@@ -1891,20 +1887,6 @@ enum KhorosWebServerLifecycleTestEvent: Sendable {
   case beforeShutdownCompletion
 }
 
-private final class WebListenerProbeDelegate: NSObject, URLSessionTaskDelegate,
-  @unchecked Sendable
-{
-  func urlSession(
-    _ session: URLSession,
-    task: URLSessionTask,
-    willPerformHTTPRedirection response: HTTPURLResponse,
-    newRequest request: URLRequest,
-    completionHandler: @escaping (URLRequest?) -> Void
-  ) {
-    completionHandler(nil)
-  }
-}
-
 enum WebListenerProbe {
   enum Result: Equatable, Sendable {
     case mikroKhoros
@@ -1913,52 +1895,30 @@ enum WebListenerProbe {
   }
 
   static func classify(port: Int, group: EventLoopGroup) async -> Result {
-    guard (1...65_535).contains(port),
-      let url = URL(string: "http://127.0.0.1:\(port)/")
-    else { return .unreachable }
+    guard (1...65_535).contains(port) else { return .unreachable }
 
-    // Reachability is established separately from the HTTP marker so a
-    // permission or resource bind failure is never presented as another service.
+    let completion = WebListenerProbeCompletion()
     let probeChannel: Channel
     do {
       probeChannel = try await ClientBootstrap(group: group)
+        .channelInitializer { channel in
+          channel.pipeline.addHTTPClientHandlers().flatMap {
+            channel.pipeline.addHandler(
+              WebListenerProbeResponseHandler(port: port, completion: completion)
+            )
+          }
+        }
         .connect(host: "127.0.0.1", port: port)
         .get()
     } catch {
       return .unreachable
     }
     defer { probeChannel.close(promise: nil) }
-
-    let configuration = URLSessionConfiguration.ephemeral
-    configuration.httpCookieStorage = nil
-    configuration.urlCredentialStorage = nil
-    configuration.urlCache = nil
-    configuration.httpShouldSetCookies = false
-    configuration.httpMaximumConnectionsPerHost = 1
-    configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-    configuration.timeoutIntervalForRequest = 0.75
-    configuration.timeoutIntervalForResource = 0.75
-    let delegate = WebListenerProbeDelegate()
-    let session = URLSession(
-      configuration: configuration,
-      delegate: delegate,
-      delegateQueue: nil
-    )
-    defer { session.invalidateAndCancel() }
-
-    var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
-    request.httpMethod = "HEAD"
-    request.setValue("no-store", forHTTPHeaderField: "cache-control")
-    do {
-      let (_, response) = try await session.data(for: request)
-      guard let response = response as? HTTPURLResponse else { return .other }
-      return response.value(forHTTPHeaderField: webListenerMarkerHeader)
-        == webListenerMarkerValue
-        ? .mikroKhoros
-        : .other
-    } catch {
-      return .other
+    let timeout = probeChannel.eventLoop.scheduleTask(in: .milliseconds(750)) {
+      completion.finish(.other)
     }
+    defer { timeout.cancel() }
+    return await completion.wait()
   }
 
   static func servingError(for port: Int, result: Result) -> WebServingError {
@@ -1970,6 +1930,83 @@ enum WebListenerProbe {
     case .unreachable:
       .bindFailed
     }
+  }
+}
+
+/// Finishes the listener probe exactly once. The channel callback and its
+/// deadline can run on different event loops, so this narrow synchronization
+/// point keeps the externally observable classification deterministic.
+private final class WebListenerProbeCompletion: @unchecked Sendable {
+  private let lock = NSLock()
+  private var result: WebListenerProbe.Result?
+  private var waiter: CheckedContinuation<WebListenerProbe.Result, Never>?
+
+  func wait() async -> WebListenerProbe.Result {
+    await withCheckedContinuation { continuation in
+      let immediate = lock.withLock { () -> WebListenerProbe.Result? in
+        if let result { return result }
+        waiter = continuation
+        return nil
+      }
+      if let immediate { continuation.resume(returning: immediate) }
+    }
+  }
+
+  func finish(_ result: WebListenerProbe.Result) {
+    let waiter = lock.withLock { () -> CheckedContinuation<WebListenerProbe.Result, Never>? in
+      guard self.result == nil else { return nil }
+      self.result = result
+      let waiter = waiter
+      self.waiter = nil
+      return waiter
+    }
+    waiter?.resume(returning: result)
+  }
+}
+
+/// Performs a single unredirected HTTP request after TCP connect. This uses the
+/// same HTTP parser and loopback behavior as the server rather than relying on
+/// platform URL loading behavior during a bind-collision diagnostic.
+private final class WebListenerProbeResponseHandler: ChannelInboundHandler, @unchecked Sendable {
+  typealias InboundIn = HTTPClientResponsePart
+  typealias OutboundOut = HTTPClientRequestPart
+
+  private let port: Int
+  private let completion: WebListenerProbeCompletion
+
+  init(port: Int, completion: WebListenerProbeCompletion) {
+    self.port = port
+    self.completion = completion
+  }
+
+  func channelActive(context: ChannelHandlerContext) {
+    let headers = HTTPHeaders([
+      ("host", "127.0.0.1:\(port)"),
+      ("cache-control", "no-store"),
+    ])
+    let head = HTTPRequestHead(version: .http1_1, method: .GET, uri: "/", headers: headers)
+    context.write(Self.wrapOutboundOut(.head(head)), promise: nil)
+    context.writeAndFlush(Self.wrapOutboundOut(.end(nil)), promise: nil)
+  }
+
+  func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+    guard case .head(let head) = Self.unwrapInboundIn(data) else { return }
+    let result: WebListenerProbe.Result =
+      head.headers.first(name: webListenerMarkerHeader) == webListenerMarkerValue
+      ? .mikroKhoros
+      : .other
+    completion.finish(result)
+    context.close(promise: nil)
+  }
+
+  func errorCaught(context: ChannelHandlerContext, error: Error) {
+    completion.finish(.other)
+    context.close(promise: nil)
+  }
+
+  func channelInactive(context: ChannelHandlerContext) {
+    completion.finish(.other)
+    context.fireChannelInactive()
   }
 }
 

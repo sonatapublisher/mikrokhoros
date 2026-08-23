@@ -21,10 +21,6 @@ import XCTest
 @testable import MikroKhoros
 @testable import MikroKhorosCLIKit
 
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
-
 final class WebCapabilityGatewayTests: XCTestCase {
   func testRegistryExactlyCoversTheLiveCatalogAcrossTheFiveWebViews() throws {
     let descriptors = CLIWebCapabilityRegistry.descriptors()
@@ -906,54 +902,74 @@ final class WebCapabilityGatewayTests: XCTestCase {
     )
   }
 
-  func testBrowserPackageDownloadRejectsPlaintextLoopbackRedirectBeforeRequest() async throws {
+  func testBrowserPackageRedirectPolicyRejectsPlaintextLoopbackDestination() throws {
     let source = try XCTUnwrap(URL(string: "https://packages.example.invalid/object.json"))
     let redirect = try XCTUnwrap(URL(string: "http://127.0.0.1:8181/object.json"))
-    ControlledPackageRedirectURLProtocol.recorder.configure(
-      source: source,
-      redirect: redirect,
-      body: Data("package".utf8)
-    )
-    let configuration = URLSessionConfiguration.ephemeral
-    configuration.protocolClasses = [ControlledPackageRedirectURLProtocol.self]
 
-    await assertThrowsErrorAsync(
-      try await ObjectPackageDownloader.download(
+    XCTAssertNoThrow(try ObjectPackageAcquisitionPolicy.browser.validate(source))
+    XCTAssertThrowsError(try ObjectPackageAcquisitionPolicy.browser.validate(redirect)) { error in
+      XCTAssertEqual((error as? MikroKhorosError)?.issue.code, "object_package.url_rejected")
+    }
+  }
+
+  func testBrowserPackageRedirectPolicyAcceptsHTTPSDestination() throws {
+    let source = try XCTUnwrap(URL(string: "https://packages.example.invalid/object.json"))
+    let redirect = try XCTUnwrap(URL(string: "https://cdn.example.invalid/object.json"))
+
+    XCTAssertNoThrow(try ObjectPackageAcquisitionPolicy.browser.validate(source))
+    XCTAssertNoThrow(try ObjectPackageAcquisitionPolicy.browser.validate(redirect))
+  }
+
+  #if canImport(Darwin)
+    func testBrowserPackageDownloadRejectsPlaintextLoopbackRedirectBeforeRequest() async throws {
+      let source = try XCTUnwrap(URL(string: "https://packages.example.invalid/object.json"))
+      let redirect = try XCTUnwrap(URL(string: "http://127.0.0.1:8181/object.json"))
+      ControlledPackageRedirectURLProtocol.recorder.configure(
+        source: source,
+        redirect: redirect,
+        body: Data("package".utf8)
+      )
+      let configuration = URLSessionConfiguration.ephemeral
+      configuration.protocolClasses = [ControlledPackageRedirectURLProtocol.self]
+
+      await assertThrowsErrorAsync(
+        try await ObjectPackageDownloader.download(
+          source,
+          maximumBytes: 1_024,
+          acquisitionPolicy: .browser,
+          sessionConfiguration: configuration
+        )
+      ) { error in
+        XCTAssertEqual((error as? MikroKhorosError)?.issue.code, "object_package.url_rejected")
+      }
+
+      XCTAssertEqual(ControlledPackageRedirectURLProtocol.recorder.requestedURLs(), [source])
+    }
+
+    func testBrowserPackageDownloadAcceptsHTTPSRedirectChain() async throws {
+      let source = try XCTUnwrap(URL(string: "https://packages.example.invalid/object.json"))
+      let redirect = try XCTUnwrap(URL(string: "https://cdn.example.invalid/object.json"))
+      let body = Data("package".utf8)
+      ControlledPackageRedirectURLProtocol.recorder.configure(
+        source: source,
+        redirect: redirect,
+        body: body
+      )
+      let configuration = URLSessionConfiguration.ephemeral
+      configuration.protocolClasses = [ControlledPackageRedirectURLProtocol.self]
+
+      let downloaded = try await ObjectPackageDownloader.download(
         source,
         maximumBytes: 1_024,
         acquisitionPolicy: .browser,
         sessionConfiguration: configuration
       )
-    ) { error in
-      XCTAssertEqual((error as? MikroKhorosError)?.issue.code, "object_package.url_rejected")
+
+      XCTAssertEqual(downloaded, body)
+      XCTAssertEqual(
+        ControlledPackageRedirectURLProtocol.recorder.requestedURLs(), [source, redirect])
     }
-
-    XCTAssertEqual(ControlledPackageRedirectURLProtocol.recorder.requestedURLs(), [source])
-  }
-
-  func testBrowserPackageDownloadAcceptsHTTPSRedirectChain() async throws {
-    let source = try XCTUnwrap(URL(string: "https://packages.example.invalid/object.json"))
-    let redirect = try XCTUnwrap(URL(string: "https://cdn.example.invalid/object.json"))
-    let body = Data("package".utf8)
-    ControlledPackageRedirectURLProtocol.recorder.configure(
-      source: source,
-      redirect: redirect,
-      body: body
-    )
-    let configuration = URLSessionConfiguration.ephemeral
-    configuration.protocolClasses = [ControlledPackageRedirectURLProtocol.self]
-
-    let downloaded = try await ObjectPackageDownloader.download(
-      source,
-      maximumBytes: 1_024,
-      acquisitionPolicy: .browser,
-      sessionConfiguration: configuration
-    )
-
-    XCTAssertEqual(downloaded, body)
-    XCTAssertEqual(
-      ControlledPackageRedirectURLProtocol.recorder.requestedURLs(), [source, redirect])
-  }
+  #endif
 
   func testCommandLinePackagePolicyRetainsLoopbackHTTPDevelopmentSupport() throws {
     let loopback = try XCTUnwrap(URL(string: "http://127.0.0.1:8181/object.json"))
@@ -1640,92 +1656,94 @@ private actor FirstExecutionGate {
   }
 }
 
-private final class ControlledPackageRedirectRecorder: @unchecked Sendable {
-  private let lock = NSLock()
-  private var source: URL?
-  private var redirect: URL?
-  private var body = Data()
-  private var requests = [URL]()
+#if canImport(Darwin)
+  private final class ControlledPackageRedirectRecorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var source: URL?
+    private var redirect: URL?
+    private var body = Data()
+    private var requests = [URL]()
 
-  func configure(source: URL, redirect: URL, body: Data) {
-    lock.lock()
-    self.source = source
-    self.redirect = redirect
-    self.body = body
-    requests = []
-    lock.unlock()
-  }
-
-  func shouldHandle(_ url: URL) -> Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    return url == source || url == redirect
-  }
-
-  func record(_ url: URL) -> (redirect: URL?, body: Data) {
-    lock.lock()
-    defer { lock.unlock() }
-    requests.append(url)
-    return (url == source ? redirect : nil, body)
-  }
-
-  func requestedURLs() -> [URL] {
-    lock.lock()
-    defer { lock.unlock() }
-    return requests
-  }
-}
-
-private final class ControlledPackageRedirectURLProtocol: URLProtocol, @unchecked Sendable {
-  static let recorder = ControlledPackageRedirectRecorder()
-
-  override class func canInit(with request: URLRequest) -> Bool {
-    guard let url = request.url else { return false }
-    return recorder.shouldHandle(url)
-  }
-
-  override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
-
-  override func startLoading() {
-    guard let url = request.url else {
-      client?.urlProtocol(self, didFailWithError: URLError(.badURL))
-      return
+    func configure(source: URL, redirect: URL, body: Data) {
+      lock.lock()
+      self.source = source
+      self.redirect = redirect
+      self.body = body
+      requests = []
+      lock.unlock()
     }
-    let event = Self.recorder.record(url)
-    if let redirect = event.redirect {
+
+    func shouldHandle(_ url: URL) -> Bool {
+      lock.lock()
+      defer { lock.unlock() }
+      return url == source || url == redirect
+    }
+
+    func record(_ url: URL) -> (redirect: URL?, body: Data) {
+      lock.lock()
+      defer { lock.unlock() }
+      requests.append(url)
+      return (url == source ? redirect : nil, body)
+    }
+
+    func requestedURLs() -> [URL] {
+      lock.lock()
+      defer { lock.unlock() }
+      return requests
+    }
+  }
+
+  private final class ControlledPackageRedirectURLProtocol: URLProtocol, @unchecked Sendable {
+    static let recorder = ControlledPackageRedirectRecorder()
+
+    override class func canInit(with request: URLRequest) -> Bool {
+      guard let url = request.url else { return false }
+      return recorder.shouldHandle(url)
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+      guard let url = request.url else {
+        client?.urlProtocol(self, didFailWithError: URLError(.badURL))
+        return
+      }
+      let event = Self.recorder.record(url)
+      if let redirect = event.redirect {
+        guard
+          let response = HTTPURLResponse(
+            url: url,
+            statusCode: 302,
+            httpVersion: "HTTP/1.1",
+            headerFields: ["Location": redirect.absoluteString]
+          )
+        else {
+          client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+          return
+        }
+        client?.urlProtocol(
+          self,
+          wasRedirectedTo: URLRequest(url: redirect),
+          redirectResponse: response
+        )
+        return
+      }
       guard
         let response = HTTPURLResponse(
           url: url,
-          statusCode: 302,
+          statusCode: 200,
           httpVersion: "HTTP/1.1",
-          headerFields: ["Location": redirect.absoluteString]
+          headerFields: ["Content-Length": String(event.body.count)]
         )
       else {
         client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
         return
       }
-      client?.urlProtocol(
-        self,
-        wasRedirectedTo: URLRequest(url: redirect),
-        redirectResponse: response
-      )
-      return
+      client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+      client?.urlProtocol(self, didLoad: event.body)
+      client?.urlProtocolDidFinishLoading(self)
     }
-    guard
-      let response = HTTPURLResponse(
-        url: url,
-        statusCode: 200,
-        httpVersion: "HTTP/1.1",
-        headerFields: ["Content-Length": String(event.body.count)]
-      )
-    else {
-      client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
-      return
-    }
-    client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-    client?.urlProtocol(self, didLoad: event.body)
-    client?.urlProtocolDidFinishLoading(self)
-  }
 
-  override func stopLoading() {}
-}
+    override func stopLoading() {}
+  }
+#endif
