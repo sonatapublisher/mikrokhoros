@@ -1010,8 +1010,16 @@ public final class CLIWebCapabilityGateway: WebCapabilityServing,
         )
       }
     }
+    // The command-line surface intentionally prints the selected path. The
+    // browser contract is different: it reveals only that a configuration
+    // file is selected, so avoid making that guarantee depend on host-specific
+    // URL path rendering.
+    let standardOutput =
+      transcript.exitStatus == 0 && request.definition.kind == .configPath
+      ? "[configuration file]\n"
+      : browserSafeTranscript(transcript.standardOutput, context: context)
     let bounded = Self.boundedBrowserOutput(
-      stdout: browserSafeTranscript(transcript.standardOutput, context: context),
+      stdout: standardOutput,
       stderr: browserSafeTranscript(transcript.standardError, context: context),
       maximumBytes: Self.maximumOutputBytes
     )

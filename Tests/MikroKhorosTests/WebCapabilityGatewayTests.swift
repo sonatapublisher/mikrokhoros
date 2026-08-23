@@ -224,7 +224,8 @@ final class WebCapabilityGatewayTests: XCTestCase {
       XCTAssertFalse(result.standardOutput.contains(outsideConfiguration.path))
       XCTAssertFalse(result.standardError.contains(outsideConfiguration.path))
     }
-    XCTAssertTrue(configurationPath.standardOutput.contains("[configuration file]"))
+    XCTAssertTrue(configurationPath.accepted)
+    XCTAssertEqual(configurationPath.standardOutput, "[configuration file]\n")
   }
 
   func testCompletionsUseTheExactProductLayoutAndExcludeFilesystemValues() async throws {
