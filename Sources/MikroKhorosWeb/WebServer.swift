@@ -1943,24 +1943,28 @@ private final class WebListenerProbeCompletion: @unchecked Sendable {
 
   func wait() async -> WebListenerProbe.Result {
     await withCheckedContinuation { continuation in
-      let immediate = lock.withLock { () -> WebListenerProbe.Result? in
-        if let result { return result }
+      lock.lock()
+      if let result {
+        lock.unlock()
+        continuation.resume(returning: result)
+      } else {
         waiter = continuation
-        return nil
+        lock.unlock()
       }
-      if let immediate { continuation.resume(returning: immediate) }
     }
   }
 
   func finish(_ result: WebListenerProbe.Result) {
-    let waiter = lock.withLock { () -> CheckedContinuation<WebListenerProbe.Result, Never>? in
-      guard self.result == nil else { return nil }
-      self.result = result
-      let waiter = waiter
-      self.waiter = nil
-      return waiter
+    lock.lock()
+    guard self.result == nil else {
+      lock.unlock()
+      return
     }
-    waiter?.resume(returning: result)
+    self.result = result
+    let continuation = waiter
+    waiter = nil
+    lock.unlock()
+    continuation?.resume(returning: result)
   }
 }
 
