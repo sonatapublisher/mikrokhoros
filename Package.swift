@@ -15,6 +15,12 @@
 
 import PackageDescription
 
+// Keep project diagnostics strict without forwarding warning policy into third-party packages.
+let projectSwiftSettings: [SwiftSetting] =
+  Context.environment["MIKROKHOROS_WARNINGS_AS_ERRORS"] == "1"
+  ? [.unsafeFlags(["-warnings-as-errors"])]
+  : []
+
 let package = Package(
   name: "MikroKhoros",
   platforms: [
@@ -29,8 +35,16 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-nio.git", exact: "2.101.3"),
   ],
   targets: [
-    .target(name: "MikroKhoros", dependencies: [.product(name: "Crypto", package: "swift-crypto")]),
-    .target(name: "MikroKhorosServices", dependencies: ["MikroKhoros"]),
+    .target(
+      name: "MikroKhoros",
+      dependencies: [.product(name: "Crypto", package: "swift-crypto")],
+      swiftSettings: projectSwiftSettings
+    ),
+    .target(
+      name: "MikroKhorosServices",
+      dependencies: ["MikroKhoros"],
+      swiftSettings: projectSwiftSettings
+    ),
     .target(
       name: "MikroKhorosWeb",
       dependencies: [
@@ -40,7 +54,8 @@ let package = Package(
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOPosix", package: "swift-nio"),
       ],
-      resources: [.process("Resources")]
+      resources: [.process("Resources")],
+      swiftSettings: projectSwiftSettings
     ),
     .target(
       name: "MikroKhorosCLIKit",
@@ -48,11 +63,13 @@ let package = Package(
         "MikroKhoros",
         "MikroKhorosServices",
         .product(name: "Crypto", package: "swift-crypto"),
-      ]
+      ],
+      swiftSettings: projectSwiftSettings
     ),
     .executableTarget(
       name: "MikroKhorosCLI",
-      dependencies: ["MikroKhorosCLIKit", "MikroKhorosWeb"]
+      dependencies: ["MikroKhorosCLIKit", "MikroKhorosWeb"],
+      swiftSettings: projectSwiftSettings
     ),
     .testTarget(
       name: "MikroKhorosTests",
@@ -62,7 +79,8 @@ let package = Package(
         "MikroKhorosWeb",
         "MikroKhorosCLIKit",
         .product(name: "Crypto", package: "swift-crypto"),
-      ]
+      ],
+      swiftSettings: projectSwiftSettings
     ),
   ]
 )

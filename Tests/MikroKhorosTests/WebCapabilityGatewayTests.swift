@@ -21,6 +21,10 @@ import XCTest
 @testable import MikroKhoros
 @testable import MikroKhorosCLIKit
 
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
+
 final class WebCapabilityGatewayTests: XCTestCase {
   func testRegistryExactlyCoversTheLiveCatalogAcrossTheFiveWebViews() throws {
     let descriptors = CLIWebCapabilityRegistry.descriptors()

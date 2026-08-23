@@ -15,33 +15,33 @@
 SWIFT ?= swift
 SWIFT_BUILD_FLAGS ?=
 WARNINGS_AS_ERRORS ?= true
-SWIFT_WARNING_FLAGS = $(if $(filter false,$(WARNINGS_AS_ERRORS)),,-Xswiftc -warnings-as-errors)
-SWIFT_FLAGS = $(SWIFT_BUILD_FLAGS) $(SWIFT_WARNING_FLAGS)
+SWIFT_WARNING_ENV = MIKROKHOROS_WARNINGS_AS_ERRORS=$(if $(filter false,$(WARNINGS_AS_ERRORS)),0,1)
+SWIFT_FLAGS = $(SWIFT_BUILD_FLAGS)
 
 .DEFAULT_GOAL := build
 
 .PHONY: build release test test-cli test-terminal docs check-docs format lint update-licenses check-licenses preflight check install uninstall pre-commit
 
 build:
-	$(SWIFT) build $(SWIFT_FLAGS)
+	$(SWIFT_WARNING_ENV) $(SWIFT) build $(SWIFT_FLAGS)
 
 release:
-	$(SWIFT) build -c release $(SWIFT_FLAGS)
+	$(SWIFT_WARNING_ENV) $(SWIFT) build -c release $(SWIFT_FLAGS)
 
 test:
-	$(SWIFT) test $(SWIFT_FLAGS)
+	$(SWIFT_WARNING_ENV) $(SWIFT) test $(SWIFT_FLAGS)
 
 test-cli:
-	SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/test-cli.sh
+	$(SWIFT_WARNING_ENV) SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/test-cli.sh
 
 test-terminal:
-	SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/test-terminal.sh
+	$(SWIFT_WARNING_ENV) SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/test-terminal.sh
 
 docs:
-	SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/generate-cli-reference.sh
+	$(SWIFT_WARNING_ENV) SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/generate-cli-reference.sh
 
 check-docs:
-	SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/generate-cli-reference.sh --check
+	$(SWIFT_WARNING_ENV) SWIFT_BUILD_FLAGS="$(SWIFT_FLAGS)" ./scripts/generate-cli-reference.sh --check
 
 format: update-licenses
 	$(SWIFT) format format --in-place --recursive --parallel Sources Tests Package.swift
