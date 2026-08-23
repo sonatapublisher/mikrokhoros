@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#f3efea">
+    <title>mikrokhoros · World</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell" id="appShell" data-sidebar="expanded">
+      <aside class="sidebar" aria-label="MikroKhoros navigation">
+        <header class="sidebar-header">
+          <div class="brand-row">
+            <a class="wordmark" href="/" aria-label="MikroKhoros World">mikrokhoros</a>
+            <button class="glass-control icon-control" id="sidebarToggle" type="button" aria-label="Collapse sidebar" aria-pressed="false">
+              <img class="control-icon" src="/icons/phosphor/sidebar-simple.svg" alt="">
+            </button>
+          </div>
+
+          <div class="menu-anchor full-width-anchor">
+            <button class="glass-control context-trigger" id="appViewTrigger" type="button" aria-label="Choose MikroKhoros Web view. Current view: World" aria-haspopup="menu" aria-expanded="false" aria-controls="appViewMenu">
+              <img class="control-icon" src="/icons/phosphor/globe.svg" alt="">
+              <span class="control-label">World</span>
+              <img class="control-icon chevron" src="/icons/phosphor/caret-down.svg" alt="">
+            </button>
+            <div class="floating-menu app-view-menu" id="appViewMenu" role="menu" aria-label="MikroKhoros Web views" hidden>
+              <button class="menu-row is-selected" type="button" role="menuitemradio" aria-checked="true" data-app-view="world">
+                <img class="menu-icon" src="/icons/phosphor/globe.svg" alt="">
+                <span>World</span>
+                <img class="menu-check" src="/icons/phosphor/check.svg" alt="Current view">
+              </button>
+              <button class="menu-row" type="button" role="menuitemradio" aria-checked="false" data-app-view="agentManager">
+                <img class="menu-icon" src="/icons/phosphor/user-plus.svg" alt="">
+                <span>Agent Manager</span>
+                <img class="menu-check" src="/icons/phosphor/check.svg" alt="Current view" hidden>
+              </button>
+              <button class="menu-row" type="button" role="menuitemradio" aria-checked="false" data-app-view="inventory">
+                <img class="menu-icon" src="/icons/phosphor/archive.svg" alt="">
+                <span>Inventory</span>
+                <img class="menu-check" src="/icons/phosphor/check.svg" alt="Current view" hidden>
+              </button>
+              <button class="menu-row" type="button" role="menuitemradio" aria-checked="false" data-app-view="packages">
+                <img class="menu-icon" src="/icons/phosphor/package.svg" alt="">
+                <span>Packages</span>
+                <img class="menu-check" src="/icons/phosphor/check.svg" alt="Current view" hidden>
+              </button>
+              <button class="menu-row" type="button" role="menuitemradio" aria-checked="false" data-app-view="templates">
+                <img class="menu-icon" src="/icons/phosphor/file-text.svg" alt="">
+                <span>Templates</span>
+                <img class="menu-check" src="/icons/phosphor/check.svg" alt="Current view" hidden>
+              </button>
+            </div>
+          </div>
+
+          <div class="menu-anchor full-width-anchor" id="worldContextPicker">
+            <button class="glass-control context-trigger" id="worldTrigger" type="button" aria-label="Choose world" aria-haspopup="menu" aria-expanded="false" aria-controls="worldMenu">
+              <img class="control-icon" src="/icons/phosphor/globe.svg" alt="">
+              <span class="control-label ellipsis" id="worldTriggerLabel">Loading world…</span>
+              <img class="control-icon chevron" src="/icons/phosphor/caret-down.svg" alt="">
+            </button>
+            <div class="floating-menu world-menu" id="worldMenu" role="menu" hidden></div>
+          </div>
+        </header>
+
+        <div class="sidebar-scroll world-sidebar-scroll" id="sidebarScroll">
+          <section class="sidebar-section" aria-labelledby="agentsHeading">
+            <h2 class="section-label" id="agentsHeading">Agents</h2>
+            <button class="sidebar-row human-view-row is-selected" id="humanViewButton" type="button" aria-label="Return to My view">
+              <span class="row-icon neutral-icon"><img src="/icons/phosphor/crosshair.svg" alt=""></span>
+              <span class="row-copy">
+                <span class="row-title">My view</span>
+              </span>
+            </button>
+            <div class="sidebar-list" id="primaryAgents"></div>
+            <div class="full-width-anchor" id="allAgentsAnchor" hidden>
+              <button class="glass-control sidebar-action" id="allAgentsTrigger" type="button" aria-label="Show all active agents" aria-expanded="false" aria-controls="primaryAgents">
+                <img class="control-icon" src="/icons/phosphor/dots-three.svg" alt="">
+                <span class="control-label" id="allAgentsLabel">All 3 agents</span>
+                <img class="control-icon chevron" src="/icons/phosphor/caret-down.svg" alt="">
+              </button>
+            </div>
+            <button class="glass-control sidebar-action" id="addAgentButton" type="button" aria-label="Add agent to this world" aria-haspopup="dialog">
+              <img class="control-icon" src="/icons/phosphor/user-plus.svg" alt="">
+              <span class="control-label">Add agent</span>
+            </button>
+            <p class="sidebar-empty" id="agentsEmpty" hidden>No active agents in this world.</p>
+          </section>
+
+          <section class="sidebar-section objects-section" aria-labelledby="objectsHeading">
+            <h2 class="section-label" id="objectsHeading">Objects</h2>
+            <div class="sidebar-list">
+              <button class="sidebar-row inventory-row" id="inventoryShortcut" type="button" aria-label="Inventory">
+                <span class="row-icon neutral-icon"><img src="/icons/phosphor/archive.svg" alt=""></span>
+                <span class="row-copy">
+                  <span class="row-title">Inventory</span>
+                  <span class="row-subtitle" id="inventoryCount"></span>
+                </span>
+              </button>
+              <div id="pinnedObjects"></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="sidebar-scroll domain-sidebar" id="domainSidebar" hidden>
+          <label class="domain-search-wrap" for="domainSearch">
+            <img src="/icons/phosphor/magnifying-glass.svg" alt="">
+            <input id="domainSearch" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
+          </label>
+          <div class="domain-sidebar-content" id="domainSidebarContent" aria-label="Current view"></div>
+          <div class="domain-sidebar-action" id="domainSidebarAction"></div>
+        </div>
+
+        <footer class="sidebar-footer">
+          <button class="glass-control" id="helpButton" type="button" aria-label="Help" aria-haspopup="dialog" aria-controls="helpBackdrop">
+            <img class="control-icon" src="/icons/phosphor/info.svg" alt="">
+            <span class="control-label">Help</span>
+          </button>
+          <button class="glass-control settings-control" id="settingsButton" type="button" aria-label="Settings">
+            <img class="control-icon" src="/icons/phosphor/gear-six.svg" alt="">
+            <span class="control-label">Settings</span>
+          </button>
+        </footer>
+      </aside>
+      <div
+        class="sidebar-resize-handle"
+        id="sidebarResizeHandle"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize sidebar. Use Left and Right Arrow to resize, Home and End for limits, or 0 for the default width."
+        aria-orientation="vertical"
+        aria-valuemin="208"
+        aria-valuemax="352"
+        aria-valuenow="240"
+        aria-valuetext="Sidebar width 240 pixels, default"
+      ><span aria-hidden="true"></span></div>
+
+      <main class="world-main" id="worldMain">
+        <header class="world-header">
+          <div class="structural-path-wrap">
+            <button class="glass-control icon-control path-back" id="containerBack" type="button" aria-label="Go to parent container" hidden>
+              <img src="/icons/phosphor/arrow-left.svg" alt="">
+            </button>
+            <code class="structural-path" id="structuralPath" tabindex="0">world</code>
+          </div>
+          <div class="world-header-actions">
+            <div class="menu-anchor notification-anchor">
+              <button class="glass-control notification-trigger" id="notificationTrigger" type="button" aria-label="World reports. No reports" aria-haspopup="dialog" aria-expanded="false" aria-controls="notificationPopover">
+                <span class="notification-icon-wrap">
+                  <img class="control-icon" src="/icons/phosphor/bell.svg" alt="">
+                  <span class="notification-cue" id="notificationCue" hidden><span class="sr-only">New report available</span></span>
+                </span>
+                <span class="notification-preview" id="notificationPreview">No reports</span>
+              </button>
+              <section class="floating-popover notification-popover" id="notificationPopover" role="dialog" aria-label="World reports" hidden>
+                <div class="popover-header">
+                  <div>
+                    <h2>World reports</h2>
+                    <p>Recent object reports from this exact world</p>
+                  </div>
+                  <span class="quiet-badge" id="reportCount">Showing 0</span>
+                </div>
+                <div class="report-list" id="reportList"></div>
+              </section>
+            </div>
+
+            <div class="menu-anchor">
+              <button class="glass-control view-trigger" id="viewTrigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="viewMenu">
+                <span class="control-label">View</span>
+                <img class="control-icon chevron" src="/icons/phosphor/caret-down.svg" alt="">
+              </button>
+              <div class="floating-menu view-menu" id="viewMenu" role="menu" hidden>
+                <button class="menu-row" type="button" role="menuitem" data-view-action="zoom-in">
+                  <img class="menu-icon" src="/icons/phosphor/magnifying-glass-plus.svg" alt=""><span>Zoom in</span>
+                  <kbd>+</kbd>
+                </button>
+                <button class="menu-row" type="button" role="menuitem" data-view-action="zoom-out">
+                  <img class="menu-icon" src="/icons/phosphor/magnifying-glass-minus.svg" alt=""><span>Zoom out</span>
+                  <kbd>−</kbd>
+                </button>
+                <button class="menu-row" type="button" role="menuitem" data-view-action="recenter">
+                  <img class="menu-icon" src="/icons/phosphor/crosshair.svg" alt=""><span>Recenter</span>
+                  <kbd>0</kbd>
+                </button>
+                <button class="menu-row" type="button" role="menuitemcheckbox" aria-checked="false" data-view-action="labels">
+                  <img class="menu-icon" src="/icons/phosphor/file-text.svg" alt=""><span>Object labels</span>
+                  <img class="menu-check" src="/icons/phosphor/check.svg" alt="Enabled" hidden>
+                </button>
+                <button class="menu-row" type="button" role="menuitem" data-view-action="world-actions">
+                  <img class="menu-icon" src="/icons/phosphor/info.svg" alt=""><span>World details…</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="world-viewport" id="worldViewport" tabindex="0" aria-label="World map. Use arrow keys to move between cells, Enter or Space to open the cell menu, plus and minus to zoom, and zero to recenter.">
+          <div class="world-layer" id="worldLayer" aria-hidden="true"></div>
+          <div class="entity-layer" id="entityLayer"></div>
+          <div class="floating-menu cell-quick-menu" id="cellQuickMenu" role="menu" hidden></div>
+          <div class="world-status" id="worldStatus" role="status">
+            <div class="status-symbol"><img src="/icons/phosphor/circle-notch.svg" alt=""></div>
+            <h1>Opening World…</h1>
+            <p>Reading the selected MikroKhoros world.</p>
+          </div>
+          <div class="zoom-indicator" id="zoomIndicator" aria-live="polite">100%</div>
+        </section>
+
+        <section class="world-console-dock" id="worldConsoleDock" aria-label="World command console">
+          <section class="world-console-panel" id="worldConsolePanel" aria-label="World command information">
+            <button class="console-resize-handle" id="consoleResizeHandle" type="button" role="separator" aria-label="Resize command information panel" aria-orientation="horizontal" aria-valuemin="140" aria-valuemax="520" aria-valuenow="220">
+              <span aria-hidden="true"></span>
+            </button>
+            <div class="console-tabs" role="tablist" aria-label="World command information">
+              <button class="console-tab is-selected" id="consoleOutputTab" type="button" role="tab" aria-selected="true" aria-controls="consoleOutputPanel" aria-keyshortcuts="1" data-console-tab="output">
+                <img src="/icons/phosphor/file-text.svg" alt="">
+                <span>Output</span>
+                <kbd class="console-tab-shortcut" aria-hidden="true">1</kbd>
+              </button>
+              <button class="console-tab" id="consoleAgentTab" type="button" role="tab" aria-selected="false" aria-controls="consoleAgentPanel" aria-keyshortcuts="2" tabindex="-1" data-console-tab="agent">
+                <img src="/icons/phosphor/crosshair.svg" alt="">
+                <span>Agent</span>
+                <kbd class="console-tab-shortcut" aria-hidden="true">2</kbd>
+              </button>
+              <button class="console-tab" id="consoleObjectTab" type="button" role="tab" aria-selected="false" aria-controls="consoleObjectPanel" aria-keyshortcuts="3" tabindex="-1" data-console-tab="object">
+                <img src="/icons/phosphor/cube.svg" alt="">
+                <span>Object</span>
+                <kbd class="console-tab-shortcut" aria-hidden="true">3</kbd>
+              </button>
+            </div>
+            <div class="console-panel-body">
+              <div class="console-tabpanel" id="consoleOutputPanel" role="tabpanel" aria-labelledby="consoleOutputTab">
+                <div class="console-output-log" id="consoleOutputLog" role="log" aria-live="polite" aria-relevant="additions text">
+                  <p class="console-empty-state" id="consoleOutputEmpty">Command output will appear here.</p>
+                </div>
+              </div>
+              <div class="console-tabpanel console-context-panel" id="consoleAgentPanel" role="tabpanel" aria-labelledby="consoleAgentTab" hidden>
+                <button class="console-context-mode" id="consoleAgentContextMode" type="button" aria-keyshortcuts="C" aria-pressed="false">
+                  <span>Press</span>
+                  <kbd class="console-mode-shortcut" aria-hidden="true">C</kbd>
+                  <span id="consoleAgentContextModeLabel">to keep detail</span>
+                  <code class="console-kept-coordinate" id="consoleAgentKeptCoordinate" hidden></code>
+                </button>
+                <div class="console-context-content" id="consoleAgentContent">
+                  <p class="console-empty-state">Point to a World cell to inspect its agents.</p>
+                </div>
+              </div>
+              <div class="console-tabpanel console-context-panel" id="consoleObjectPanel" role="tabpanel" aria-labelledby="consoleObjectTab" hidden>
+                <button class="console-context-mode" id="consoleObjectContextMode" type="button" aria-keyshortcuts="C" aria-pressed="false">
+                  <span>Press</span>
+                  <kbd class="console-mode-shortcut" aria-hidden="true">C</kbd>
+                  <span id="consoleObjectContextModeLabel">to keep detail</span>
+                  <code class="console-kept-coordinate" id="consoleObjectKeptCoordinate" hidden></code>
+                </button>
+                <div class="console-context-content" id="consoleObjectContent">
+                  <p class="console-empty-state">Point to a World cell to inspect its object.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="command-suggestions" id="commandSuggestions" role="listbox" aria-label="Command suggestions" hidden></div>
+          <form class="world-command-capsule" id="worldCommandForm" autocomplete="off">
+            <span class="command-prompt" aria-hidden="true">›</span>
+            <div class="command-editor">
+              <pre class="command-highlight" id="commandHighlight" aria-hidden="true"></pre>
+              <input class="world-command-input" id="worldCommandInput" name="command" type="text" role="combobox" aria-label="MikroKhoros World command" aria-autocomplete="list" aria-controls="commandSuggestions" aria-expanded="false" aria-activedescendant="" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="4096" placeholder="world show">
+            </div>
+            <button class="command-submit" id="worldCommandSubmit" type="submit" aria-label="Run command">
+              <img class="control-icon" src="/icons/phosphor/arrow-elbow-down-left.svg" alt="">
+            </button>
+            <button class="console-minimize" id="consoleMinimize" type="button" aria-label="Minimize command information" aria-controls="worldConsolePanel" aria-expanded="true">
+              <img src="/icons/phosphor/caret-down.svg" alt="">
+            </button>
+          </form>
+        </section>
+      </main>
+
+      <main class="workspace-main" id="workspaceMain" hidden>
+        <header class="workspace-header">
+          <div>
+            <p class="workspace-eyebrow" id="workspaceEyebrow">MikroKhoros</p>
+            <h1 id="workspaceTitle">Agent Manager</h1>
+            <p id="workspaceDescription">Create, inspect, and manage agent identities.</p>
+          </div>
+          <div class="workspace-header-actions">
+            <div class="workspace-context-actions" id="webCapabilityContextActions"></div>
+            <button
+              class="glass-control workspace-refresh"
+              id="workspaceRefresh"
+              type="button"
+              aria-label="Refresh"
+            >
+              <img class="control-icon" src="/icons/phosphor/circle-notch.svg" alt="">
+              <span>Refresh</span>
+            </button>
+          </div>
+        </header>
+        <section class="workspace-scroll-region" id="workspaceScrollRegion" aria-live="polite">
+          <div class="workspace-state" id="workspaceState" role="status" aria-live="polite" hidden></div>
+          <section class="workspace-content" id="workspaceContent" aria-label="MikroKhoros Web workspace" tabindex="-1"></section>
+          <div class="workspace-welcome" id="workspaceWelcome" hidden>
+            <span class="welcome-icon" id="workspaceWelcomeIcon"><img src="/icons/phosphor/user-plus.svg" alt=""></span>
+            <h2 id="workspaceWelcomeTitle">Loading</h2>
+            <p id="workspaceWelcomeCopy">Preparing this view.</p>
+          </div>
+        </section>
+      </main>
+
+      <div class="dialog-backdrop action-sheet-backdrop" id="actionBackdrop" hidden>
+        <section class="native-action-dialog" id="actionDialog" role="dialog" aria-modal="true" aria-label="Contextual action" tabindex="-1">
+          <button class="dialog-close" id="actionDialogClose" type="button" aria-label="Close action">
+            <img src="/icons/phosphor/x.svg" alt="">
+          </button>
+          <article class="operation-detail action-operation-detail" id="operationDetail" hidden></article>
+        </section>
+      </div>
+
+      <div class="dialog-backdrop" id="worldCreateBackdrop" hidden>
+        <section class="compact-dialog" id="worldCreateDialog" role="dialog" aria-modal="true" aria-labelledby="worldCreateTitle" aria-describedby="worldCreateDescription" tabindex="-1">
+          <header class="compact-dialog-header">
+            <div>
+              <h1 id="worldCreateTitle">Create new world</h1>
+              <p id="worldCreateDescription">A bare, independent MikroKhoros world.</p>
+            </div>
+          </header>
+          <form class="compact-form" id="worldCreateForm" novalidate>
+            <label class="field-label" for="worldNameInput">World name</label>
+            <input class="text-field" id="worldNameInput" name="name" type="text" value="world" maxlength="128" autocomplete="off" required aria-describedby="worldNameHint worldCreateError">
+            <p class="field-hint" id="worldNameHint">You can rename it later without changing its identity.</p>
+            <p class="form-error" id="worldCreateError" role="alert" hidden></p>
+            <div class="compact-dialog-actions">
+              <button class="dialog-button" id="worldCreateCancel" type="button">Cancel</button>
+              <button class="dialog-button dialog-button-primary create-world-submit" id="worldCreateSubmit" type="submit">
+                <img class="control-icon" src="/icons/phosphor/plus.svg" alt="">
+                <span id="worldCreateSubmitLabel">Create</span>
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="dialog-backdrop" id="agentAddBackdrop" hidden>
+        <section class="compact-dialog agent-add-dialog" id="agentAddDialog" role="dialog" aria-modal="true" aria-labelledby="agentAddTitle" aria-describedby="agentAddDescription" tabindex="-1">
+          <header class="compact-dialog-header">
+            <div>
+              <h1 id="agentAddTitle">Add agent</h1>
+              <p id="agentAddDescription">Place an existing agent identity in this World.</p>
+            </div>
+          </header>
+          <form class="compact-form" id="agentAddForm" novalidate>
+            <label class="field-label" id="agentChoiceLabel">Agent</label>
+            <div class="menu-anchor form-menu-anchor">
+              <button class="text-field select-field" id="agentChoiceTrigger" type="button" aria-labelledby="agentChoiceLabel agentChoiceValue" aria-haspopup="menu" aria-expanded="false" aria-controls="agentChoiceMenu">
+                <span class="agent-symbol selected-agent-symbol" id="agentChoiceSymbol" hidden></span>
+                <span class="control-label" id="agentChoiceValue">Loading agents…</span>
+                <img class="control-icon chevron" src="/icons/phosphor/caret-down.svg" alt="">
+              </button>
+              <div class="floating-menu form-select-menu" id="agentChoiceMenu" role="menu" hidden></div>
+            </div>
+            <p class="field-hint" id="agentChoiceHint">Choose a user-owned identity that can enter this World.</p>
+            <div class="coordinate-fields" role="group" aria-label="World coordinate">
+              <label class="coordinate-field">
+                <span class="field-label">X</span>
+                <input class="text-field coordinate-input" id="agentCoordinateX" name="x" type="text" value="0" inputmode="numeric" autocomplete="off" required>
+              </label>
+              <label class="coordinate-field">
+                <span class="field-label">Y</span>
+                <input class="text-field coordinate-input" id="agentCoordinateY" name="y" type="text" value="0" inputmode="numeric" autocomplete="off" required>
+              </label>
+            </div>
+            <button class="form-option" id="agentAutoAdapt" type="button" aria-pressed="false">
+              <span class="option-check"><img src="/icons/phosphor/check.svg" alt="" hidden></span>
+              <span>Allow position adaptation</span>
+            </button>
+            <p class="form-error" id="agentAddError" role="alert" hidden></p>
+            <div class="compact-dialog-actions">
+              <button class="dialog-button" id="agentAddCancel" type="button">Cancel</button>
+              <button class="dialog-button dialog-button-primary add-agent-submit" id="agentAddSubmit" type="submit">
+                <img class="control-icon" src="/icons/phosphor/user-plus.svg" alt="">
+                <span id="agentAddSubmitLabel">Add agent</span>
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="inspector-backdrop" id="inspectorBackdrop" hidden>
+        <section class="object-inspector" id="objectInspector" role="dialog" aria-modal="true" aria-labelledby="inspectorTitle" tabindex="-1">
+          <header class="inspector-header">
+            <div class="inspector-object-heading">
+              <span class="inspector-symbol" id="inspectorSymbol"></span>
+              <div>
+                <h1 id="inspectorTitle">Object</h1>
+                <code id="inspectorType">object</code>
+              </div>
+            </div>
+            <div class="inspector-actions">
+              <button class="modal-control" id="openContainerButton" type="button" aria-label="Open container" hidden>
+                <img class="control-icon" src="/icons/phosphor/globe.svg" alt=""><span>Open container</span>
+              </button>
+              <button class="modal-control" id="pinObjectButton" type="button" aria-label="Pin object">
+                <img class="control-icon" src="/icons/phosphor/push-pin.svg" alt=""><span id="pinObjectLabel">Pin object</span>
+              </button>
+              <button class="modal-control modal-icon-control" id="inspectorClose" type="button" aria-label="Close object interface">
+                <img class="control-icon" src="/icons/phosphor/x.svg" alt="">
+              </button>
+            </div>
+          </header>
+          <div class="inspector-layout">
+            <aside class="inspector-nav" aria-label="Object interface sections">
+              <div class="object-identity" id="inspectorIdentity"></div>
+              <nav id="inspectorNav" role="tablist" aria-label="Object interface pages"></nav>
+            </aside>
+            <div class="inspector-content" id="inspectorContent"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="dialog-backdrop help-backdrop" id="helpBackdrop" hidden>
+        <section class="help-dialog" id="helpDialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle" aria-describedby="helpDescription" tabindex="-1">
+          <header class="help-header">
+            <div>
+              <p class="workspace-eyebrow">Reference</p>
+              <h1 id="helpTitle">MikroKhoros help</h1>
+              <p id="helpDescription">Search actions and keyboard shortcuts. Press / anywhere outside a field to open this reference.</p>
+            </div>
+            <button class="modal-control modal-icon-control" id="helpClose" type="button" aria-label="Close help">
+              <img class="control-icon" src="/icons/phosphor/x.svg" alt="">
+            </button>
+          </header>
+          <label class="help-search-wrap" for="helpSearch">
+            <img src="/icons/phosphor/magnifying-glass.svg" alt="">
+            <input id="helpSearch" type="search" placeholder="Search commands, fields, and shortcuts" autocomplete="off" spellcheck="false">
+            <kbd>/</kbd>
+          </label>
+          <div class="help-results" id="helpResults"></div>
+          <p class="help-empty" id="helpEmpty" hidden>No help topics match this search.</p>
+        </section>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+      <div class="sr-only" id="liveRegion" aria-live="polite"></div>
+    </div>
+  </body>
+</html>

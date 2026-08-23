@@ -14,6 +14,7 @@
 
 import Foundation
 import MikroKhoros
+import MikroKhorosServices
 
 public enum ConsoleControl: Equatable, Sendable {
   case queue
@@ -318,7 +319,8 @@ public enum InteractiveConsole {
     initialGlobals: CommandGlobalOptions,
     io _: any CommandIO,
     terminal suppliedTerminal: (any TerminalBackend)? = nil,
-    historyURL: URL = ConsoleHistoryStore.defaultURL
+    historyURL: URL = ConsoleHistoryStore.defaultURL,
+    webHost: (any KhorosWebServing)? = nil
   ) async -> Int {
     let terminal = suppliedTerminal ?? SystemTerminalBackend()
     guard terminal.isInteractive else {
@@ -335,7 +337,8 @@ public enum InteractiveConsole {
       return try await session(
         initialGlobals: initialGlobals,
         terminal: terminal,
-        historyURL: historyURL
+        historyURL: historyURL,
+        webHost: webHost
       )
     } catch {
       terminal.end()
@@ -347,7 +350,8 @@ public enum InteractiveConsole {
   private static func session(
     initialGlobals: CommandGlobalOptions,
     terminal: any TerminalBackend,
-    historyURL: URL
+    historyURL: URL,
+    webHost: (any KhorosWebServing)?
   ) async throws -> Int {
     var globals = initialGlobals
     var configuration = try loadConfiguration(for: globals)
@@ -373,7 +377,7 @@ public enum InteractiveConsole {
     )
 
     let worker = Task {
-      await runQueue(queue, io: commandIO)
+      await runQueue(queue, io: commandIO, webHost: webHost)
     }
 
     var shouldQuit = false
@@ -616,7 +620,8 @@ public enum InteractiveConsole {
 
   private static func runQueue(
     _ queue: ConsoleCommandQueue,
-    io: ConsoleCommandIO
+    io: ConsoleCommandIO,
+    webHost: (any KhorosWebServing)?
   ) async {
     while !queue.shouldWorkerExit() {
       guard let item = queue.takeNext() else {
@@ -628,7 +633,7 @@ public enum InteractiveConsole {
       let barrier = item.submission.stopsQueueOnError ? "& " : ""
       io.writeStandardOutput("#\(item.id)  \(barrier)\(item.submission.commandPath)  running\n")
       let task = Task {
-        await CommandExecutor.execute(arguments: item.arguments, io: io)
+        await CommandExecutor.execute(arguments: item.arguments, io: io, webHost: webHost)
       }
       queue.attach(task: task, to: item.id)
       let status = await task.value
@@ -1241,7 +1246,7 @@ public enum InteractiveConsole {
   }
 }
 
-private enum CompletionResolver {
+enum CompletionResolver {
   static func values(
     for completion: CommandCompletion,
     globals: CommandGlobalOptions,

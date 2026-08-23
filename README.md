@@ -14,12 +14,15 @@ experience.**
 *MikroKhoros* combines Ancient Greek *mikrós* (“small”) and *khōros* (“place”): a
 small, concrete place for agents and objects.
 
-MikroKhoros is a Swift 6 runtime and CLI for persistent object worlds on macOS,
-Linux, and Windows. An attached LLM supplies cognition for a concrete agent. The
-agent observes its setting, uses a small bounded action language and object
-interfaces, produces validated state transitions, and carries permitted history into
-future decisions. Its dependency-free domain model uses `swift-crypto` 4.3.1 for
-local Ed25519 and SHA-256 integrity mechanisms.
+MikroKhoros is a Swift 6 runtime and one cross-platform `khoros` product for
+persistent object worlds on macOS, Linux, and Windows. Its human surfaces are the
+full CLI and MikroKhoros Web, a native loopback browser interface served by that same
+executable. An attached LLM supplies cognition for a concrete agent. The agent
+observes its setting, uses a small bounded action
+language and object interfaces, produces validated state transitions, and carries
+permitted history into future decisions. The domain model uses `swift-crypto` 4.3.1
+for local Ed25519 and SHA-256 integrity mechanisms; the web host uses SwiftNIO
+2.101.3.
 
 <img src="https://github.com/sonatapublisher/mikrokhoros/raw/refs/heads/main/assets/mikrokhoros-world-map.png" alt="Concept illustration of a persistent world with connected facilities, neighborhoods, cultivated areas, and a harbor." width="100%" />
 
@@ -68,6 +71,73 @@ becomes an operating-system shell. The runtime resolves exact identities and gov
 capabilities, possession, placement, locks, permissions, persistence, and effect
 replay.
 
+`khoros web` serves MikroKhoros Web from the same native executable and
+canonical product data. Its single custom app menu contains World, Agent Manager,
+Inventory, Packages, and Templates; Settings remains fixed in the sidebar footer,
+and Help is a searchable command reference. World alone owns persistent world
+selection. An exact target is collected inside an action everywhere else.
+
+Each web view is a deliberately designed, typed projection of its domain:
+Agent Manager is the identity and assignment catalog; Inventory is the global folder
+and source tree; Packages is the package catalog; Templates is the trusted template
+catalog; and Settings groups product configuration and diagnostics. The capability
+catalog remains execution and Help infrastructure. It binds named contextual
+controls to the native in-process command engine. Domain views define browser
+navigation. Only an Inventory source or a concrete world object uses the generic
+`ObjectManagementInterface` renderer. The host injects the trusted product layout,
+configuration, session, output mode, and exact world context. MikroKhoros Web is not
+a separate `.app` bundle, Node or TypeScript service, second runtime, CLI subprocess,
+operating-system shell, or browser editor for persistence files.
+
+An exact object interface carries its declared field, action, view, and report
+metadata. Fields describe type, required/deployable state, safe defaults, choices,
+and declared bounds; actions describe ordered typed inputs, safe defaults and
+choices, capability requirements, mutation state, scope, and result shape; views and
+reports describe their structured results and bounded payloads. The host renders
+those contracts with its own controls and validation. It never turns package markup
+into UI, exposes configured Inventory values, or reads credential values back into
+the page. A contract that declares a filesystem-path field or path-typed action
+input remains legible as metadata, while its actions and views are CLI-only;
+configuration-backed views are also CLI-only. Browser mutation results expose only
+whether each Inventory configuration key is present. World-object interfaces cover
+placed, held, nested, and agent-attached objects; non-spatial equipment keeps an
+optional coordinate, canonical structural path, and runtime-derived move
+availability without exposing raw action implementations or private object state.
+Raw `inventory show`, `inventory copies show`, and `world object show` remain
+searchable CLI references and are disabled at the browser gateway.
+
+Agent Manager exposes Retry only when the active agent has a profile and the
+content-free pending-work count is positive. Packages expose their identity, runtime,
+requested capabilities, installation/retention state, content hash where retained,
+and management counts. The install field is labelled **Trusted package source** and
+accepts only an exact built-in catalog source such as `builtin:paper` or an HTTPS
+URL; every redirect must remain within the same HTTPS, host, and no-user-information
+policy. Templates present every root and owned object with its package and requested
+parent-space coordinate. A template declaration uses the neutral Phosphor Cube;
+canonical MikroKhoros identity appears only after an object exists. World-dependent
+template actions collect their exact target inside the action, and Create World is
+an overflow action.
+
+Private World inspection is an explicit local reveal. A World export is a sensitive
+download that can contain the journal, histories, object private state, and opaque
+credential handles; MikroKhoros Web warns before download and never includes
+credential values or treasury signing bytes. The browser attaches an export only
+when the complete document fits its finite transfer budget; larger exports remain
+available through the displayed local CLI command.
+
+World remains a spatial, object-first surface. It includes stable active-agent
+follow, nested containers, generic object interfaces, recent world reports, local
+pins, and a floating command dock. The dock has a separate monospace input capsule
+and a resizable/minimizable Output, Agent, and Object panel. Its bounded
+command-line allowlist is an immediate exact-world tool. World management and
+object-specific actions appear only where their selected world or object makes them
+contextually meaningful.
+
+Recent World reports retain their exact report ID and time together with the concrete
+object, Inventory source/revision, package/version, declared type, title, body, and
+structured payload. Notifications remain a concise exact-world report entry point;
+they do not become agent messages or authority.
+
 ## Available today
 
 - Persistent sparse worlds with nested containers, material occupancy, structural
@@ -85,29 +155,93 @@ replay.
 - Bare worlds by default and the trusted `default-khoros` template, which composes
   Athena, Objective Board, Library, Warehouse, and Marketplace from five independent
   Inventory sources.
+- MikroKhoros Web with five primary views, fixed Settings, and
+  searchable Help. Agent Manager, Inventory, Packages, Templates, and Settings are
+  typed domain views; contextual controls preserve exact-identity completion,
+  explicit confirmations, write-only credentials, private viewers, downloads, and
+  cancellable report following through the shared in-process command engine.
+- A World page with exact world and container routes, a stable collapsible
+  active-agent roster, world objects, reports, click-open inspection for occupied
+  and empty cells, consumed empty-cell dismissal while an object menu is open, local
+  pins, generic structured object interfaces, exact existing-agent entry for
+  user-owned identities, bare-world creation from the persistent World picker, and
+  the bounded World command console with catalog-derived completion, syntax styling,
+  inert in-memory output, and exact-world object movement.
 
 ## Current scope
 
-The product is CLI-first. `default-khoros` resolves facilities from exact template
-lineage, and agent equipment follows its own lifecycle.
+The CLI and MikroKhoros Web are two human interfaces over the same native services
+and runtime. The CLI’s exhaustive command catalog remains the execution contract and
+the browser’s searchable Help reference. The browser hierarchy follows
+the product domains. Global agents, Inventory sources, packages, and templates keep
+their existing ownership scopes; exact-world operations capture one exact target. A
+command-console submission is FIFO and nonretrying, and its transcript exists only in
+page memory as inert text.
+
+`default-khoros` resolves facilities from exact template lineage, and agent
+equipment follows its own lifecycle.
 
 World schema 7, AgentStore schema 3, and administrative snapshot schema 2 define
 the current persistence line. The CLI accepts these current formats only and provides
 no automatic migration or legacy import for Coin, single-hand, or other historical
 files.
 
-Planned layers include `khoros web`, a localhost browser interface for the same
-human-management contracts; the Hall; cross-world networking; and network or
-blockchain settlement. See the [browser UI specification](docs/ui-design-draft.txt)
-and [view and command-coverage brief](docs/design-v2.txt).
+Planned layers include the Hall, cross-world networking, and network or blockchain
+settlement. See the
+[browser UI specification](docs/ui-design-draft.txt) and
+[view and command-coverage brief](docs/design-v2.txt). The source-backed UX rationale
+is in [web UX decisions](docs/web-ux-decisions.md).
+
+## Open MikroKhoros Web
+
+Start the foreground host with or without an existing world:
+
+```bash
+khoros web
+khoros web --port 47568
+khoros web --available-port
+```
+
+To choose a temporary initial world without changing the saved current-world
+pointer:
+
+```bash
+khoros --world <world-selector> web
+```
+
+`web` accepts `--config` and `--world`, but not `--output` or `--color`;
+MikroKhoros Web owns its browser presentation. `--port` and `--available-port` are
+mutually exclusive, and an explicit port must be in `1...65535`.
+
+The default command binds exactly `127.0.0.1:47567`. `--port` selects one other exact
+loopback port without fallback; `--available-port` is the only mode that asks the
+operating system to choose an available port atomically. The command prints one
+short-lived launch URL. Open that exact URL in a local browser; aliases such as
+`localhost`, a changed port, and forwarded Host values are rejected. The host remains
+attached to the command; stop it with Ctrl-C. It does not open a browser
+automatically. When no world exists, open the custom World menu and choose `Create
+new world`; the committed bare world becomes current and opens at its exact route.
+If an exact port is occupied, MikroKhoros does not silently move: a known
+MikroKhoros Web listener directs you to the launch URL printed by its terminal, and
+an unknown local listener directs you to choose `--port` or `--available-port`.
+The listener marker is diagnostic only and never attaches to or authorizes another
+process.
+
+After the launch exchange, the browser may reload or bookmark an exact web
+route on that same `127.0.0.1:<port>` authority, including `?view=inventory` and
+exact World route hints. The initial fragment launch still establishes the session;
+opening a route in a browser without that session requires reopening the printed
+launch URL. A generic `{"error":"request_rejected"}` response is reserved for a
+request whose route shape or authority failed the local boundary; first verify the
+exact printed `127.0.0.1:<port>` authority and a canonical route.
 
 ## Platforms
 
 | Platform | Support |
 | --- | --- |
 | macOS 13+ | Supported |
-| Linux with Swift 6+ | Supported |
-| Windows with Swift 6+ | Supported |
+| Linux with Swift 6.1+ | Supported |
+| Windows with Swift 6.1+ | Supported |
 
 `Package.swift` declares the macOS minimum. SwiftPM does not express Linux or
 Windows OS versions. GitHub Actions builds and tests the supported platform matrix.
@@ -180,5 +314,5 @@ documents and keeps historical provenance separate from current product behavior
 
 MikroKhoros is pre-release software. World-document and public SDK compatibility
 become stable with a future numbered release. The project is licensed under
-[Apache License 2.0](LICENSE); `swift-crypto` attribution is recorded in
-[NOTICE](NOTICE).
+[Apache License 2.0](LICENSE); third-party dependency, font, and icon attribution is
+recorded in [NOTICE](NOTICE).

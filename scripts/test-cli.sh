@@ -91,7 +91,7 @@ then
   printf 'failed in-world action unexpectedly returned success\n' >&2
   exit 1
 fi
-grep -Fq 'pickup.hand_occupied' "$test_root/failed-action.out"
+grep -Fq 'pickup.holding_occupied' "$test_root/failed-action.out"
 
 MIKROKHOROS_HOME="$test_root" "$khoros_binary" --output json status \
   >"$test_root/status.json"

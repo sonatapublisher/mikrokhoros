@@ -12,6 +12,8 @@ khoros [global-options] console
 Command groups:
 help [<topic>]... [--all]
 Show command help.
+web [--port <port>] [--available-port]
+Start MikroKhoros Web.
 init
 Create the complete default-khoros product setup without prompts.
 status

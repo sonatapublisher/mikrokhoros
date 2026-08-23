@@ -64,20 +64,42 @@ public enum CommandResultStream: Sendable {
 
 final class CapturingCommandIO: CommandIO, @unchecked Sendable {
   private let base: any CommandIO
+  private let maximumBytes: Int?
   private let lock = NSLock()
   private var standardOutput = ""
   private var standardError = ""
+  private var standardOutputBytes = 0
+  private var standardErrorBytes = 0
+  private var outputTruncated = false
+  private var errorTruncated = false
 
-  init(base: any CommandIO) { self.base = base }
+  init(base: any CommandIO, maximumBytes: Int? = nil) {
+    self.base = base
+    self.maximumBytes = maximumBytes
+  }
 
   var isInteractive: Bool { base.isInteractive }
 
   func writeStandardOutput(_ text: String) {
-    lock.withPresentationLock { standardOutput += text }
+    lock.withPresentationLock {
+      append(
+        text,
+        to: &standardOutput,
+        byteCount: &standardOutputBytes,
+        truncated: &outputTruncated
+      )
+    }
   }
 
   func writeStandardError(_ text: String) {
-    lock.withPresentationLock { standardError += text }
+    lock.withPresentationLock {
+      append(
+        text,
+        to: &standardError,
+        byteCount: &standardErrorBytes,
+        truncated: &errorTruncated
+      )
+    }
   }
 
   func readLine(prompt: String, hidden: Bool) throws -> String? {
@@ -86,8 +108,43 @@ final class CapturingCommandIO: CommandIO, @unchecked Sendable {
 
   func readStandardInputToEnd() throws -> Data { try base.readStandardInputToEnd() }
 
-  func captured() -> (output: String, error: String) {
-    lock.withPresentationLock { (standardOutput, standardError) }
+  func captured() -> (
+    output: String,
+    error: String,
+    outputTruncated: Bool,
+    errorTruncated: Bool
+  ) {
+    lock.withPresentationLock {
+      (standardOutput, standardError, outputTruncated, errorTruncated)
+    }
+  }
+
+  private func append(
+    _ text: String,
+    to target: inout String,
+    byteCount: inout Int,
+    truncated: inout Bool
+  ) {
+    guard !truncated else { return }
+    guard let maximumBytes else {
+      target += text
+      byteCount += text.utf8.count
+      return
+    }
+    let remaining = max(0, maximumBytes - byteCount)
+    guard remaining > 0 else {
+      truncated = !text.isEmpty
+      return
+    }
+    let data = Data(text.utf8)
+    if data.count <= remaining {
+      target += text
+      byteCount += data.count
+      return
+    }
+    target += String(decoding: data.prefix(remaining), as: UTF8.self)
+    byteCount = maximumBytes
+    truncated = true
   }
 }
 

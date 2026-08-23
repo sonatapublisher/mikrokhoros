@@ -20,8 +20,25 @@ import Foundation
   import Darwin
 #endif
 
+/// A task-scoped product-root override for embedded, in-process hosts.
+///
+/// The ordinary CLI leaves this value nil and continues to resolve the root
+/// from the environment or the current user's home directory. An embedded
+/// host can bind one command task to an explicit product layout without
+/// mutating process-global environment variables or affecting concurrent
+/// commands that use another layout.
+public enum MikroKhorosPathContext {
+  @TaskLocal public static var canonicalRootOverride: URL?
+}
+
 public enum MikroKhorosPaths {
   public static var root: URL {
+    if let override = MikroKhorosPathContext.canonicalRootOverride {
+      return URL(
+        fileURLWithPath: override.standardizedFileURL.path,
+        isDirectory: true
+      ).standardizedFileURL
+    }
     #if os(Windows)
       let override = ProcessInfo.processInfo.environment["MIKROKHOROS_HOME"]
     #else

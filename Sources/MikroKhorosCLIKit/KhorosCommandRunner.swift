@@ -14,6 +14,7 @@
 
 import Foundation
 import MikroKhoros
+import MikroKhorosServices
 
 #if os(Windows)
   import WinSDK
@@ -261,10 +262,11 @@ private enum JSONOutput {
 
 private struct CommandReportedFailure: Error {}
 
-public enum KhorosApplication {
-  public static func main() async {
+public enum KhorosCommandRunner {
+  public static func main(webHost: (any KhorosWebServing)? = nil) async {
     let result = await CommandExecutor.execute(
-      arguments: Array(CommandLine.arguments.dropFirst())
+      arguments: Array(CommandLine.arguments.dropFirst()),
+      webHost: webHost
     )
     // A command may temporarily own process-global terminal signal sources.
     // The executor has already completed all deferred restoration at this
@@ -276,16 +278,18 @@ public enum KhorosApplication {
   @discardableResult
   public static func execute(
     arguments rawArguments: [String],
-    io: any CommandIO = StandardCommandIO.shared
+    io: any CommandIO = StandardCommandIO.shared,
+    webHost: (any KhorosWebServing)? = nil
   ) async -> Int {
-    await CommandExecutor.execute(arguments: rawArguments, io: io)
+    await CommandExecutor.execute(arguments: rawArguments, io: io, webHost: webHost)
   }
 }
 
 extension CommandExecutor {
   static func executeResolved(
     arguments rawArguments: [String],
-    io: any CommandIO
+    io: any CommandIO,
+    webHost: (any KhorosWebServing)?
   ) async -> Int {
     await CommandRuntimeIO.$current.withValue(io) {
       do {
@@ -297,11 +301,11 @@ extension CommandExecutor {
               "the interactive console requires terminal input and output"
             )
           }
-          return await InteractiveConsole.run(initialGlobals: globals, io: io)
+          return await InteractiveConsole.run(initialGlobals: globals, io: io, webHost: webHost)
         }
         if rawArguments.isEmpty {
           if io.isInteractive {
-            return await InteractiveConsole.run(initialGlobals: globals, io: io)
+            return await InteractiveConsole.run(initialGlobals: globals, io: io, webHost: webHost)
           }
           print(CommandCatalog.renderHelp())
           return 0
@@ -325,6 +329,54 @@ extension CommandExecutor {
         let configurationURL =
           configurationPath.map { URL(fileURLWithPath: $0) }
           ?? ConfigurationStore.defaultURL
+        if parsed.kind == .web {
+          let explicitPort = try arguments.value(for: "--port")
+          let useAvailablePort = arguments.flag("--available-port")
+          try arguments.requireEmpty()
+          guard parsed.globals.outputMode == nil, parsed.globals.colorMode == nil else {
+            throw MikroKhorosError.command("--output and --color are not supported by web")
+          }
+          guard explicitPort == nil || !useAvailablePort else {
+            throw MikroKhorosError.command(
+              "choose either --port or --available-port, not both"
+            )
+          }
+          let portSelection: WebPortSelection
+          if let explicitPort {
+            guard let port = Int(explicitPort), (1...65_535).contains(port) else {
+              throw MikroKhorosError.command("--port must be an integer from 1 through 65535")
+            }
+            portSelection = .explicit(port)
+          } else if useAvailablePort {
+            portSelection = .available
+          } else {
+            portSelection = .stable
+          }
+          guard let webHost else {
+            throw MikroKhorosError.runtime(
+              "web.host_unavailable",
+              "the local web host is unavailable"
+            )
+          }
+          let request = WebLaunchRequest(
+            canonicalRoot: MikroKhorosPaths.root,
+            configurationURL: configurationPath.map { URL(fileURLWithPath: $0) },
+            worldSelector: worldQuery,
+            portSelection: portSelection
+          )
+          do {
+            try await webHost.serve(request) { launchURL in
+              print(launchURL.absoluteString)
+              if let port = launchURL.port {
+                print("web: ready on http://127.0.0.1:\(port)/")
+              }
+              print("web: open the launch link above; stop with Ctrl-C")
+            }
+          } catch let error as WebServingError {
+            throw webServingFailure(error)
+          }
+          return 0
+        }
         if CommandExecutor.route(for: parsed.kind) == .adapters {
           try arguments.requireEmpty()
           printAdapters()
@@ -334,18 +386,30 @@ extension CommandExecutor {
         case .configuration:
           let stateLock = try ProductStateLock()
           try ProductStateTransaction.recoverPending()
+          try WebProductStateFingerprint.validateExpected(
+            layout: ProductLayout(
+              canonicalRoot: MikroKhorosPaths.root,
+              configurationURL: configurationURL
+            )
+          )
           try configurationCommand(&arguments, url: configurationURL)
           withExtendedLifetime(stateLock) {}
           return 0
         case .runtime:
           break
-        case .help, .adapters:
+        case .help, .web, .adapters:
           preconditionFailure("immediate commands return before runtime loading")
         }
 
         let followsReports = parsed.kind == .inventoryReportsFollow
         var stateLock: ProductStateLock? = try ProductStateLock()
         try ProductStateTransaction.recoverPending()
+        try WebProductStateFingerprint.validateExpected(
+          layout: ProductLayout(
+            canonicalRoot: MikroKhorosPaths.root,
+            configurationURL: configurationURL
+          )
+        )
         let configuration = try ConfigurationStore.load(from: configurationURL)
         let agents = try AgentStore(
           maximumBytes: configuration.runtime.maximumAgentStoreBytes
@@ -386,6 +450,10 @@ extension CommandExecutor {
           try worldCreateCommand(
             &arguments,
             worldQuery: worldQuery,
+            layout: ProductLayout(
+              canonicalRoot: MikroKhorosPaths.root,
+              configurationURL: configurationURL
+            ),
             worlds: worlds,
             configuration: configuration,
             inventory: inventory,
@@ -591,6 +659,8 @@ extension CommandExecutor {
         case .help, .adapters, .configShow, .configPath, .configKeys, .configGet,
           .configSet, .configReset, .configValidate:
           preconditionFailure("command was handled before runtime loading")
+        case .web:
+          preconditionFailure("web returns before runtime loading")
         }
         withExtendedLifetime(stateLock) {}
         return 0
@@ -609,6 +679,64 @@ extension CommandExecutor {
         }
         return 1
       }
+    }
+  }
+
+  private static func webServingFailure(_ error: WebServingError) -> MikroKhorosError {
+    switch error {
+    case .alreadyRunning:
+      return .runtime(
+        "web.host_already_running",
+        "this MikroKhoros web host is already running",
+        suggestions: ["use the launch URL printed by the running host"]
+      )
+    case .invalidPort:
+      return .runtime(
+        "web.port_invalid",
+        "the selected web port is invalid",
+        suggestions: [
+          "use `khoros web --port <1-65535>`",
+          "use `khoros web --available-port` to let the operating system choose",
+        ]
+      )
+    case .portUnavailable(let port, let listener):
+      let message: String
+      let suggestions: [String]
+      switch listener {
+      case .mikroKhoros:
+        message =
+          "port \(port) is already used by a local service that identifies as MikroKhoros Web"
+        suggestions = [
+          "return to the terminal that started the existing host and use its launch URL",
+          "use `khoros web --available-port` to start a separate host",
+          "use `khoros web --port <another-port>` to choose another stable address",
+        ]
+      case .other:
+        message = "port \(port) is unavailable, usually because another local service is using it"
+        suggestions = [
+          "use `khoros web --available-port` to let the operating system choose",
+          "use `khoros web --port <another-port>` to choose another stable address",
+        ]
+      }
+      return .runtime(
+        "web.port_unavailable",
+        message,
+        details: [
+          "address": "127.0.0.1",
+          "listener": listener.rawValue,
+          "port": String(port),
+        ],
+        suggestions: suggestions
+      )
+    case .bindFailed:
+      return .runtime(
+        "web.bind_failed",
+        "the local web host could not bind its loopback listener",
+        suggestions: [
+          "use `khoros web --available-port`",
+          "check local networking and try again",
+        ]
+      )
     }
   }
 
@@ -1164,6 +1292,7 @@ extension CommandExecutor {
   private static func worldCreateCommand(
     _ arguments: inout Arguments,
     worldQuery: String?,
+    layout: ProductLayout,
     worlds: WorldCatalogStore,
     configuration: RuntimeConfiguration,
     inventory: InventoryStore,
@@ -1185,6 +1314,24 @@ extension CommandExecutor {
     try arguments.requireEmpty()
     let definition = try templateID.map { try WorldTemplateCatalog.installedCLI().resolve($0) }
     let name = suppliedName ?? definition?.id ?? "world"
+    if templateID == nil {
+      let created = try WorldCreationService(layout: layout).createBareWorldAssumingLocked(
+        name: name,
+        configuration: configuration,
+        worlds: worlds,
+        inventory: inventory,
+        treasuryAuthority: treasuryAuthority
+      )
+      let worldURL = try layout.worldURL(for: created.id)
+      print("world:")
+      print("  id: \(CLI.scalar(created.id))")
+      print("  name: \(CLI.scalar(created.name))")
+      print("  file: \(CLI.scalar(worldURL.path))")
+      print("  template: null")
+      print("  status: created")
+      print("  current: true")
+      return
+    }
     let document = WorldDocument(worldName: name)
     let worldURL = try WorldStore.url(for: document.worldID)
     let runtime = try WorldRuntime(
@@ -2818,6 +2965,22 @@ extension CommandExecutor {
     let restock = runtime.restockRules.values.filter { $0.inventoryObjectID == object.id }
     let listenerCount = copies.filter { runtime.listeners.contains($0.hash) }.count
     let reportCount = runtime.reports.filter { $0.inventoryObjectID == object.id }.count
+    let configuration: JSONValue
+    if WebPresentationContext.isActive {
+      let redacted = inventory.redactedConfiguration(of: object, manifest: package.manifest)
+      let fieldIDs = Set(package.manifest.management.fields.map(\.id)).union(redacted.keys).sorted()
+      configuration = .object(
+        Dictionary(
+          uniqueKeysWithValues: fieldIDs.map { fieldID in
+            (fieldID, .object(["present": .bool(redacted[fieldID] != nil)]))
+          }
+        )
+      )
+    } else {
+      configuration = .object(
+        inventory.redactedConfiguration(of: object, manifest: package.manifest)
+      )
+    }
     let bindingStatus: JSONValue =
       object.worldBinding.map { binding in
         let available =
@@ -2871,9 +3034,7 @@ extension CommandExecutor {
               readiness.missingCapabilities.map(\.rawValue).map(JSONValue.string)
             ),
           ]),
-          "configuration": .object(
-            inventory.redactedConfiguration(of: object, manifest: package.manifest)
-          ),
+          "configuration": configuration,
           "requested_capabilities": .array(
             object.requestedCapabilities.map(\.rawValue).sorted().map(JSONValue.string)
           ),
@@ -3146,7 +3307,7 @@ extension CommandExecutor {
       .agentProfileClear, .agentRetry, .agentShell:
       guard let selector = command.fieldValues["agent-id"]?.last else { return nil }
       return try agents.resolve(selector).worldAssignment?.worldID
-    case .help, .initialize, .status, .doctor, .configShow, .configPath, .configKeys,
+    case .help, .web, .initialize, .status, .doctor, .configShow, .configPath, .configKeys,
       .configGet, .configSet, .configReset, .configValidate, .adapters, .agentCreate,
       .agentList, .libraryFetch, .libraryList,
       .inventoryInstall, .inventoryPackageAvailable, .inventoryPackageList,
@@ -3185,7 +3346,7 @@ extension CommandExecutor {
       .worldObjectInterface, .worldObjectActionList, .worldObjectActionRun,
       .worldObjectViewList, .worldObjectViewShow, .worldObjectMove:
       true
-    case .help, .initialize, .status, .doctor, .configShow, .configPath, .configKeys,
+    case .help, .web, .initialize, .status, .doctor, .configShow, .configPath, .configKeys,
       .configGet, .configSet, .configReset, .configValidate, .adapters,
       .agentCreate, .agentList, .agentShow, .agentConfigure, .agentProfileSet,
       .agentProfileClear, .inventoryInstall, .inventoryPackageAvailable,

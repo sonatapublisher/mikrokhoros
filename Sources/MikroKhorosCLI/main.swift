@@ -13,10 +13,16 @@
 // limitations under the License.
 
 import MikroKhorosCLIKit
+import MikroKhorosWeb
 
 @main
 private enum MikroKhorosCLI {
   static func main() async {
-    await KhorosApplication.main()
+    await KhorosCommandRunner.main(
+      webHost: KhorosWebServer(
+        commandConsole: CLIWorldCommandConsoleService(),
+        webCapabilities: CLIWebCapabilityGateway()
+      )
+    )
   }
 }

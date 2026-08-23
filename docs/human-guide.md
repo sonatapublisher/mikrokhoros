@@ -1,9 +1,9 @@
 # Operating MikroKhoros
 
-MikroKhoros is operated by a human through the local `khoros` command. This guide
-explains the durable operating model, the safety boundaries around it, and where to
-find the right kind of detail. It is not a replacement for the generated command
-reference or the hands-on tours.
+MikroKhoros is operated by a human through the local `khoros` CLI or the native
+MikroKhoros Web interface. This guide explains the durable operating model, the
+safety boundaries around it, and where to find the right kind of detail. It is not a
+replacement for the generated command reference or the hands-on tours.
 
 ## Purpose and reading paths
 
@@ -20,9 +20,13 @@ different product layers relate, or which surface is appropriate for a task.
 | Threat model, authority checks, and security limits | [Security architecture](security.md) |
 | Repository setup and contribution checks | [Contributing guide](../CONTRIBUTING.md) |
 
-The current product is CLI-first. The planned `khoros web` browser interface is not
-available yet; the Hall, cross-world networking, network Wallets, external
-settlement, and blockchain consensus are not current product capabilities.
+The CLI and `khoros web` are complete local human interfaces over the same native
+service and runtime layers. The browser is organized around the product
+domains: World, Agent Manager, Inventory, Packages, Templates, and fixed Settings.
+Searchable Help contains the full command reference, while contextual action sheets
+run the exact operation selected from a domain view. The Hall, cross-world
+networking, network Wallets, external settlement, and blockchain consensus are
+outside both local interfaces.
 
 ## Operating model
 
@@ -103,21 +107,108 @@ otherwise makes no change.
 Use the generated [CLI reference](cli-reference.md) for the explicit bare-world,
 templated-world, template-status, and world-selection command forms.
 
+### Use MikroKhoros Web
+
+Run `khoros web` with or without an existing world. The native `khoros` executable
+serves MikroKhoros Web in the foreground; there is no separate `.app` or Node
+process. By default it binds exactly `127.0.0.1:47567`. Use `--port <1...65535>` for
+one exact custom port or `--available-port` to let the operating system select an
+available port atomically. The two port options are mutually exclusive, and an exact
+port never falls back silently.
+
+The command prints one short-lived local URL; open that exact URL in a browser and
+keep the command running. Use `khoros --world <selector> web` to choose an initial
+world without changing the saved current-world pointer. `web` accepts `--config` and
+`--world`, but not `--output` or `--color`; MikroKhoros Web owns its browser
+presentation. Do not replace `127.0.0.1` with `localhost` or change the bound port;
+the host rejects alternate and forwarded authorities. Ctrl-C stops the host.
+
+When an exact port is occupied, a listener that identifies as MikroKhoros Web means
+another terminal already owns that address; use its printed launch URL or start a
+separate host with `--port` or `--available-port`. An unknown local listener requires
+a different port. The marker is bounded diagnostic guidance, not authentication or
+permission to attach to another process.
+
+The World page reads the same canonical product state as the CLI. It can switch the
+route-local world, focus and follow agents, pan or zoom the map, inspect cells, open
+nested containers, review human object reports, keep local pinned shortcuts, and
+render the selected exact world object's `ObjectManagementInterface`. The World menu
+always ends with `Create new world`; it opens a compact form that commits a bare
+world, makes it current, and opens its exact route. Add agent places one existing
+user-owned identity at explicit integer coordinates without starting follow. The
+bottom command dock is an intentional bounded exact-world interface: its autocomplete
+and output are limited to the commands allowed there. Searchable Help remains the
+full command reference; domain actions open from their relevant page or selected
+entity.
+
+Use the app-view dropdown for Agent Manager, Inventory, Packages, and Templates.
+Settings is the fixed sidebar-footer control:
+
+- **Agent Manager** creates and inspects identities, configuration, profiles,
+  assignment, presence, and lifecycle equipment. Equipment links open each exact
+  held or agent-attached object's bounded interface rather than duplicating object
+  controls in this view. Non-spatial equipment keeps its canonical structural path
+  without receiving a fabricated world coordinate. Retry is shown only when an
+  active agent with a profile has a positive safe pending-work count; the page never
+  exposes the content of that queued work.
+- **Inventory** manages folders and sources. Selecting one exact source opens its
+  typed `ObjectManagementInterface` for declared fields, actions, views, and report
+  contracts. Its host controls show field type, requirements, deployability, safe
+  defaults, choices, and limits; action inputs retain declared order, type, safe
+  defaults, choices, capability requirements, scope, and structured result shape.
+  If the selected contract declares a filesystem-path field or path-typed action
+  input, its actions and views remain visible as `CLI only` contract metadata;
+  configuration-backed views are also CLI-only. The browser cannot set or unset a
+  host path, and browser mutation results show configuration-key presence rather
+  than values.
+  Deployment, reports, restocking, capabilities, and credentials remain source-level
+  actions. The source detail shows readiness requirements, exact source/fork/template
+  provenance, and exact world binding without revealing source configuration or
+  credential values. An exact target World appears only inside an action that needs
+  one.
+- **Packages** presents available, installed, and retained package records with
+  identity/version, runtime, requested capabilities, installation state, retained
+  content hash/time where applicable, source counts, and management counts. Its
+  install control is labelled **Trusted package source** and accepts only an exact
+  `builtin:<catalog-name>` source or an HTTPS URL.
+- **Templates** presents every available root and owned-object placement as Object,
+  Package, and Placement rows. Placement names the parent space and requested
+  coordinate when declared; trusted `default-khoros` currently has nine rows. Status
+  and application collect an exact World inside their action, Create World is in the
+  compact overflow menu, and the view has no persistent World picker.
+- **Settings** handles setup, status, configuration, diagnostics, adapters, and the
+  finite web-host status projection.
+
+The browser uses native domain projections and contextual action sheets. A generic
+mapping is reserved for a selected exact Inventory source or selected exact world
+object through its declared `ObjectManagementInterface`; it is not a replacement for
+MikroKhoros Web domain pages. Exact-ID inputs offer bounded completion.
+Consequential actions require a prepare/review/confirm step; prepared plans expire
+and can be used once. Credential values are write-only and cleared after submission.
+Private world inspection requires explicit reveal, export is a download, and report
+follow has explicit Start/Stop. Output is inert text and remains in page memory unless
+the selected action itself persists canonical product state.
+
 ## Worlds, templates, and agents
 
 ### Bare worlds and the trusted template
 
 Creating a world produces a bare infinite world unless the exact trusted
 `default-khoros` template is selected. The template is a host-owned composition of
-five independent canonical Inventory sources:
+five independent canonical Inventory sources. Its Templates view shows every
+concrete definition directly:
 
-| Facility source | Root coordinate | Package-owned child |
-| --- | ---: | --- |
-| Athena | `(0,-2)` | — |
-| Objective Board | `(1,-2)` | Objective Index at local `(0,0)` |
-| Library | `(-2,2)` | Library Catalog at local `(0,0)` |
-| Warehouse | `(2,2)` | Warehouse Directory at local `(1,0)` |
-| Marketplace | `(0,2)` | Merchant at local `(0,0)` |
+| Object | Package | Placement |
+| --- | --- | --- |
+| Athena | `org.mikrokhoros.athena` | world `(0,-2)` |
+| Objective Board | `org.mikrokhoros.objective-board` | world `(1,-2)` |
+| Objective Index | `org.mikrokhoros.objective-board` | Objective Board `(0,0)` |
+| Library | `org.mikrokhoros.library` | world `(-2,2)` |
+| Library Catalog | `org.mikrokhoros.library` | Library `(0,0)` |
+| Warehouse | `org.mikrokhoros.warehouse` | world `(2,2)` |
+| Warehouse Directory | `org.mikrokhoros.warehouse` | Warehouse `(1,0)` |
+| Marketplace | `org.mikrokhoros.marketplace` | world `(0,2)` |
+| Merchant | `org.mikrokhoros.marketplace` | Marketplace `(0,0)` |
 
 The facilities are authorized by exact template lineage, never by mutable names,
 coordinates, types, or package metadata. Applying the same healthy template is
@@ -144,7 +235,8 @@ separate operations. An agent identity initially lives in the user-level agent
 catalog. Its first placement assigns it to one exact world. Removing it from a world
 surface preserves that assignment and its concrete equipment so that it can re-enter
 the same world. A conflicting world selection for an assigned agent fails without
-mutation.
+mutation. Browser-side world entry is not an identity-creation operation and does not
+auto-run provider processing.
 
 Profiles can use the supported OpenAI, OpenAI-compatible, Azure OpenAI, Anthropic,
 Gemini, Ollama, LM Studio, vLLM, or role-separated coding-agent adapters. Provider
@@ -261,7 +353,10 @@ JavaScript packages remain unavailable until a sandboxed adapter exists.
 
 The normal lifecycle is:
 
-1. Install a package, then create or inspect its Inventory source.
+1. In MikroKhoros Web, install a package from **Trusted package source** using
+   an exact available `builtin:<catalog-name>` source or an HTTPS URL, then create or
+   inspect its Inventory source. The CLI's `inventory install` command separately
+   accepts its documented path-or-URL input.
 2. Configure typed fields, create credential versions through a write-only input
    path, and grant only the requested capabilities that you intend to allow.
 3. Check readiness, then deploy an independent world copy to an exact destination or
@@ -285,9 +380,12 @@ captured revision.
 
 Inventory folders organize sources for the human. They never become world containers.
 A world-bound source fork copies ordinary configuration, management state, and grants
-from its parent, has its own revision and recorded provenance, omits credential
-handles, and can deploy or restock only in its exact bound world. Moving an Inventory
-source between folders does not change its existing world copies.
+from its parent, has its own revision, records the exact parent source ID, parent
+revision, and fork time, omits credential handles, and can deploy or restock only in
+its exact bound world. The source detail independently reports every missing required
+configuration field, credential field, and requested capability; readiness is checked
+again immediately before deployment or restocking. Moving an Inventory source between
+folders does not change its existing world copies.
 
 ### Live host folders and composable objects
 
@@ -342,8 +440,10 @@ runtime's authority checks.
 
 A human listener is enabled for one exact world-object ID. Only declared reports
 emitted while that listener is enabled enter the human report store. Reports carry
-authenticated world, concrete-object, Inventory-source, revision, and package
-lineage. They remain separate from Messenger notifications and agent requests.
+an exact report ID and time, authenticated world, concrete-object, Inventory-source,
+revision, package/version, declared type, title, body, and structured payload.
+Lineage is runtime-issued rather than supplied by the report body. Reports remain
+separate from Messenger notifications and agent requests.
 
 World-scoped management views can select an exact copy without a listener. Use the
 listener, report, and view command families in the

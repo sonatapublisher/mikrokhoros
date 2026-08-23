@@ -1,8 +1,9 @@
 # MikroKhoros security architecture
 
-This document defines the implemented CLI-first trust model. Private vulnerability
-reporting is described in [`SECURITY.md`](../SECURITY.md), and product behavior is
-specified in [`design.md`](design.md).
+This document defines the implemented trust model for the CLI and complete local
+MikroKhoros Web browser interface. Private vulnerability reporting is described in
+[`SECURITY.md`](../SECURITY.md), and product behavior is specified in
+[`design.md`](design.md).
 
 ## Security objective
 
@@ -420,6 +421,266 @@ All published numeric limits are available through `khoros config`. Increasing a
 limit deliberately increases memory, provider, persistence, or execution exposure.
 Authorization and exact runtime identity checks remain independent of those values.
 
+## Loopback browser boundary
+
+`khoros web` serves MikroKhoros Web from the native `khoros` executable and binds
+only `127.0.0.1`. The default is exact port `47567`; `--port <1...65535>` selects one
+other exact port without fallback, and `--available-port` is the sole mode that
+atomically asks the operating system to select an available port. The options are
+mutually exclusive. The host exposes bounded World projections, five typed domain
+views, fixed Settings, searchable Help, and contextual capability execution. The host is
+in-process, but its presentation adapter receives allowlisted domain DTOs,
+capability descriptors, and committed results. Descriptors support contextual
+execution and Help; domain DTOs supply browser navigation and view content. The host
+atomically reserves one listener lifecycle per server instance, rejects a concurrent
+start, and releases only the resources owned by the matching lifecycle during
+shutdown. Overlapping stop paths join the same completion and return only after the
+matching lifecycle is idle; a stop that wins before launch suppresses the callback.
+The listening bootstrap does not opt into cross-process address reuse. Stable and
+explicit-port startup never probes for a replacement port. After a bind collision,
+a bounded loopback-only `HEAD /` probe may use
+`x-mikrokhoros-listener: khoros-web/1` to distinguish a reachable MikroKhoros Web
+listener from another reachable local service. This marker is spoofable diagnostic
+metadata, not identity, authentication, authorization, or permission to reuse an
+existing session. A failure without a confirmed reachable listener stays a generic
+bind failure and does not disclose platform error details.
+The host does not invoke a shell or CLI subprocess, deserialize live domain
+objects into ordinary browser responses, or expose canonical filesystem paths or
+treasury key material. Ordinary projections omit credential handles, event journals,
+model histories, private object state, and administrative snapshots. Two deliberately
+private operations are explicit exceptions: `world inspect` reveals a bounded
+administrative snapshot in the current local tab, and `world export` downloads the
+private world journal. The export can contain histories, object private state, and
+opaque credential handles, but never credential values or treasury signing bytes.
+The UI labels these operations private, requires an explicit Reveal or Download,
+clears revealed text on close/navigation, and warns the human to protect the
+downloaded file.
+
+Static files are a fixed bundled allowlist and contain no product data. Every data
+route requires an opaque local session. After the listener is live, the command
+prints a cryptographically random bootstrap value in the URL fragment. Browser code
+removes the fragment from history before exchanging it once, within its short
+lifetime, for a nonpersistent cookie with `Path=/`, `HttpOnly`, and
+`SameSite=Strict`. The session-cookie name is derived from the actual bound loopback
+port, so simultaneous `127.0.0.1` hosts cannot attach to one another's cookie. Bootstrap
+and session values are not placed in local storage, browser responses, logs,
+referrers, or subsequent URLs.
+
+The root document is the sole static resource that accepts a route-hint query on
+`GET` or `HEAD`. Its exact allowlist is `view`, `world`, `container`, `focus`,
+`agent`, `source`, `folder`, `package`, `version`, `template`, and `setting`; each
+key is single-valued and bounded. The hint only selects a client projection after the
+normal session exchange and never authorizes data access or mutation. All other
+static assets reject queries. API routes keep their endpoint-specific query contracts,
+including query-free mutation routes. This permits an active-session same-origin
+MikroKhoros Web deep link or reload without broadening the resource or API surface.
+
+Local storage is limited to bounded presentation preferences: exact-world pin IDs,
+latest-seen report IDs, My-view container/camera/zoom/keyboard state, last
+inspector-tab IDs, and a clamped expanded-sidebar width. The client validates every
+value before use. These values are untrusted rendering hints and never authorize a
+route, selector, object, or mutation. Per-view and per-entity scroll positions remain
+page-memory state and never enter local storage.
+
+The server validates the exact printed loopback Host and the exact same-origin Origin
+for each request. `localhost`, a changed port, comma-joined Hosts, and forwarded-host
+aliases are rejected; forwarded headers never override the socket authority. Every
+state-bearing endpoint requires the session and returns restrictive CSP,
+no-referrer, MIME-sniffing, frame, permission, origin, and no-store headers.
+The singular World/object projections accept GET or HEAD only. The two World command
+routes are authenticated POST-only endpoints with no query component.
+
+Authenticated `POST /api/v1/worlds` creates a bare world through one narrowly scoped
+mutation route. It rejects a query, transfer encoding, inconsistent content length, a
+missing or non-exact `application/json` content type, a body above 512 bytes, duplicate
+or unknown JSON members, non-string values, and any name outside the canonical one-line
+1–128 character contract. It never echoes a rejected value or internal error. The client
+submits once, prevents concurrent submission, and does not automatically retry.
+
+Authenticated `GET /api/v1/world-agents` is the World-actor query route in this slice.
+It requires a `world` query, the exact loopback Host, and the local session; any
+supplied Origin must match the exact loopback origin.
+Malformed selectors, missing/invalid `world` values, and request-size abuse return
+generic errors.
+
+Authenticated `POST /api/v1/world-agents` adds an existing user-owned identity to one
+exact world at integer coordinates. It requires only `{worldID, agentID, x, y, autoAdapt}`
+with exact, typed JSON and no extra fields, and enforces a 1 KiB body ceiling. It
+uses a recoverable product transaction; the canonical treasury authority remains
+server-side when first entry requires Wallet registration. It returns generic status responses:
+
+- success: 201;
+- validation: 400;
+- conflict: 409; and
+- transient infra: 503.
+
+It rejects malformed selectors, conflicts, and malformed coordinates with the same generic
+error envelope. It does not create identities, does not auto-run provider processing, and
+does not alter focus/follow state. A successful call returns only a bounded placement
+result, after which the client reloads the authoritative World projection.
+
+Authenticated `GET /api/v1/agents`, `/inventory`, `/packages`,
+`/templates`, and `/settings` are bounded read-only domain projections. They acquire
+the product lock after pending-transaction recovery and accept no browser-supplied
+product root, configuration, CLI global, or authority context. Agent data contains
+only public identity/assignment/presence, visual, and exact equipment-link summaries;
+it excludes profiles, messages, balances, private object state, and object content.
+The agent retry affordance derives only from a bounded content-free pending-work count
+for an exact active agent with a profile; it does not expose or interpret queued
+work. Inventory contains folders, source summaries, readiness, field-presence
+metadata, immutable fork/template provenance, and visual identity. Its selected exact
+source management contract is bounded declarative metadata: field kind/requiredness/
+deployability/safe default/choices/limits; ordered action input types/defaults/
+choices/mutation/capability/scope/result declarations; view source/scope/result
+declarations; and report type/payload-limit/schema declarations. The source's actual
+configuration values, credential handles or values, and management state remain
+absent. Packages contain catalog and retention metadata: identity/version/display
+summary/runtime/requested capabilities, installation state, retained content hash and
+time when available, source counts, and management counts. Templates contain trusted
+definitions and bounded root/owned-object rows with their package, requested parent
+space, and coordinate. Settings contains explicitly typed non-secret runtime values,
+product counts, ready/current-world status, current-world summary, and adapter
+declared/detected booleans. None of these routes expose private world state, history,
+treasury material, administrative snapshots, local executable paths, raw persistence
+files, or executable capability closures. Projection data is inert presentation data
+and never authorizes a mutation.
+
+Authenticated `GET /api/v1/object` resolves only one exact non-world object inside
+one exact World. Placed, nested, directly held, and agent-attached objects share the
+same endpoint. Non-spatial objects expose no fabricated coordinate; the response
+contains a bounded structural path and runtime-derived move availability. The host
+rebuilds the base summary from allowlisted identity, location, lineage, capability,
+and function metadata, then applies the same bounded management-contract projector
+used by Inventory. Raw declarative actions, private state, public-data blobs,
+configured values, credentials, and unsafe path or secret defaults are excluded.
+
+The World command routes accept exactly the primitive JSON object `{worldID, source}`.
+They reject duplicate or unknown members, a query, transfer encoding, inconsistent
+content length, a missing or non-exact `application/json` content type, unauthenticated
+or cross-origin requests, and malformed IDs. The body is capped at 8 KiB and the
+source at 4,096 characters; newlines and NULs are rejected. Completions are capped at
+eight catalog-derived suggestions. Execution captures standard output and standard
+error through an in-process, noninteractive `CommandExecutor` transcript with each
+channel capped at 65,536 bytes. The host never invokes an operating-system shell or
+subprocess.
+
+The command policy is exhaustive and deny-by-default. Only `help`, `world show`,
+`world template status`, `world object list`, `world object view list`, and
+`world object move` are callable from the World page. Management interfaces and
+action metadata are available only through the bounded typed object projection, not
+through raw command output. A new `CommandKind` remains unavailable until the
+explicit policy switch is reviewed. Global options in the browser source are
+rejected; the service injects configuration, human output, no color, and the exact
+selected World itself. The request World ID must exist in the catalog and have its
+world file, and `world show` must resolve any supplied selector to that same ID. This
+prevents a route, selector, or stale browser request from crossing the selected-world
+boundary.
+
+One World response retains at most 128 picker entries, 128 other-agent rows, and 256
+objects from the selected space. Reports are newest-first and share an aggregate
+256 KiB encoded budget in addition to their configured count limit. Agent-selection
+options use a deterministic caller-clamped prefix with a hard maximum of 256.
+
+The browser keeps a bounded FIFO queue in memory and does not retry failed, rejected,
+or busy commands. The service allows one in-flight execution and returns a generic
+`409` while another command is running. The browser renders returned command, output,
+and error strings with text nodes only; the transcript is inert, memory-only state and
+is not written to console history, local storage, a world document, logs, or URLs. A
+successful `world object move` returns a refresh flag, and only then does the client
+reload the authoritative projection for that same selected World. Read-only console
+commands do not mutate or refresh world state.
+
+The web capability route is a separate deny-by-default boundary around the
+complete command catalog. `GET /api/v1/web/capabilities` returns only bounded
+execution and Help metadata: canonical paths, summaries, scope, interaction mode,
+field syntax/cardinality, safe defaults, completion names or fixed choices, refresh
+targets, enabled state, and test references. It does not return configuration paths,
+environment values, credentials, product bytes, histories, or executable closures.
+Descriptor data supports contextual execution and Help. The registry switch is
+exhaustive over `CommandKind`, so a new command cannot compile without an explicit
+safe execution and Help policy. `inventory show` is a disabled reference because its
+terminal output contains configured source values. `inventory copies show` and
+`world object show` are disabled references because their terminal output contains
+raw administrative object snapshots. Crafted execution requests are rejected before
+dispatch; bounded domain and exact-object projections are the browser representation
+for those targets.
+
+Web capability POST bodies are capped at 64 KiB. A recursive JSON validator rejects
+literal and escaped duplicate keys before Foundation materializes nested objects.
+Each endpoint then requires exact top-level keys, bounded field-name to string-array
+maps, one capability ID, and an optional exact world ID. Browser requests cannot
+supply configuration, output, color, root, session, or other CLI globals; the host
+injects those from the authenticated launch context. Filesystem completion is empty.
+The install control is labelled **Trusted package source** and accepts only an exact
+trusted `builtin:<catalog-name>` source or an HTTPS URL with a host and no user
+information; every redirect target must satisfy the same browser policy before it is
+followed. Browser-supplied host paths remain unavailable. If an exact management
+contract declares any `path` field or path-typed action input, all actions and views
+in that contract are CLI-only; a configuration-sourced view is always CLI-only. The
+gateway independently resolves the selected exact contract and rejects path-field
+set and unset requests as well as action/view execution across that boundary.
+Path-free typed actions and non-configuration views remain available. The gateway
+resolves a built-in source through the trusted catalog rather than treating its
+label or suffix as filesystem input.
+
+Gateway execution establishes a scoped browser-presentation context. When an
+allowed command prints an Inventory object, every configuration entry is represented
+only as `{present: Bool}`. No configured secret or non-secret value enters an
+ordinary browser result. The context ends with that request; local terminal output
+retains the full human-management presentation.
+
+Finite execution is serialized and captured in process, with stdout and stderr
+sharing one aggregate 256 KiB UTF-8 budget. Only catalog fields whose history policy
+permits storage enter the inert command preview; any value containing whitespace or
+shell-active punctuation is replaced wholesale with `value_omitted`. Clipboard copy
+contains result text only, never the command preview. Returned output is inserted as
+inert text. Private viewers require an explicit reveal and are cleared on close or
+navigation. An accepted private export uses a bounded host-chosen filename and an
+ephemeral browser object URL only when its complete output fits the aggregate finite
+budget. Command failure or truncation returns an ordinary rejected bounded JSON
+result with no attachment; the human can use the inert local CLI command for a
+larger complete export. Host status is a finite projection of the current listener
+and cannot recursively start another host. `config path` reports only
+`[configuration file]` in the browser-safe presentation.
+
+Consequential commands use prepare/commit. A prepared plan expires after 90 seconds,
+binds to the authenticated opaque session, the normalized exact target, and a
+SHA-256 fingerprint of the persistent product state, and is consumed exactly once.
+Commit checks the fingerprint before execution and again after the command runtime
+acquires the canonical product lock; intervening product changes reject the plan.
+The gateway retains at most 128 pending plans and 256 recent consumed-plan markers.
+A request from another session cannot inspect, commit, or invalidate a plan. `--yes`
+is absent from the generated form and is injected only during a valid commit.
+Replayed, expired, changed, unknown, or wrong-session plans return bounded generic
+errors.
+
+Credential set has one host-owned write-only value capped at 16 KiB. The browser
+cannot select an environment source or inject raw stdin flags. The gateway forces
+its own noninteractive stdin mode, consumes the bounded bytes once, omits them from
+command display and result data, and the client clears the control after success,
+failure, abort, or navigation. Agent control accepts only explicit in-world actions.
+Report following is a cancellable, session-expiring, chunked exact-world stream and
+never polls the filesystem from browser code. The gateway permits at most eight
+concurrent report streams, keeps only the newest pending snapshot per stream, and
+the NIO transport awaits each flush and closes a slow consumer when the channel is
+not writable rather than accumulating outbound chunks.
+
+Each World projection request holds the product lock through pending-transaction
+recovery and projection. Persisted world credit is verified by a runtime constructed
+without a treasury authority or credential store. Unavailable or invalid material fails
+closed;
+after canonical recovery, the projection never bootstraps, repairs, signs, or
+persists world state. Package, object, and report strings are untrusted display data
+and enter the document only through typed node creation and text content.
+
+Creation validates before acquiring the product lock. The service then
+recovers pending transactions before loading exact product stores, resolves the
+canonical treasury authority, and persists the runtime-produced bare world through a
+recoverable transaction covering the Inventory document, world catalog, and new
+world file. Treasury bootstrap is a separate recoverable transaction and never
+rotates an existing authority. Browser responses contain no signer or credential
+material.
+
 ## Verification
 
 Regression coverage exercises:
@@ -452,18 +713,35 @@ Regression coverage exercises:
   bearer broadcasts, wallet lifecycle/deletion constraints, and safe projections;
 - native generic human management for Wallet, Messenger, and Objective Board,
   separation from agent-owned Wallet transfer and trusted Merchant purchase,
-  human-only objective posting, child Objective work without a payment gate,
-  package finance exclusion, message-based funding, bare-world behavior, exact
+  child Objective work without a payment gate, package finance exclusion,
+  message-based funding, bare-world behavior, exact
   template application and repair, and crash recovery;
 - catalog completeness, one-shot/form parser equivalence, Unicode cell layout,
   control-sequence escaping, safe history exclusion, pseudoterminal restoration,
   finite/streaming output equivalence, FIFO execution, and `&` pause/resume; and
 - corrupt configuration, agent catalog, Inventory, package cache, and world
-  failure.
+  failure;
+- loopback world creation and exact existing-agent entry with exact Host, Origin,
+  session, content-length, content-type, query, route-specific body bounds,
+  duplicate-key rejection, generic errors, transaction recovery, treasury stability,
+  conflict handling, and no-automatic-retry behavior;
+- World command-console allowlist enforcement, exact selected-world binding, strict
+  authenticated same-origin command endpoints, duplicate-key and body/source bounds,
+  eight-suggestion and 65,536-byte output limits, one-in-flight `409` behavior,
+  FIFO/no-retry scheduling, inert memory-only transcript handling, and successful
+  move-triggered projection reload; and
+- capability-execution denial and Help-reference coverage; required exact-world field
+  projection; global-option and cross-world rejection; built-in-or-HTTPS-only
+  package acquisition; typed domain-projection redaction; one aggregate output
+  budget; inert command previews; bounded plan and stream counts;
+  persistent-state-bound confirmation; write-only bounded secret submission; private
+  reveal; accepted and failed download transport; recursive duplicate-key and JSON
+  depth/node limits; path redaction; and authoritative domain-projection refresh.
 
-The CI matrix runs formatting, tests, release builds, and CLI smoke tests on macOS,
-Linux, and Windows. macOS and Linux additionally exercise the release executable in
-a real 120-by-30 pseudoterminal; Windows exercises its native console-event backend.
+CI runs formatting and shell-script checks on Ubuntu. It runs tests, release builds,
+and a `khoros --help` CLI smoke test on macOS, Linux, and Windows. macOS and Linux
+additionally exercise the release executable in a real 120-by-30 pseudoterminal;
+the Windows job does not run that script.
 
 ## Current limits
 
@@ -477,24 +755,21 @@ a real 120-by-30 pseudoterminal; Windows exercises its native console-event back
 - A future JavaScript adapter requires process isolation, CPU/memory/time quotas,
   filesystem and network policy, SSRF controls, audited capability handles, and
   adversarial testing.
-- The planned `khoros web` loopback interface requires origin and Host validation,
-  CSRF protection, an explicit local-session authentication decision, restrictive
-  content security policy, output encoding, and safe rendering of model, package,
-  and report content.
+- MikroKhoros Web is a local single-user browser interface, not a remote or multi-tenant
+  service. Its contextual capability execution does not broaden the authority of the
+  corresponding CLI command, capability, lock, transaction, exact-world, or
+  confirmation boundary.
 - The future Hall requires authenticated peers, message integrity, replay protection,
   per-world authorization, and cross-agent isolation.
 
 ## Research basis
 
+- [OWASP LLM01:2025 Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)
+- [OWASP LLM07:2025 System Prompt Leakage](https://genai.owasp.org/llmrisk/llm072025-system-prompt-leakage/)
 - [OWASP LLM Prompt Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html)
 - [OWASP AI Agent Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html)
-- [OWASP MCP Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/MCP_Security_Cheat_Sheet.html)
 - [OpenAI: Improving instruction hierarchy in frontier LLMs](https://openai.com/index/instruction-hierarchy-challenge/)
 - [OpenAI: Understanding prompt injections](https://openai.com/safety/prompt-injections/)
-- [OpenAI: GPT-5.6 model guidance](https://developers.openai.com/api/docs/guides/latest-model)
-- [Anthropic: Context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing)
-- [Cheng et al.: Contextual Drag](https://arxiv.org/abs/2602.04288)
-- [Lou and Sun: Anchoring Bias in Large Language Models](https://arxiv.org/abs/2412.06593)
 - [Peng et al.: RepeatLeakage](https://doi.org/10.1609/aaai.v39i25.34832)
 
 These publications inform defense in depth. Runtime validation and regression tests

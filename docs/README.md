@@ -24,15 +24,17 @@ detail when needed.
 | [`tours/`](tours/README.md) | Hands-on | Isolated progressive exercises for worlds, packages, tools, and live folders |
 | [`cli-reference.md`](cli-reference.md) | Generated | Command catalog and global CLI syntax; regenerate it rather than editing command entries by hand |
 | [`object-sdk.md`](object-sdk.md) | Canonical | Package, adapter, management, composition, and capability API guide |
-| [`design.md`](design.md) | Canonical | Implemented CLI-first runtime contract and future boundaries |
+| [`design.md`](design.md) | Canonical | Implemented runtime, CLI, MikroKhoros Web, and future boundaries |
 | [`security.md`](security.md) | Canonical | Threat model, controls, validation, and known limitations |
 
-## Planned interface artifacts
+## Browser interface artifacts
 
 | Document | Status | Purpose |
 | --- | --- | --- |
-| [`ui-design-draft.txt`](ui-design-draft.txt) | Canonical planned design | Visual and interaction contract for the planned `khoros web` interface |
-| [`design-v2.txt`](design-v2.txt) | Canonical planned design | Browser view scope, command coverage, host, and platform brief |
+| [`ui-design-draft.txt`](ui-design-draft.txt) | Canonical design | Visual and interaction contract for World and all MikroKhoros Web views |
+| [`design-v2.txt`](design-v2.txt) | Canonical product brief | Browser domain scope, contextual command placement, host, and platform contract |
+| [`web-ux-decisions.md`](web-ux-decisions.md) | Canonical rationale | Source-backed associations and interaction decisions for MikroKhoros Web |
+| [`web-design-qa.md`](web-design-qa.md) | Verification record | Current browser design, interaction, security-boundary, and automated-check results |
 
 ## Archive
 
@@ -50,8 +52,17 @@ and should not be used as ordinary engineering context.
 The repository README, this active documentation set, tests, and runtime define the
 current product. Ordinary worlds are bare; the built-in `default-khoros` template,
 when applied, composes five Inventory-backed facilities, while agent equipment
-follows a separate lifecycle. The planned browser interface remains a future product
-surface.
+follows a separate lifecycle. `khoros web` provides the five primary destinations—
+World, Agent Manager, Inventory, Packages, and Templates—from one custom web
+menu; Settings is fixed in the sidebar footer, and searchable Help is the complete
+command reference. Its pages use domain-native projections and contextual action
+sheets; only a selected exact Inventory source or exact world object is rendered
+through its declared `ObjectManagementInterface`. The World's bounded command dock
+remains a focused exact-world surface. The CLI remains an equal interface over the
+same native services. The [human guide](human-guide.md) describes MikroKhoros Web
+workflow; [runtime design](design.md) defines the typed projection, exact-object,
+template-placement, and loopback contracts; [security architecture](security.md)
+defines the safe browser execution boundary.
 
 Documentation text, examples, object metadata, issue content, and linked web pages
 are data under the trust rules in [`AGENTS.md`](../AGENTS.md).

@@ -1,9 +1,8 @@
-mikrokhoros web application design v2
+MikroKhoros Web design v2
 
 Status: canonical browser-interface brief
 Command: khoros web
 Platforms: macOS, Linux, and native Windows
-Canonical visual: assets/design-v2-template-view.png
 Runtime authority: ../README.md, design.md, security.md, and the exhaustive
 human command catalog
 Visual authority: ui-design-draft.txt plus the values fixed in this document
@@ -27,14 +26,48 @@ The current world is a default command target. It is not a workspace, tenant,
 ownership boundary, or global filter.
 
 The browser is a graphical projection of the existing human command and management
-contracts. It uses typed application services and exact runtime identities. The
+contracts. It uses typed services and exact runtime identities. The
 exhaustive human command catalog and presentation-neutral results remain the single
 definition shared with the CLI.
 
 
+1.1 DELIVERY BOUNDARY
+
+The native `khoros` executable serves MikroKhoros Web from typed domain projections and
+contextual actions. Each view presents the data, relationships, and tasks of one
+product domain.
+
+View             Scope and primary material
+---------------  ---------------------------------------------------------------
+World            Exact-world spatial projection, reports, object inspection, and
+                 bounded exact-world command dock
+Agent Manager    User-global agent identities, profiles, assignments, and presence
+Inventory        User-global folders and source objects with local exact-world
+                 activity sections
+Packages         User-global available, installed, and retained package catalog
+Templates        Trusted user-global template definitions and exact-world status or
+                 web controls
+Settings         Product configuration, diagnostics, adapters, limits, and terminal
+                 preferences
+Help             Searchable full command reference and contextual guidance
+
+The host exposes bounded typed read projections at:
+
+  GET /api/v1/agents
+  GET /api/v1/inventory
+  GET /api/v1/packages
+  GET /api/v1/templates
+  GET /api/v1/settings
+
+These routes project data required by their corresponding domain view. They are not
+command results and do not expose persistence files, credentials, private histories,
+administrative snapshots, or executable behavior. Mutations continue through the
+contextual action gateway described below.
+
+
 2. APPLICATION SHELL
 
-The desktop browser application has two persistent regions:
+The desktop browser interface has two persistent regions:
 
 1. a narrow left sidebar; and
 2. the active product view filling the remaining viewport.
@@ -47,7 +80,7 @@ The sidebar has three independently laid-out zones:
 
 The visible product name is always lowercase mikrokhoros.
 
-The canonical 1536 by 1024 state uses an expanded 304px sidebar. It may narrow at
+The canonical 1536 by 1024 state uses an expanded 240px sidebar. It may narrow at
 compact desktop widths or collapse to a rail. The active view uses the remaining
 width. A warm translucent tint, a narrow edge fade, and restrained backdrop blur
 separate the two regions.
@@ -72,6 +105,9 @@ the current view icon, current view label, and chevron. Opening it reveals these
 The current row has a checkmark and a restrained selected tint. The menu has 6px
 outer padding and one warm-white translucent surface. Selecting a row closes the
 menu and returns focus to the button.
+
+All five rows are enabled. Selecting one closes the menu, updates the route, and
+returns focus to the app-view button.
 
 Settings remains the fixed footer control.
 
@@ -105,6 +141,27 @@ is scoped to the submitted action and has the same meaning as a temporary --worl
 selection. It does not change the saved current-world pointer.
 
 
+2.3 CONTEXTUAL ACTION LAYER
+
+The exhaustive command catalog remains the shared CLI execution contract and the
+searchable Help reference. It is internal web infrastructure: descriptors
+bind named controls to field validation, completion, confirmation, private reveal,
+download, report following, and refresh behavior. Descriptors never supply the
+MikroKhoros Web’s primary navigation, sidebars, default selection, or page structure.
+
+Every action begins from the selected domain entity or a deliberately placed
+contextual control. A compact action sheet contains only the fields, consequence
+review, result, or stream required for that action. Fixed choices and exact-world
+selection use custom dropdowns; identity fields use bounded editable completion.
+Credential entry is write-only. Consequential changes prepare a session-bound plan
+before explicit Confirm or Cancel.
+
+Help is the one full searchable command-reference surface. It explains a command’s
+scope, arguments, and safe route to its contextual control without replacing the
+current domain view. The World map stays spatial while contextual world controls and
+the exact-object interface remain available in place.
+
+
 3. VIEW AND SCOPE MAP
 
 
@@ -120,31 +177,54 @@ Sidebar header
 World-picker behavior
   The closed button shows the viewed world name, a globe icon, and a chevron.
   The menu lists managed worlds by display name and exact ID.
+  The final row is always Create new world, including when the catalog is empty or
+  the selected projection cannot open.
   A checkmark identifies the world displayed by this browser view.
   A compact Current label identifies the saved current-world pointer.
   Choosing a world changes the viewed route only.
+  Viewing a world restores that exact world's bounded browser-local My-view state as
+  a route/camera hint, then reloads the ordinary authoritative projection.
   Make current invokes world use explicitly.
-  Create, Import, Rename, Delete, Inspect, and Export are contextual commands in
-  meaningful menu groups.
-  World creation and import follow their implemented selection semantics.
+  Create new world opens a compact custom form with one bounded name field. The
+  committed bare world becomes current and opens through its exact returned route.
+  Rename, Delete, Inspect, and Export are available through contextual World
+  controls and searchable Help.
   Destructive world deletion identifies the complete world ID and uses the
   canonical confirmation.
 
 Scrollable sidebar middle
 
 Agents
-  Show the focused agent first and the nearest active agents in the displayed
-  container until three rows are visible.
-  Distance is Manhattan distance from the focus position.
-  Equal distances sort by complete agent ID.
-  A typed application service supplies the ordered projection to the browser.
-  Other agents opens one custom dropdown containing the remaining registered agents.
-  Clicking an agent focuses it and makes the world follow that agent.
-  Manual panning suspends following until the human focuses an agent again.
+  Keep one persistent My view row separate from the exact world's active-agent
+  roster. The collapsed roster shows the first three agents in stable per-world
+  order.
+  My view is a flat, single-line row containing only its icon and visible label;
+  camera, path, coordinate, and zoom remain accessibility metadata.
+  The first exact-world projection seeds a stable agent order. Explicit agent
+  selection promotes that agent; follow refresh and My view restoration preserve
+  the surviving order. Newly visible agents append and unavailable agents disappear.
+  Explicit selection is the sole focus-changing interaction.
+  A compact `All X agents` disclosure appears after the collapsed rows, where X is
+  the exact active count. It contains no separate trailing count badge and is absent
+  when fewer than three agents are active. Expanding it replaces the collapsed roster
+  with every active registered agent in the same row treatment and stable per-world
+  order.
+  Selecting an agent from the expanded roster focuses it and starts scoped live follow,
+  refreshing through the ordinary World projection approximately every 1.8 seconds.
+  Collapsing is triggered by the same `All X agents` control and returns to the three-row
+  collapsed state.
+  Adding an agent is a separate world-agents mutation: it requires an existing
+  user-owned identity selector, integer `x` and `y`, and an explicit `auto-adapt`
+  choice, reloads the authoritative world, and preserves the prior focus/follow state.
+  Manual panning, zooming, container click, or a view-target action cancels follow
+  immediately and does not re-enable it until a new explicit focus selection.
+  Agent focus and follow preserve the saved My-view container, camera, and zoom.
+  Selecting My view restores that state while preserving roster order.
 
 Objects
   Inventory is the first 32px row and navigates to the global Inventory view.
-  Exact world-level pinned objects follow it directly in the same Objects section.
+  Exact world-level pinned objects continue immediately after it as one uninterrupted
+  Objects list.
   A pin stores only the complete world-object ID under the exact world ID.
   Clicking a pin focuses the same object and opens the same generic interface as
   direct selection in the world.
@@ -169,10 +249,14 @@ Notifications
   Opening it reveals one anchored report popover scoped to the viewed world.
   Rows retain exact report, object, Inventory, package, deployment, and world
   lineage.
+  The browser stores one exact-world latest-seen report marker and derives the unread
+  dot as a boolean. It computes N from the returned bounded recent-report list; the
+  DTO does not claim an unread count, complete history, or a global total.
   Selecting a report opens its generic human-management detail.
 
 View
   One 32px transparent-glass button and one anchored custom dropdown.
+  The closed button contains the View label and chevron.
   The menu contains zoom, recenter, visibility, display, and context-valid
   inspection actions.
   Choosing an action runs it, closes the menu, and restores focus to View.
@@ -180,27 +264,93 @@ View
 World field
   The world has no visible grid, tiles, cell borders, axes, or checkerboard.
   Empty visible positions are quiet 3px dots.
-  Objects and agents replace the dot with their deterministic SVG symbol.
+  A placed object replaces the dot with its deterministic SVG body. Agent occupancy
+  is represented entirely through the canonical cell outline, fill, and held-object
+  state.
+  Every position uses a 48px base equal-width, equal-height rounded-square target.
+  Adjacent cells touch without spacing. Zoom scales the complete target, dot,
+  identity shape, outline, count, and label together.
+  Empty and ordinary nonholding targets stay transparent. Hover, keyboard focus, and
+  a stationary press or hold share one brightness-only feedback treatment.
+  A placed object remains independently reachable through the cell occupant model
+  when a colocated agent's held-object silhouette owns the visible body.
   Agent identity, held-object, standing-object, and selection states use the
-  canonical symbol grammar from docs/ui-design-draft.txt.
+  canonical centered, geometrically balanced symbol grammar from
+  docs/ui-design-draft.txt. Each silhouette has its own visually balanced 24px
+  keyline. Filled area is retained as a quantitative reference, while apparent
+  extent, density, negative space, and recognition determine final size. Every true
+  filled-area centroid is normalized to (128,128).
 
-Cell hover
-  Hover or keyboard focus opens one small overlay above and to the right of the
-  pointer or focus target.
-  The overlay contains local grid coordinates and one short information line.
-  It uses 8px padding, system monospace for coordinates, system sans for the
-  description, and a warm-white translucent surface.
+Cell click and drag arbitration
+  A single click on any world cell opens one anchored custom cell dropdown. Empty
+  cells expose their coordinate and Empty position; occupied cells expose their
+  occupants and context-valid actions. For a generic container, defer that menu by
+  200ms so a valid double-click on the same object can cancel it and navigate
+  directly into the container.
+  When an object-bearing cell dropdown is open, the next primary click on an empty
+  World cell closes that dropdown and is consumed. A later activation opens the
+  empty-cell dropdown normally. Crossing the drag threshold still proceeds into
+  ordinary World panning.
+  Drag capture for world interaction begins only after pointer travel crosses 6px.
+
+Cell detail
+  Hover or keyboard-cell focus updates the Agent/Object information panel only.
+  Agent and Object each expose `Press C to keep detail`; `C` keeps the current or
+  most recently pointed-to coordinate after pointer exit and changes the control to
+  `Press C to follow hover`. Pressing it again resumes live pointer/keyboard context.
+  Kept context is page-memory state and clears on exact World or container change.
+  Click, Enter, or Space opens the anchored custom cell dropdown for both empty and
+  occupied cells.
 
 Object selection
   Selecting an exact object opens the generic object human interface.
+  The open inspector tab is remembered per exact object per exact world and restored
+  when returning to that same object view.
   The world remains visible and visually recedes behind the interface.
 
-World capability coverage
-  World catalog operations; exact world show/inspect/export; concrete object
-  list/show/interface/action/view/move; exact-world objectives and Library
-  operations; concrete listeners, reports, copies, restock state, and template
-  application state are reached from the world, an exact object, or a corresponding
-  contextual action.
+World action placement
+  World catalog controls, exact-world inspection/export, selected concrete-object
+  actions, notifications, and template status/application are available only from
+  their relevant World or object context. The map remains the World work region.
+  Help documents the full command set, while the immediate dock is limited to the
+  exact-world allowlist below.
+
+World command console
+  A floating dock sits at the bottom of the World field. The monospace command input
+  is a separate 40px-high capsule from the command-information panel above it. The
+  panel is resizable from a centered pill handle on its top edge and minimizable.
+  Its selected body scrolls internally. Its horizontal tabs are Output, Agent, and
+  Object, with short vertical separators between them. Visible `1`, `2`, and `3`
+  hints switch those tabs outside editable fields and modal/menu surfaces, expanding
+  the information panel without moving focus.
+  Output holds the bounded command transcript. Agent and Object show the context
+  selected by hovering a World cell, and that context appears exclusively in the
+  panel while the World field keeps quiet target feedback. Context is exact-world
+  scoped and clears when the selected World or shown container changes. Their `C`
+  control keeps or releases the selected coordinate independently of pointer exit.
+  Cell menus and object interfaces require activation.
+  Autocomplete is capped at eight suggestions from the canonical catalog and its
+  bounded completion providers. Syntax styling is bounded inert text rendering.
+  Entries are FIFO and nonretrying, with one command in flight. The transcript is
+  memory-only, bounded, and inert; it is not browser persistence or CLI history.
+  The host uses the same catalog, tokenizer, parser, and executor as the CLI and
+  never invokes an operating-system shell or subprocess.
+
+  The exhaustive deny-by-default immediate-console allowlist is:
+
+    help
+    world show
+    world template status
+    world object list
+    world object interface
+    world object action list
+    world object view list
+    world object move
+
+  Every request carries the exact World route selection. The host validates that
+  world ID against the catalog and file, injects its global context, and rejects a
+  `world show` selector that resolves elsewhere. A successful `world object move`
+  reloads the authoritative projection for that exact World.
 
 
 3.2 AGENT MANAGER
@@ -218,11 +368,12 @@ Agent detail
   Complete agent ID.
   Name and creation metadata.
   Maximum actions per response.
-  Initial/current coin presentation.
-  Attached AI profile and adapter metadata.
+  AI-profile presence.
   Exact assigned-world link when assigned.
-  Active-world presence, structural path, hand, backpack, and genesis equipment
-  when concrete state exists.
+  Active-world presence and structural path when concrete state exists.
+  Read-only lifecycle equipment and four holding-slot links with primary holding
+  state. Each link opens that exact concrete object’s object interface in its
+  assigned world.
   Unread or retryable notification state.
 
 Actions
@@ -232,17 +383,16 @@ Actions
   Remove an active agent from its assigned world surface.
   Set, replace, or clear its AI profile.
   Retry the latest eligible unread notification.
-  Submit a Messenger request with body, sender, thread, and priority.
-  Submit the built-in orientation request.
-  Grant finite or infinite coin.
   Open the bounded in-world action controller for the assigned agent.
 
 The Add to world form contains an explicit World field. An assigned agent shows its
 fixed exact-world link; its commands follow that assignment and cannot be redirected
 by a free world switcher.
 
-Equipment is an exact read-only view of agent lifecycle state. It is not an equipment
-editor.
+Agent Manager presents identity, profile, assignment, presence, and lifecycle-link
+information. Equipment is an exact read-only lifecycle projection whose links open
+the appropriate object interface. Wallet and Messenger interaction lives with the
+selected object and its runtime-owned management interface.
 
 Provider attachment can trigger immediate work when unread input exists. The UI
 shows committed profile state separately from the resulting provider task and world
@@ -267,8 +417,9 @@ Source detail
   Package ID, version, and content hash.
   Folder and fork provenance.
   Optional exact-world binding.
-  Readiness, missing fields, missing credential handles, and missing grants.
-  Redacted configuration.
+  Readiness, missing configuration fields, missing credential fields, and missing
+  grants.
+  Declared configuration and credential field presence.
   Requested and granted capabilities.
   Runtime-owned base management interface.
   Package-declared fields, actions, views, and report definitions.
@@ -310,12 +461,12 @@ Sidebar
 
 Package detail
   Package ID and semantic version.
-  Content hash, runtime kind, installation policy, package graph, requested
-  capabilities, management schema, agent/object function declarations, and retained
-  usage.
+  Display name, summary, runtime kind, requested capabilities, installation state,
+  management field/action/view counts, and retained usage. Retained versions also
+  show their content hash and installed timestamp.
 
 Actions
-  Install from a bounded local file or validated URL.
+  Install a built-in package or acquire one validated HTTPS package source.
   Show available first-party packages.
   List and inspect installed versions.
   Remove one visible catalog entry using the canonical confirmation.
@@ -340,6 +491,8 @@ Template definition
   Canonical source roles.
   All template-deployed objects as individual rows.
   Parent space and requested local coordinate for every object.
+  A neutral Phosphor Cube for every declaration; deterministic MikroKhoros identity
+  begins only with the instantiated object.
 
 default-khoros objects
 
@@ -393,7 +546,7 @@ Sections
 Product
   Initialization state and khoros init.
   Selected/current-world pointer.
-  Product status.
+  Ready/current-world product status.
 
 Diagnostics
   khoros doctor across global state and every managed world.
@@ -424,8 +577,9 @@ Advanced
 
 4. GENERIC OBJECT HUMAN INTERFACE
 
-Every package and concrete object uses one host-owned interface shell. The selected
-entity supplies structured management metadata and values.
+Every selected Inventory source and selected concrete world object uses one host-
+owned interface shell. The selected entity supplies structured management metadata
+and values.
 
 The shell contains:
 
@@ -465,8 +619,13 @@ Supported management field controls:
   boolean    switch
   choice     custom dropdown
   url        validated URL field
-  path       human-only path field
+  path       CLI-only declared field; the browser displays its contract but accepts no value
   secret     write-only secure field
+
+A contract containing any declared `path` field or `path` action input remains
+visible as contract metadata, but all of its actions and views are labelled CLI
+only. A view sourced from configuration is also CLI only. The browser never offers
+set or unset controls for the path field itself.
 
 Package content supplies bounded structured management data. The host supplies all
 controls, layout, icons, encoding, focus behavior, validation presentation,
@@ -475,6 +634,10 @@ confirmation behavior, and exact service calls.
 The interface is a centered substantial surface with 32px outer corner radius. It
 uses spacing, alignment, tint, and blur rather than a straight internal divider.
 All interface buttons and selectable navigation rows are 32px high.
+
+Browser-local presentation preferences are limited to bounded exact-world pin IDs,
+latest-seen report IDs, My-view state, and last inspector tabs. Every stored value is
+validated when used and remains outside product authority and persistence.
 
 
 5. VISUAL SYSTEM
@@ -531,27 +694,59 @@ Monospace
 - Every routine button, dropdown trigger, selectable sidebar row, tab, and compact
   action is exactly 32px high.
 - Every routine icon-only control is 32px by 32px.
-- Capsule controls use the 48px corner-radius token.
+- Every standalone action button, pressed toggle, modal or dialog control, icon
+  control, and closed custom-dropdown or selector trigger is exactly 32px high and resolves the
+  `--pill-radius` token as a complete smooth capsule. Transparent Project Genie construction remains
+  limited to its designated chrome controls; other standalone capsules retain their
+  own documented surface treatment.
+- Repeated sidebar rows, menu items, report rows, tabs, and world cells use flat row
+  or map treatments rather than the Genie surface.
+- The domain search control is a complete 32px capsule. Ordinary editable inputs and
+  content surfaces retain the local 12px treatment unless they are a closed selector
+  trigger.
 - Major overlays use a 32px radius.
+- The World command-information panel uses a 24px radius.
 - Menus and compact floating surfaces use a 16px radius.
+- Every non-circular `border-radius` declaration resolves through
+  `--smooth-corner: superellipse(1.78)`, including `--pill-radius` capsules and
+  clipped transparent-glass layers. Numeric radius tokens remain authoritative.
+  The three semantic circle/dot selectors explicitly resolve through `round`; the
+  original Identity Shape SVGs and masks retain their authored geometry.
 - Standard pane padding is 8px.
 - Reading-heavy content may use 12px.
 - The spacing scale is 4, 6, 8, 12, 16, and 24px.
-- Icons are 14 to 16px with round caps and joins.
+- Interface icons are vendored Phosphor Bold at 14 to 16px. Identity silhouettes
+  use the original project-owned MikroKhoros Identity Shapes set.
+- Search fields use the plain Phosphor Magnifying Glass; the Plus and Minus variants
+  are reserved for explicit World zoom controls.
 - Controls grow horizontally for content and retain their 32px height.
+- Clipped 32px glass controls use a 20px label line box so rounded Google Sans Flex
+  descenders remain complete while one-line ellipsis behavior is preserved.
 - Headers are content-tight with 6px vertical inset around 32px controls.
 - Nested cards are replaced by alignment, spacing, and subtle tonal regions.
 
+Shared web workspace frame
+  All non-World web views share `--workspace-column-max: 1080px` and
+  `--workspace-inline-gutter: clamp(18px, 2.4vw, 36px)`. Their header, transient
+  transient state, and scrollable content resolve to the same left and right
+  edges. Compact views use the identical frame rather than an independent inset or
+  narrower column. Detail sections use a 16px section cadence, 8px between paired
+  fields or controls, and 6px between a label and its immediate supporting content.
 
-5.4 TRANSPARENT-GLASS CONTROL
+
+5.4 DESIGNATED TRANSPARENT-GLASS CONTROLS
+
+This treatment is limited to designated standalone triggers and actions. It does
+not apply to navigation rows, menu items, report items, tabs, passive badges,
+floating surfaces, or world-cell targets.
 
 Rest
   Transparent surface.
   Dark label.
-  Light upper-left rim.
-  Warm-dark lower-right rim.
-  Restrained one-pixel inner highlight.
-  Approximately 20px backdrop blur.
+  Approximately 20px backdrop blur clipped by the complete capsule.
+  A diffused one-pixel light inset reflection plus two masked, light-only directional
+  edge layers at the 32px control scale.
+  The canvas remains visible through the entire resting surface.
 
 Hover
   #FFFFFF2E translucent wash.
@@ -569,20 +764,30 @@ Controls use no conventional drop shadow.
 
 - Custom rendered throughout.
 - One 32px trigger opens one anchored surface.
-- Surface-primary with 16px radius, directional rim, and 6px padding.
-- Rows are 32px high.
+- Surface-primary with 16px radius, a light-only perimeter, and 6px padding.
+- Rows are flat and 32px high; they have no clipped blur or reflected capsule edge.
+- Text-only choice rows use a flexible label track followed by optional trailing
+  state, so labels remain complete without reserving a leading identity-icon column.
 - Current selection uses a checkmark plus selected tint.
 - Escape and outside click close the surface.
 - Selection closes the surface and restores focus.
 - Only one dropdown, report popover, or object inspection popover is open at a time.
 - Menus scroll internally after eight visible rows.
+- Menus start-align to their closed trigger unless an explicit end-aligned overflow
+  action calls for the opposite edge. A trigger-local menu fits its content within
+  the available pane and uses an opaque enough surface to keep underlying rows from
+  competing with its labels.
 - Dividers appear only between distinct command groups and remain short and soft.
 
 
-6. COMMAND-COVERAGE MAP
+6. CONTEXTUAL ACTION AND HELP MAP
+
+This map binds the existing command contract to a named domain control or Help
+reference while keeping navigation organized around product domains.
 
 Application and settings
   help                         contextual help generated from CommandCatalog
+  web                          Settings > Product / local host status
   init                         Settings > Product / first-run setup
   status                       Settings > Product
   doctor                       Settings > Diagnostics
@@ -596,15 +801,13 @@ Agents
   agent profile set/clear
   agent retry
   shell
-  message send/orient
-  coin grant
   These belong to Agent Manager and exact-agent action forms.
 
 World facilities
-  objective post/list
   library fetch/list
-  These are exact-world operations exposed through the corresponding exact facility
-  interface and runtime-owned management controls.
+  These appear from the selected Library or matching World context. Package-defined
+  facility operations continue to come from the exact object’s structured management
+  interface.
 
 Packages
   inventory install
@@ -619,7 +822,10 @@ Inventory sources
   inventory action list/run
   inventory view list/show
   inventory deploy
-  These belong to Inventory and its generated object interfaces.
+  These belong to Inventory and a selected source’s generic object interface.
+  `inventory show` remains a disabled CLI reference because its terminal result
+  contains configured source values. The browser uses the bounded Inventory
+  projection, and allowed mutation results expose configuration-key presence only.
 
 Inventory folders
   inventory folder create/list/show/rename/move/delete
@@ -632,10 +838,14 @@ Exact-world Inventory descendants
   inventory restock create/list/show/set/run/delete
   These belong to one source's labelled World activity, an exact world object, or
   the World notification/object interface.
+  `inventory copies show` remains a disabled CLI reference because its terminal
+  result contains a raw administrative object snapshot. The browser uses the bounded
+  exact-object projection for the selected copy.
 
 World catalog and templates
-  world list/use/create/rename/delete/import
+  world list/use/create/rename/delete
   These belong to the World picker and world-management actions.
+  Bare world create is also the picker's permanent final action.
   world template list/show
   These belong to Templates.
   world template status/apply
@@ -647,21 +857,27 @@ Exact world and objects
   world object action list/run
   world object view list/show
   world object move
-  These belong to World and the generic exact-object interface.
+  These belong to contextual World controls and the generic exact-object interface.
+  `world object show` remains a disabled CLI reference because its terminal result
+  contains a raw administrative object snapshot. The browser uses the bounded
+  exact-object projection instead.
+  The immediate World command console exposes only `help`, `world show`,
+  `world template status`, `world object list`, `world object interface`,
+  `world object action list`, `world object view list`, and `world object move`.
+  Help remains the full command reference.
 
 
 7. WEB HOST AND PLATFORM CONTRACT
 
 khoros web starts the local browser host.
 
-The browser transport is a thin adapter around typed application services. Domain
+The browser transport is a thin adapter around typed services. Domain
 behavior stays independent of HTTP routing and frontend presentation.
 
-The host transport stays dependency-free and keeps a small platform-neutral Swift
-boundary. Native Windows, macOS, and Linux behavior is verified without binding
-product semantics to a server framework. Any future transport dependency requires
-license review, a concrete product need, Swift-version compatibility, and passing
-macOS/Linux/Windows CI before adoption.
+The current host transport uses SwiftNIO 2.101.3 through a small platform-neutral
+Swift adapter. Product semantics remain in presentation-neutral services.
+Transport dependency changes require license review, a concrete product need,
+Swift-version compatibility, and passing macOS/Linux/Windows CI before adoption.
 
 Host requirements:
 
@@ -681,6 +897,39 @@ Host requirements:
 The Windows build is a native Swift executable and uses no Unix shell or Darwin-only
 runtime path.
 
+The immediate World command routes are POST-only, same-origin,
+session-authenticated, and query-free. Each accepts only `{worldID, source}` with
+strict primitive JSON, exact content type, duplicate-key rejection, an 8 KiB request
+bound, and a 4,096-character source bound. Each captured output channel is capped at
+65,536 bytes and completion at eight suggestions.
+
+The web capability transport exposes authenticated catalog, completion,
+finite execution, prepare/commit, secret, agent-controller, and report-follow
+routes. Bodies are capped at 64 KiB, reject duplicate keys recursively, and accept
+only one operation ID, declared string-array fields, an optional exact world ID, and
+the endpoint's typed private value. The host injects layout, configuration, output,
+color, session, and exact-world globals. Stdout and stderr share one aggregate
+256 KiB finite-output budget. Confirmation plans are session-bound,
+persistent-state-bound, count-bounded, expire after 90 seconds, and are single-use.
+Credentials use forced write-only standard input with a 16 KiB gateway ceiling.
+Report follow is a cancellable session-expiring chunked exact-world stream with an
+eight-stream cap, newest-snapshot buffering, and awaited transport writes. Accepted
+private exports become attachments only when the complete output fits the aggregate
+finite budget; command failure or truncation stays an ordinary rejected JSON result.
+A busy execution returns `409`; the browser never retries. Successful mutations
+refresh the descriptor's authoritative targets.
+
+The five authenticated web projection routes are read-only and serve bounded
+typed domain data for Agent Manager, Inventory, Packages, Templates, and Settings.
+They recover pending product transactions and acquire the canonical product lock
+before projecting their domain. They do not accept browser-supplied product paths,
+configuration, session globals, or world authority. Settings may expose typed
+non-secret runtime configuration values; Inventory exposes configuration and
+credential field presence only. The response schema excludes credential values and
+handles, local executable paths, raw persistence documents, private histories,
+administrative snapshots, and capability closures. A view refresh always reloads its
+authoritative projection rather than parsing a prior action result as domain state.
+
 
 8. CANONICAL DESKTOP STATES
 
@@ -691,7 +940,7 @@ Sidebar:
   mikrokhoros
   World app-view button
   Genesis world picker
-  Agents: Sol, Builder, Archivist, Other agents
+  Agents: Sol, Builder, Archivist, All 3 agents
   Objects: Inventory, then exact pinned objects
   Settings fixed at the bottom
 
@@ -699,7 +948,7 @@ Main:
   complete CLI structural path
   gridless dot-and-symbol world
   one-line Notifications control immediately left of View
-  cursor-adjacent coordinate/information hover layer
+  cell-anchored custom dropdown opened by activating any occupied or empty position
   generic object interface when an object is selected
 
 
@@ -734,15 +983,38 @@ Inventory, Packages, and Templates. The template catalog remains user-global.
 - Inventory separates global source state from labelled one-world activity.
 - Every object-specific form, action, and view comes from the typed management
   contract plus the runtime-owned base interface.
-- Every routine control is 32px high.
-- Capsules use the 48px radius token.
+- Every routine interactive target retains the 32px height.
+- Only designated standalone controls use the `--pill-radius` Project Genie capsule; repeated
+  navigation, menu, report, and tab rows remain flat.
 - Major overlays use a 32px radius.
+- Header, transient state, and content in every non-World web view share
+  the 1080px responsive workspace frame, with the 16/8/6 detail rhythm and no
+  view-local horizontal offset.
+- Every non-circular rounded surface, including `--pill-radius` capsules and
+  transparent-glass layers, uses `--smooth-corner: superellipse(1.78)`. The three
+  semantic circle/dot selectors use `round`; Identity Shape SVGs and
+  masks retain their authored geometry.
 - Typography, palette, transparent-glass rims, blur separation, gridless world,
   deterministic SVG identity, and system-monospace raw data match the canonical
   visual contract.
 - Notifications precedes View and provides a one-line ellipsized report preview.
+- The collapsed roster shows the first three active agents in stable per-world
+  order. At three or more agents, `All X agents` expands the complete roster inline
+  and carries no trailing count badge.
+- Agent follow is explicit and scoped; while selected, it refreshes approximately
+  every 1.8s without overlap, and any manual camera action exits follow immediately.
+- World-cell interactions use 200ms click/double-click arbitration and a 6px drag
+  capture threshold.
+- Empty and occupied world cells open the custom cell dropdown on click or keyboard
+  activation. Hover and keyboard-cell focus update only the Agent/Object information
+  panel and never open a menu or inspector. `C` keeps/releases that context, while
+  `1`, `2`, and `3` switch Output, Agent, and Object outside editable/modal surfaces.
+- Notifications and reports are exact-world bounded; the browser maintains a
+  latest-seen marker and computes N from the returned recent slice.
 - Complete paths and IDs remain selectable and authoritative.
-- Every implemented human command has one browser placement.
+- Help is the searchable reference for every current human command leaf. Named
+  contextual controls bind relevant commands to the selected domain entity without
+  turning the command catalog into browser navigation.
 - khoros web remains native on macOS, Linux, and Windows.
 - Browser actions preserve existing security, locking, transaction, confirmation,
   capability, credential, and error semantics.

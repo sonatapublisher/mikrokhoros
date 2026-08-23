@@ -17,6 +17,7 @@ import MikroKhoros
 
 public enum CommandKind: String, CaseIterable, Codable, Sendable {
   case help
+  case web
   case initialize
   case status
   case doctor
@@ -506,6 +507,23 @@ public enum CommandCatalog {
         kind: kind,
         path: ["init"],
         summary: "Create the complete default-khoros product setup without prompts."
+      )
+    case .web:
+      return .init(
+        kind: kind,
+        path: ["web"],
+        summary: "Start MikroKhoros Web.",
+        longDescription:
+          "Serve MikroKhoros Web from the foreground khoros process on stable loopback port 47567. Use --port for one exact custom port or --available-port to let the operating system choose an available port. This command accepts the --config and --world global options, but not --output or --color because the browser owns its presentation.",
+        examples: [
+          "khoros web",
+          "khoros web --port 47568",
+          "khoros web --available-port",
+        ],
+        fields: [
+          .option("--port"),
+          .flag("--available-port"),
+        ]
       )
     case .status:
       return .init(kind: kind, path: ["status"], summary: "Show selected product status.")
@@ -1273,7 +1291,7 @@ public enum CommandCatalog {
     }
     lines += ["", path.isEmpty ? "Command groups:" : "Commands:"]
     if path.isEmpty, !includeAll {
-      let standalone = Set(["help", "init", "status", "doctor", "adapters", "console"])
+      let standalone = Set(["help", "web", "init", "status", "doctor", "adapters", "console"])
       let groups = Dictionary(grouping: all, by: { $0.path.first ?? "" })
       for group in groups.keys.sorted() {
         let summary =

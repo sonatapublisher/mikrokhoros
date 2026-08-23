@@ -41,9 +41,31 @@ This product contains test vectors from Google's wycheproof project.
 
 ---
 
-This product contains a derivation of various files from SwiftNIO.
+This product includes SwiftNIO 2.101.3 and contains a derivation of various files
+from SwiftNIO.
 
   * LICENSE (Apache License 2.0):
     * https://www.apache.org/licenses/LICENSE-2.0
   * HOMEPAGE:
     * https://github.com/apple/swift-nio
+
+-------------------------------------------------------------------------------
+
+This product bundles Google Sans Flex font software from Google Fonts under the
+SIL Open Font License, Version 1.1. The complete license is included at
+`Sources/MikroKhorosWeb/Resources/licenses/Google-Sans-Flex-OFL.txt`.
+
+  * HOMEPAGE:
+    * https://fonts.google.com/specimen/Google+Sans+Flex
+
+-------------------------------------------------------------------------------
+
+This product bundles a selected SVG subset from Phosphor Icons Core 2.1.1,
+upstream commit `2b75f3ad12b420c9504ef05df8d2564a28f8500e`, under the MIT License.
+The subset contains interface-control icons in Bold weight. The complete license is
+included at `Sources/MikroKhorosWeb/Resources/licenses/Phosphor-Icons-MIT.txt`.
+
+  * HOMEPAGE:
+    * https://phosphoricons.com
+  * SOURCE:
+    * https://github.com/phosphor-icons/core

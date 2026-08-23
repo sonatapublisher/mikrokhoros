@@ -1176,6 +1176,23 @@ public final class InventoryStore: @unchecked Sendable {
 
   @discardableResult
   public func install(from source: String) async throws -> PackageInstallationResult {
+    try await install(
+      from: source,
+      acquisitionPolicy: ObjectPackageAcquisitionContext.policy
+    )
+  }
+
+  /// Installs one package under the supplied acquisition policy.
+  ///
+  /// The command-line default remains intentionally permissive enough for
+  /// local development. Browser-originated requests supply the stricter
+  /// browser policy through the application command boundary.
+  @discardableResult
+  public func install(
+    from source: String,
+    acquisitionPolicy: ObjectPackageAcquisitionPolicy
+  ) async throws -> PackageInstallationResult {
+    try acquisitionPolicy.validate(source: source)
     if source.hasPrefix("builtin:") {
       return try install(data: FirstPartyPackageCatalog.data(named: String(source.dropFirst(8))))
     }
@@ -1184,7 +1201,8 @@ public final class InventoryStore: @unchecked Sendable {
     {
       let data = try await ObjectPackageDownloader.download(
         remote,
-        maximumBytes: limits.maximumPackageBytes
+        maximumBytes: limits.maximumPackageBytes,
+        acquisitionPolicy: acquisitionPolicy
       )
       return try install(data: data)
     }
@@ -2272,28 +2290,111 @@ enum BoundedPackageFile {
   }
 }
 
+/// Origin-specific constraints for acquiring an object package.
+///
+/// Browser requests stay inside the MikroKhoros Web boundary: a built-in
+/// catalog name is resolved locally, while each remote request in the redirect
+/// chain must remain an HTTPS URL with a host and no embedded credentials.
+/// Command-line requests preserve the documented loopback HTTP development
+/// exception.
+public enum ObjectPackageAcquisitionPolicy: Equatable, Sendable {
+  case commandLine
+  case browser
+
+  /// Validates the source form before Inventory can interpret it as a local
+  /// file path, built-in catalog name, or remote URL.
+  public func validate(source: String) throws {
+    guard self == .browser else { return }
+    if source.hasPrefix("builtin:") {
+      let catalogName = String(source.dropFirst("builtin:".count))
+      guard !catalogName.isEmpty,
+        (try? FirstPartyPackageCatalog.manifest(named: catalogName)) != nil
+      else { throw rejectedSourceError }
+      return
+    }
+    guard let url = URL(string: source) else { throw rejectedSourceError }
+    try validate(url)
+  }
+
+  func validate(_ url: URL) throws {
+    switch self {
+    case .browser:
+      guard
+        url.scheme?.lowercased() == "https",
+        url.host?.isEmpty == false,
+        url.user == nil,
+        url.password == nil
+      else { throw rejectedURL }
+    case .commandLine:
+      let scheme = url.scheme?.lowercased()
+      if scheme == "https" { return }
+      if scheme == "http", let host = url.host?.lowercased(),
+        host == "localhost" || host == "127.0.0.1" || host == "::1"
+      {
+        return
+      }
+      throw MikroKhorosError.runtime(
+        "object_package.url_rejected",
+        "remote packages require HTTPS; plaintext HTTP is limited to loopback development",
+        suggestions: ["use an HTTPS URL or a loopback development server"]
+      )
+    }
+  }
+
+  private var rejectedSourceError: MikroKhorosError {
+    MikroKhorosError.runtime(
+      "object_package.url_rejected",
+      "browser package installation requires an available built-in package or an HTTPS URL",
+      suggestions: ["use builtin:paper or an HTTPS URL without embedded credentials"]
+    )
+  }
+
+  private var rejectedURL: MikroKhorosError {
+    MikroKhorosError.runtime(
+      "object_package.url_rejected",
+      "browser package downloads require HTTPS URLs with a host and no embedded credentials",
+      suggestions: ["use an HTTPS URL without a username or password"]
+    )
+  }
+}
+
+/// Typed acquisition context propagated by the browser command gateway.
+/// Inventory defaults to command-line behavior outside that gateway.
+public enum ObjectPackageAcquisitionContext {
+  @TaskLocal public static var policy: ObjectPackageAcquisitionPolicy = .commandLine
+}
+
 public enum ObjectPackageDownloader {
-  public static func download(_ url: URL, maximumBytes: Int) async throws -> Data {
+  public static func download(
+    _ url: URL,
+    maximumBytes: Int,
+    acquisitionPolicy: ObjectPackageAcquisitionPolicy = .commandLine
+  ) async throws -> Data {
+    let configuration = URLSessionConfiguration.ephemeral
+    return try await download(
+      url,
+      maximumBytes: maximumBytes,
+      acquisitionPolicy: acquisitionPolicy,
+      sessionConfiguration: configuration
+    )
+  }
+
+  static func download(
+    _ url: URL,
+    maximumBytes: Int,
+    acquisitionPolicy: ObjectPackageAcquisitionPolicy,
+    sessionConfiguration: URLSessionConfiguration
+  ) async throws -> Data {
     guard maximumBytes > 0 else {
       throw MikroKhorosError.configuration("maximum-package-bytes must be positive")
     }
-    try validate(url)
-    return try await BoundedPackageDownload(url: url, maximumBytes: maximumBytes).start()
-  }
-
-  fileprivate static func validate(_ url: URL) throws {
-    let scheme = url.scheme?.lowercased()
-    if scheme == "https" { return }
-    if scheme == "http", let host = url.host?.lowercased(),
-      host == "localhost" || host == "127.0.0.1" || host == "::1"
-    {
-      return
-    }
-    throw MikroKhorosError.runtime(
-      "object_package.url_rejected",
-      "remote packages require HTTPS; plaintext HTTP is limited to loopback development",
-      suggestions: ["use an HTTPS URL or a loopback development server"]
-    )
+    try acquisitionPolicy.validate(url)
+    return try await BoundedPackageDownload(
+      url: url,
+      maximumBytes: maximumBytes,
+      acquisitionPolicy: acquisitionPolicy,
+      sessionConfiguration: sessionConfiguration
+    ).start()
   }
 }
 
@@ -2302,14 +2403,23 @@ private final class BoundedPackageDownload: NSObject, URLSessionDataDelegate,
 {
   private let url: URL
   private let maximumBytes: Int
+  private let acquisitionPolicy: ObjectPackageAcquisitionPolicy
+  private let sessionConfiguration: URLSessionConfiguration
   private let lock = NSLock()
   private var data = Data()
   private var continuation: CheckedContinuation<Data, Error>?
   private var session: URLSession?
 
-  init(url: URL, maximumBytes: Int) {
+  init(
+    url: URL,
+    maximumBytes: Int,
+    acquisitionPolicy: ObjectPackageAcquisitionPolicy,
+    sessionConfiguration: URLSessionConfiguration
+  ) {
     self.url = url
     self.maximumBytes = maximumBytes
+    self.acquisitionPolicy = acquisitionPolicy
+    self.sessionConfiguration = sessionConfiguration
   }
 
   func start() async throws -> Data {
@@ -2317,7 +2427,7 @@ private final class BoundedPackageDownload: NSObject, URLSessionDataDelegate,
       lock.lock()
       self.continuation = continuation
       lock.unlock()
-      let configuration = URLSessionConfiguration.ephemeral
+      let configuration = sessionConfiguration
       configuration.timeoutIntervalForRequest = 60
       configuration.timeoutIntervalForResource = 60
       let session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
@@ -2379,7 +2489,7 @@ private final class BoundedPackageDownload: NSObject, URLSessionDataDelegate,
           "the package redirect has no valid destination"
         )
       }
-      try ObjectPackageDownloader.validate(redirected)
+      try acquisitionPolicy.validate(redirected)
       completionHandler(request)
     } catch {
       completionHandler(nil)

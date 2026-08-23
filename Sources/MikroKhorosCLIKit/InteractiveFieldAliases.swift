@@ -65,6 +65,13 @@ public enum InteractiveFieldAliasCatalog {
         off: "current selection", on: "all items")
     case "at":
       return aliases("coordinate", "Local destination coordinate written as x,y.")
+    case "available-port":
+      return flag(
+        "port selection",
+        "Choose whether the operating system selects an available loopback port for this launch.",
+        off: "stable or custom port",
+        on: "available port"
+      )
     case "auto-adapt":
       return flag(
         "occupied-coordinate behavior",
@@ -144,6 +151,8 @@ public enum InteractiveFieldAliasCatalog {
       return aliases("price", "Credit price assigned to newly stocked copies.")
     case "priority":
       return aliases("notification priority", "Optional !, !!, or !!! notification label.")
+    case "port":
+      return aliases("web port", "Exact loopback TCP port from 1 through 65535.")
     case "reasoning":
       return aliases("reasoning effort", "Reasoning-effort value supported by the selected model.")
     case "recursive":

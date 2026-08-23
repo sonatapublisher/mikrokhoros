@@ -1,7 +1,8 @@
 # MikroKhoros runtime and Object SDK design
 
-This document is the canonical engineering contract for the implemented CLI-first
-product. Security invariants are specified in [`security.md`](security.md).
+This document is the canonical engineering contract for the implemented product,
+including its CLI and MikroKhoros Web browser interface. Security invariants are
+specified in [`security.md`](security.md).
 
 ## 1. Product boundary
 
@@ -299,8 +300,8 @@ durability consumption, pickup lock, agent functions, or model-visible surface.
 
 ### 5.1 Human management contract
 
-`ObjectManagementInterface` supplies structured metadata for the CLI and future
-localhost UI:
+`ObjectManagementInterface` supplies structured metadata for the CLI and local
+MikroKhoros Web:
 
 - `ManagementField`: text, integer, decimal, Boolean, choice, URL, filesystem path,
   or secret;
@@ -318,7 +319,7 @@ configure/deploy/inspect/delete controls.
 
 `WorldRuntime.managementInterface(for:)` returns the combined base and
 object-defined description as structured data. The CLI renders that value directly;
-the localhost UI can consume the same service.
+MikroKhoros Web consumes the same service for its selected exact object panel.
 
 Configuration updates are atomic. Every submitted field is declared, non-secret
 values match their type, URL values use HTTP(S), paths are structurally valid, and
@@ -650,7 +651,9 @@ world or a temporary `--world` selection, records the first exact world assignme
 registers a concrete agent snapshot in that world, and performs placement. An
 assigned identity cannot be registered in another world. Removing it from the world
 surface keeps its assignment and concrete world state, allowing later re-entry into
-the same world.
+the same world. `agent add` never creates a new identity. The World browser action
+does not change focus or follow state and does not run provider processing; provider
+follow-up remains a separate CLI workflow.
 
 Concrete registration creates the infinite backpack, native Wallet, Scratchpad,
 Messenger, and calculator using the catalog’s stable genesis IDs. The Wallet is
@@ -939,38 +942,393 @@ mediation at runtime services remains the authorization boundary.
 
 See [`security.md`](security.md) for the full threat model and verification matrix.
 
-## 20. Future interfaces
+## 20. MikroKhoros Web
 
-The planned `khoros web` command starts a native macOS, Linux, or Windows host for a
-loopback browser interface. The browser is a thin projection of the exhaustive human
-command catalog, typed application services, `ObjectManagementInterface`, and the
-runtime-owned base interface. The existing exhaustive catalog defines browser and
-CLI inputs, and typed application results drive browser rendering.
+`khoros web` serves a native macOS, Linux, or Windows loopback host from the same
+`khoros` executable as the CLI. MikroKhoros Web is a browser interface, not a
+separate `.app` bundle or Node process. It has five primary views in one custom menu:
+World, Agent Manager, Inventory, Packages, and Templates. Settings is fixed in the
+sidebar footer, and Help is a searchable global overlay. All rows are operational.
+One server instance owns at most one listener lifecycle; listener startup is reserved
+atomically, a repeated start fails explicitly, and shutdown releases only the
+resources owned by that lifecycle. Overlapping stop callers join one completion
+signal that resolves only after the lifecycle is idle, so an immediate restart is
+well-defined. A start stopped before callback delivery never announces a stale URL.
+The web adapter never invokes a CLI subprocess, opens an operating-system shell,
+parses presentation output as state, or edits JSON files as an alternate runtime.
 
-The application shell has one app-view button whose custom menu contains World,
-Agent Manager, Inventory, Packages, and Templates. World renders the persistent
-world picker. Agent identities, Inventory sources, packages, and trusted template
-definitions retain their user-global catalog scope. Forms for a global-view action
-that requires a world collect one exact target locally and preserve the temporary
-selection semantics of `--world`; changing the saved pointer remains the explicit
-`world use` operation.
+World is the spatial default and the only view with a persistent world picker.
+Choosing a world changes the browser route without mutating the persisted
+current-world pointer; `world use` remains the explicit state-changing operation.
+The picker always ends with `Create new world`, including with an empty catalog or an
+unavailable projection. Creation registers the issued exact bare world as current and
+opens its exact route. Agent Manager, Inventory, Packages, and Templates remain
+user-global catalogs. An operation that needs a world collects or inherits one exact
+target inside the operation and never acquires a hidden persistent world context.
 
-The World view renders exact world state, structural paths, agents, concrete
-objects, reports, and object interfaces. The Templates view renders trusted catalog
-definitions; template status, application, and repair resolve the exact world chosen
-inside the action. Every object-specific field, action, view, and report surface is
-generated from the selected object's structured interface and the runtime-owned base
-description. Package-controlled values remain bounded untrusted data and never
-become executable markup or browser code.
+### 20.1 Capability catalog and execution
 
-The browser transport calls the same locked and transactional services as the CLI.
-It binds loopback by default, validates Host and Origin, makes an explicit local
-session-authentication decision, protects mutations against CSRF, uses restrictive
-content security policy, keeps credentials write-only, resolves complete identities
-before authorization, and preserves canonical confirmation, cancellation,
-capability, revalidation, and error boundaries. The visual and interaction contract
-is [`ui-design-draft.txt`](ui-design-draft.txt); complete view placement and command
-coverage are specified in [`design-v2.txt`](design-v2.txt).
+`CLIWebCapabilityRegistry` projects every live `CommandKind` exactly once
+into a presentation-neutral descriptor. A descriptor supplies its canonical command
+path, scope, interaction mode, fields, history policy, completion provider, refresh
+targets, enabled state, and stable test references. The registry is execution and
+Help infrastructure. Typed domain projections define browser navigation. Adding
+a command to `CommandKind` is a compile-time exhaustiveness obligation for safe
+execution and Help coverage. A disabled descriptor remains searchable reference
+material and cannot be executed through the browser gateway.
+
+MikroKhoros Web is built from five typed domain projections:
+
+- `GET /api/v1/agents` supplies user-global identity, assignment,
+  active-presence, visual, exact-equipment-link, and content-free pending-work
+  availability data for Agent Manager. Retry is available only when the exact active
+  agent has a profile and a positive bounded pending-work count; queue contents,
+  sender, priority, and profile data remain absent.
+- `GET /api/v1/inventory` supplies global folders, sources, readiness,
+  field-presence metadata, bounded typed management fields, actions, views, and
+  reports, lineage, and bounded identity data for Inventory. Each field carries its
+  label, summary, kind, required/deployable state, safe declared default, choices,
+  and numeric or text limits. Each action carries ordered parameters, input kinds,
+  safe defaults and choices, mutability, required capabilities, scope, and a result
+  schema. Views carry their source, scope, and result schema; reports carry their
+  type, summary, title/body/payload bounds, and payload schema. Package-declared
+  defaults are omitted for secret and path fields; configured source values remain
+  private.
+- `GET /api/v1/packages` supplies available and retained package
+  identity/version, display metadata, runtime, requested capabilities, installation
+  state, retained content hash and installation time where applicable, source
+  retention counts, and management counts.
+- `GET /api/v1/templates` supplies trusted definitions and every
+  requested root and owned-object placement, including the requested parent space
+  and coordinate for every row. Definitions have no runtime object identity, so the
+  browser uses the neutral Phosphor Cube rather than synthesizing an identity
+  silhouette.
+- `GET /api/v1/settings` supplies semantic setting groups, typed
+  non-secret values, product counts, a ready/current-world status summary, the
+  current-world summary, and adapter declared/detected status.
+
+All projection arrays are bounded and built under the canonical product lock after
+pending-transaction recovery. The projections are read-only, do not parse CLI
+presentation output, and omit credential handles and values, Inventory configuration
+values, profile endpoints/history, private world state, treasury/admin material,
+local executable paths, raw persistence documents, and capability closures. Settings
+is the sole projection that presents current non-secret runtime configuration values.
+
+The generic object panel is reached only from one selected exact Inventory source or
+one selected exact concrete World object. It consumes the same bounded management
+contract above, filtering declarations by their exact Inventory, World, or shared
+scope. Host-owned controls render types and choices, enforce declared local bounds,
+collect browser-safe ordered action inputs, and route the exact IDs and typed values
+through the capability gateway. If the selected contract declares any filesystem-
+path field or path-typed action input, its declaration remains visible but every
+action and view in that contract is CLI-only. A configuration-backed view is
+CLI-only even when the remaining contract is path-free. The gateway applies the same
+rule after resolving the exact contract, rejects both setting and unsetting declared
+path fields, and keeps path-free typed actions and non-configuration views available.
+Package labels, schemas, reports, and results are inert data; package HTML,
+JavaScript, and source-configured values do not become part of the interface.
+
+The exact World-object projection covers placed, directly held, nested, and
+agent-attached objects without inventing spatial placement. A coordinate is present
+only when the object is actually placed in a `Space`; every result carries its
+canonical structural path and a runtime-derived `canMove` flag. The endpoint rebuilds
+the base summary from a bounded allowlist and projects the declared interface through
+the same redacted management contract used by Inventory. Raw declarative action
+implementations, private object state, configured values, credentials, and unsafe
+path or secret defaults never enter the response.
+
+Contextual interactions are finite forms, read-only projections, prepare/confirm
+operations, write-only credential entry, explicit agent action submission, report
+following, private reveal/close viewers, downloads, host status, and Help. Exact-ID
+fields use bounded dynamic completion from the same completion resolvers as the CLI.
+Filesystem completion is never exposed. Package installation accepts a built-in
+package or a browser-safe HTTPS source. Its visible field label is **Trusted package
+source**; valid values are an exact trusted `builtin:<catalog-name>` source or an
+HTTPS URL with a host and no user information. Every redirect target is revalidated
+under that same browser policy before it is followed. Secret set forces
+noninteractive standard input inside the trusted adapter; environment sourcing and
+raw secret command options are unavailable to the browser. Confirmation forms omit
+`--yes`; commit injects it only after a session-bound single-use plan is explicitly
+confirmed.
+
+The neutral web capability protocol receives a trusted `ProductLayout`, opaque session
+identity, and host lifecycle state out of band. `CLIWebCapabilityGateway`
+converts typed values into one `InteractiveCommandSubmission`, supplies trusted
+configuration/world/output/color globals, and invokes `CommandExecutor` in process.
+It serializes finite execution, bounds values and captured output, never retries, and
+returns inert stdout/stderr separately. Display commands include only fields whose
+catalog history policy permits storage. Mutating successes identify the authoritative
+views that must be refreshed.
+
+Prepared plans expire after 90 seconds, bind to one authenticated session, normalized
+targets, and the persistent-product SHA-256 fingerprint, and are consumed exactly
+once. Commit revalidates that fingerprint inside the canonical product lock. The
+gateway caps pending and consumed plan state. A request from another session cannot
+consume the plan. Credential bytes are capped at 16 KiB, passed once through bounded
+in-memory standard input, cleared by the client after every outcome, omitted from
+display commands and persistence, and never returned by the transport. Report
+following is a cancellable, session-expiring chunked text stream of canonical
+exact-world report projections. It has a global concurrency cap, a newest-snapshot
+buffer, and one awaited transport write at a time. Agent control remains an in-world
+action channel and cannot expand into an operating-system shell.
+
+Named controls in a selected domain view open only a compact contextual action
+surface. Agent Manager covers identity, profile, assignment, and active presence;
+equipment links open the exact object interface, where Wallet, Messenger, and
+object-management interaction lives. Inventory and World use the generic
+`ObjectManagementInterface` renderer only after a source or concrete object is
+selected. Templates collect an exact target World within status/application actions
+and never own persistent World chrome. Template composition lists each root and owned
+object by package and requested parent-space coordinate; Create World is a compact
+overflow action, while status and application remain visible action-local forms.
+Each definition row uses the neutral Phosphor Cube until application creates a
+concrete object with canonical identity.
+Settings uses fixed semantic sections.
+
+The Help command is represented by the searchable full command reference: topic
+search and the complete catalog present command documentation. `web` is represented
+by finite Local host status, and `config path`
+reports selection without returning a host filesystem path. World retains its
+spatial map and bounded immediate console; World management and object actions remain
+in their selected context. Raw `inventory show` configuration output is disabled in
+the browser. Raw `inventory copies show` and `world object show` administrative
+output is also disabled; bounded domain and exact-object projections are the browser
+representation for those targets. When an allowed browser mutation prints an
+Inventory object, its configuration map contains only a presence boolean per key;
+the local terminal retains the full human-management presentation.
+
+### 20.2 World projection and interaction
+
+For each data request the projection service acquires the canonical product lock,
+recovers any pending product transaction, loads configuration, catalog, Inventory,
+and the exact persisted world, then constructs a verify-only `WorldRuntime` with no
+treasury signer or credential store. The bounded projection contains the world
+catalog, selected container and structural path, exact-world active agents in stable
+order, visible objects, report summaries, and the global Inventory-source count.
+One response retains at most 128 world-picker entries, 128 other-agent rows, and 256
+objects from the selected space. Retained reports form the newest-first prefix that
+fits both the configured count limit and one aggregate 256 KiB encoded budget.
+Missing or invalid signed world material fails closed and is never repaired by the
+browser.
+
+Every retained report summary is exact-world data: it includes the report ID and
+timestamp, world and concrete-object IDs, Inventory source and revision, package and
+version, declared report type, title, body, and structured payload. The reports
+popover is a quick World entry point; opening its object uses the report's exact
+concrete-object ID rather than a name, coordinate, or inferred lineage.
+
+The sidebar keeps My view separate from the active-agent roster. The collapsed roster
+shows the first three agents in stable per-world order. At three or more active agents,
+`All X agents` expands the complete roster inline with the same row treatment and no
+trailing count badge. Explicit agent selection starts scoped follow without changing
+the saved My-view container, camera, zoom, or roster order. Selecting My view restores
+that saved state. Adding an agent is a separate exact-world action and never starts
+focus, follow, or provider processing.
+
+The World page supports focus and follow, pan, zoom, recenter, label visibility,
+activation-opened coordinates and summaries for both empty and occupied positions,
+nested-container navigation, local pinned-object shortcuts, and a reports popover.
+When an object-bearing cell dropdown is open, the next primary click on an empty
+cell closes that dropdown and is consumed; a later activation opens the empty-cell
+dropdown normally. Crossing the drag threshold continues into ordinary World
+panning.
+Pointer and keyboard-cell context updates the Agent/Object information tabs;
+`C` keeps the current or most recently pointed-to coordinate after pointer exit and
+releases it back to live pointer/keyboard context. `1`, `2`, and `3` select Output,
+Agent, and Object outside editable, modal, inspector, and menu surfaces. Activation
+opens a cell menu or inspector. A selected object opens one generic
+inspector sourced from its exact `WorldRuntime.worldManagementInterface`. Package
+values are rendered as inert text through host-owned components; package HTML and
+JavaScript are never accepted. Consequential object operations execute only through
+catalog-derived typed forms and ordinary runtime authorization.
+
+The client may retain bounded presentation preferences for exact-world pins, the
+latest-seen report ID, My-view container/camera/zoom/keyboard state, and the last
+inspector tab for an exact world/object pair. These are validated route and rendering
+hints. They are not product persistence, current-world selection, identity,
+authorization, or command history.
+
+The browser shell has one scroll owner for each independently usable region: the
+World sidebar's middle, a domain sidebar's content, and the web workspace.
+Their header, search/filter area, contextual actions, and footer remain fixed within
+their own regions. Each view and selected domain entity restores a page-memory scroll
+position only while that page remains open; no scroll position enters persistent
+preferences. On desktop the sidebar may be resized through its focusable vertical
+separator. The expanded width is a clamped presentation hint with a 208px minimum,
+240px default, and a dynamic maximum of 352px that always leaves at least 480px for
+the main workspace. Pointer dragging uses capture and cancellation; Arrow keys,
+Home, End, and `0` provide an equivalent keyboard resize/reset path. The separator is
+disabled when the sidebar is collapsed or the viewport is at most 760px wide.
+
+### 20.3 World command console
+
+The World view has a floating dock at the bottom of the map. Its input is a separate
+40px-high monospace capsule; its output/context panel is a separate surface that can
+be resized from a centered top pill within its bounded range or minimized. The
+selected panel body scrolls internally. The panel presents horizontal `Output`,
+`Agent`, and `Object` tabs. Short vertical separators divide the tabs, and the
+selected tab owns the panel body. Output is a bounded transcript of command results.
+Agent and Object context is selected from the World cell under the pointer and is
+rendered exclusively in the corresponding panel tab while the World field keeps
+quiet target feedback. Cell menus and inspectors require activation. Context is
+derived from the currently selected exact World. Each context tab exposes a compact
+`Press C to keep detail` control; the same key or control keeps the current or most
+recent coordinate after pointer exit, then releases it back to live hover/keyboard
+context. The tabs expose `1`, `2`, and `3` shortcuts for Output, Agent, and Object.
+These shortcuts do not run inside editable fields, dialogs, inspectors, or open
+menus. Kept context is page-memory presentation state and clears when the World or
+shown container changes.
+
+The input is a bounded exact-world catalog editor rather than a general shell. Its
+autocomplete returns at most eight complete suggestions from the allowlisted
+`CommandCatalog` definitions and their bounded completion providers. Syntax styling
+is likewise a bounded rendering of the command line; it does not interpret or execute
+arbitrary markup. The browser keeps at most 60 output entries and inserts returned
+output and errors as inert text in memory. The transcript is not console history,
+local storage, or a persistence document.
+
+Each submitted line follows the same `CommandLineTokenizer`, `CommandParser`, and
+`CommandExecutor` path as the terminal CLI. The host invokes the executor in process,
+with no operating-system shell or subprocess. The exhaustive deny-by-default World
+allowlist contains only:
+
+- `help`;
+- `world show`;
+- `world template status`;
+- `world object list`;
+- `world object view list`; and
+- `world object move`.
+
+No other command becomes callable through this immediate console when added to the
+catalog; the complete typed web capability catalog is a separate boundary. The console
+supplies configuration, output, color, and the exact selected World as
+trusted execution context; user input cannot provide alternate global options. Every
+request carries the selected World ID, which is validated against the catalog and
+world file before execution. `world show` must resolve its selector to that same ID,
+and no command can cross the selected-world boundary.
+
+The client keeps submissions in a bounded FIFO queue and never retries a failed or
+busy request. The service permits one in-flight command; a concurrent request is
+rejected as busy. Source, request, suggestion, output, and transcript bounds are
+enforced independently. A successful `world object move` marks the result for
+refresh, after which the browser reloads the authoritative projection for the same
+selected World; read-only commands do not mutate the projection.
+
+`WorldCreationService` is the shared service boundary for bare creation. Its
+public entry validates the name before any side effect, acquires the exact product
+lock, recovers pending transactions before loading product documents, and loads the
+configuration, agent catalog, world catalog, and Inventory from one `ProductLayout`.
+It loads the canonical treasury authority or bootstraps it only when both catalogs
+are empty. Treasury bootstrap commits through its own recoverable transaction and is
+never rotated or removed by a later world-write failure.
+
+The shared assuming-locked core is also used by the CLI's bare `world create` path.
+It constructs `WorldRuntime` with the canonical treasury authority, then wraps the
+Inventory document, world catalog, and new exact world file in one product
+transaction. It preserves active Inventory artifact references, persists the
+runtime-produced schema-7 world document, registers it as current, and commits. A
+failure restores the prior catalog and Inventory state and rolls back the new world
+target. Template creation remains in the existing trusted-template command path.
+
+### 20.4 Loopback transport
+
+The default host binds exactly `127.0.0.1:47567`. `--port <1...65535>` selects one
+other exact port with no fallback, while `--available-port` is the only mode that
+atomically asks the operating system for an available port. The options are mutually
+exclusive. The host prints one fragment-bearing, short-lived launch URL after
+binding. The bootstrap value is cleared from browser history before a same-origin
+exchange for an opaque,
+nonpersistent, `HttpOnly`, `SameSite=Strict` session cookie whose name is scoped to
+the actual bound port. Every data endpoint requires that session; the server validates
+the exact Host and same-origin Origin, serves a fixed resource allowlist, applies
+restrictive browser security headers, and keeps `/api/v1/world` and
+`/api/v1/object` GET/HEAD-only. The printed
+`127.0.0.1:<bound-port>` authority is exact: `localhost`, a different port,
+comma-joined Hosts, and forwarded-host aliases are rejected with the same bounded
+generic error.
+
+Stable and explicit-port startup never retries on another port. After a bind
+collision, a bounded loopback-only `HEAD /` probe may classify a reachable listener
+as MikroKhoros Web through `x-mikrokhoros-listener: khoros-web/1` or as another local
+service so the CLI can give useful recovery guidance. The marker is advisory only:
+it grants no authority, carries no session, and never causes the new process to
+attach to an existing listener. A bind failure without a confirmed reachable
+listener remains a generic bind failure rather than a false port-collision claim.
+
+`GET` and `HEAD` of the root document accept a bounded, non-authorizing route-hint
+query only: `view`, `world`, `container`, `focus`, `agent`, `source`, `folder`,
+`package`, `version`, `template`, and `setting`. Each key appears at most once and
+the normal route-value bounds apply. This serves the fixed shell for an active-session
+same-origin deep link or reload without treating the query as authority. Every
+non-document static asset and every API route retains its endpoint-specific
+fail-closed query policy.
+
+The browser agent contract includes:
+
+- `GET /api/v1/world-agents?world=<exact-world-id>`: exact query selection returns a
+  bounded list of user-owned agent identities with their availability for that exact
+  World. Private profiles, genesis equipment, credentials, and runtime state are absent.
+- `POST /api/v1/worlds`: accepts one exact bounded JSON object containing one
+  string `name` and creates a bare world.
+- `POST /api/v1/world-agents`: accepts one exact bounded JSON object with only
+  `{worldID, agentID, x, y, autoAdapt}` and places an existing identity at a target
+  coordinate in the selected world.
+- `POST /api/v1/world-command/completions`: accepts one exact bounded JSON object
+  `{worldID, source}` and returns at most eight catalog-derived suggestions for the
+  selected World.
+- `POST /api/v1/world-command/execute`: accepts the same exact body and executes one
+  allowlisted command against the selected World, returning bounded standard output,
+  standard error, status, and a refresh flag.
+- `GET /api/v1/agents`: returns bounded user-global identity,
+  assignment, active-presence, visual, and exact equipment-link summaries for Agent
+  Manager, plus a content-free bounded pending-work count and safe retry availability.
+  It excludes profile details, messages, balances, and private object data.
+- `GET /api/v1/inventory`: returns bounded global folder/source,
+  readiness, field-presence, complete declared management metadata, lineage, and
+  visual data for Inventory. It excludes configuration values, credential handles or
+  values, and management state.
+- `GET /api/v1/packages`: returns bounded available and retained package
+  catalog metadata, installation state, retention counts, and management counts.
+- `GET /api/v1/templates`: returns bounded trusted template definitions,
+  components, and root/owned-object placement summaries with requested parent spaces
+  and coordinates.
+- `GET /api/v1/settings`: returns bounded semantic setting groups with
+  current non-secret runtime values, product counts, ready/current-world status,
+  current-world summary, and adapter declared/detected state.
+- `GET /api/v1/web/capabilities`: returns the exhaustive bounded descriptor
+  catalog for the authenticated session as execution and Help infrastructure.
+- `POST /api/v1/web/completions`: returns bounded catalog values for one
+  declared field and trusted product/world context.
+- `POST /api/v1/web/execute`: runs finite form, projection, private-view,
+  download, or host-status operations. A complete accepted download is an
+  attachment; command failures and outputs that exceed the finite browser transfer
+  budget are ordinary rejected JSON execution results.
+- `POST /api/v1/web/prepare` and `/api/v1/web/commit`: create and
+  consume one explicit session-bound confirmation plan.
+- `POST /api/v1/web/secret`: submits one write-only credential value.
+- `POST /api/v1/web/agent-controller`: submits one explicit bounded in-world
+  action.
+- `POST /api/v1/web/report-follow`: returns a cancellable chunked exact-world
+  report stream.
+
+All authenticated data POST endpoints enforce exact same-origin/session checks,
+content type, query/body bounds, recursive duplicate-key rejection, exact top-level
+keys, bounded string arrays, and typed bodies before mutation or execution. Unknown
+fields and browser-supplied globals fail closed. The world-agent endpoint has a 1 KiB
+payload ceiling. Command bodies have an 8 KiB ceiling and source has a
+4,096-character ceiling; web capability bodies have a 64 KiB ceiling; captured web
+capability stdout and stderr share one aggregate 256 KiB cap. Malformed, expired,
+changed, busy, and transient
+requests return only bounded generic status bodies. `agent add` remains distinct from
+`agent create`: it does not create identities, alter focus/follow state, or run
+provider processing. Successful mutations refresh only the relevant authoritative
+projections.
+
+The visual and interaction contract is [`ui-design-draft.txt`](ui-design-draft.txt),
+the complete view and command placement is [`design-v2.txt`](design-v2.txt), and the
+source-backed association rationale is [`web-ux-decisions.md`](web-ux-decisions.md).
+World-required forms retain the temporary exact-target semantics of `--world` and
+canonical confirmation, capability, transaction, and revalidation boundaries.
 
 The Hall and cross-world network require authenticated peer identity, message
 integrity, replay protection, explicit cross-world authorization, and isolation.

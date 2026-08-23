@@ -25,16 +25,41 @@ let package = Package(
     .executable(name: "khoros", targets: ["MikroKhorosCLI"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-crypto.git", exact: "4.3.1")
+    .package(url: "https://github.com/apple/swift-crypto.git", exact: "4.3.1"),
+    .package(url: "https://github.com/apple/swift-nio.git", exact: "2.101.3"),
   ],
   targets: [
     .target(name: "MikroKhoros", dependencies: [.product(name: "Crypto", package: "swift-crypto")]),
-    .target(name: "MikroKhorosCLIKit", dependencies: ["MikroKhoros"]),
-    .executableTarget(name: "MikroKhorosCLI", dependencies: ["MikroKhorosCLIKit"]),
+    .target(name: "MikroKhorosServices", dependencies: ["MikroKhoros"]),
+    .target(
+      name: "MikroKhorosWeb",
+      dependencies: [
+        "MikroKhoros",
+        "MikroKhorosServices",
+        .product(name: "NIOCore", package: "swift-nio"),
+        .product(name: "NIOHTTP1", package: "swift-nio"),
+        .product(name: "NIOPosix", package: "swift-nio"),
+      ],
+      resources: [.process("Resources")]
+    ),
+    .target(
+      name: "MikroKhorosCLIKit",
+      dependencies: [
+        "MikroKhoros",
+        "MikroKhorosServices",
+        .product(name: "Crypto", package: "swift-crypto"),
+      ]
+    ),
+    .executableTarget(
+      name: "MikroKhorosCLI",
+      dependencies: ["MikroKhorosCLIKit", "MikroKhorosWeb"]
+    ),
     .testTarget(
       name: "MikroKhorosTests",
       dependencies: [
         "MikroKhoros",
+        "MikroKhorosServices",
+        "MikroKhorosWeb",
         "MikroKhorosCLIKit",
         .product(name: "Crypto", package: "swift-crypto"),
       ]

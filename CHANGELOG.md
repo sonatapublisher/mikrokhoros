@@ -5,8 +5,132 @@ follow [Semantic Versioning](https://semver.org/) once numbered releases begin.
 
 ## Unreleased
 
+### Changed
+
+- `khoros web` now serves bounded canonical root-document route hints for
+  active-session same-origin deep links and reloads, keeps static assets and API
+  query handling fail-closed, isolates loopback session-cookie names by bound
+  port, gives every primary view one independent scroll workspace, and adds a
+  keyboard-accessible desktop sidebar resize boundary with bounded persisted
+  presentation width.
+- MikroKhoros Web now binds stable `127.0.0.1:47567` by default, accepts one strict
+  custom port through `--port`, and selects an operating-system port only through
+  `--available-port`. Exact-port collisions never fall back silently; bounded
+  loopback diagnostics distinguish a reachable MikroKhoros Web listener from another
+  local service without treating the diagnostic marker as authority.
+- Standardized the `khoros web` standalone control contract: actions, dialogs,
+  icon controls, domain search, and closed custom selectors are complete 32px
+  capsules; custom text-only filter, autocomplete, and choice rows keep their full
+  labels; Agent Manager filters now open start-aligned, content-bounded opaque menus.
+- Aligned every non-World web header, transient state, and content surface
+  to one responsive 1080px workspace frame with an 18px...36px inline gutter;
+  compact pages use the same edge contract and the shared 16px/8px/6px detail
+  rhythm. Every non-circular web radius, including pill-radius capsules and clipped
+  transparent-glass layers, now uses the shared `superellipse(1.78)` smooth-corner
+  construction; only the three semantic circle/dot selectors retain round geometry.
+
 ### Added
 
+- MikroKhoros Web, served by the existing native `khoros` executable. Its
+  custom menu provides World, Agent Manager, Inventory, Packages, and Templates,
+  with fixed Settings and searchable Help. Agent Manager, Inventory, Packages,
+  Templates, and Settings are domain-native typed views.
+  The shared capability catalog drives contextual controls, typed fields, custom
+  choices, dynamic completion, explicit confirmation, write-only credentials,
+  bounded agent actions, private views, downloads, and cancellable report following
+  through the in-process command engine. World keeps exact world/container routes,
+  focus/follow, map controls, reports, local pins, generic object inspection,
+  bare-world creation, existing-agent entry, and its bounded command dock.
+- World projections now cap picker entries at 128, other-agent rows at 128,
+  selected-space objects at 256, and the newest retained reports at one aggregate
+  256 KiB encoded budget. Agent-selection options have a hard maximum of 256.
+- Bounded authenticated typed projections for Agent Manager, Inventory, Packages,
+  Templates, and Settings at `/api/v1/agents`, `/api/v1/inventory`,
+  `/api/v1/packages`, `/api/v1/templates`, and `/api/v1/settings`. The views reload
+  authoritative domain data after relevant
+  actions; projection responses omit credential data, private histories, raw
+  persistence documents, executable paths, capability closures, and administrative
+  authority material. Settings exposes only typed non-secret runtime values.
+- Exact object interfaces now project complete bounded field, action, view, and
+  report metadata for their declared scope, and host controls execute that metadata
+  through the capability gateway. Placed, held, nested, and agent-attached objects
+  share the exact interface route with truthful optional coordinates, structural
+  paths, and move availability; raw action implementations and unsafe defaults remain
+  outside the browser contract. Inventory presents readiness gaps, requested and
+  granted capabilities, exact fork/template provenance, and world binding without
+  exposing source configuration or credential values. Agent Retry is derived only
+  from a content-free pending-work count. Package detail includes runtime, requested
+  capabilities, installation/retention metadata, content identity, and source usage;
+  its install field is labelled **Trusted package source**, accepts only exact
+  built-ins or HTTPS, and reapplies that browser policy to every redirect. Template
+  composition now shows every root and owned object's package, requested parent
+  space, and coordinate with a neutral Phosphor Cube rather than a synthesized
+  pre-instantiation identity, with Create World in overflow and exact-world
+  status/application forms.
+- A presentation-neutral web capability protocol and CLIKit gateway with
+  exhaustive command placement, trusted layout/world globals, bounded inert output,
+  single-flight execution, session- and persistent-state-bound single-use plans,
+  bounded plan/stream state, write-only secret limits, inert display previews,
+  and filesystem-free completion. The SwiftNIO transport adds authenticated catalog,
+  completion, execute, prepare/commit, secret, agent-controller, download, and
+  backpressured session-expiring report routes with recursive duplicate-key rejection,
+  JSON depth/node limits, accepted-only attachment delivery, and generic failures.
+  Web capability requests use their documented 64 KiB transport bound, and a private
+  export is attached only when its complete output fits the finite browser budget.
+  Raw Inventory configuration and administrative object-snapshot commands are
+  disabled browser reference entries. A selected contract with any declared path
+  field or path-typed action input keeps its metadata visible while all actions and
+  views are CLI-only; configuration-backed views are also CLI-only. Crafted set,
+  unset, action, and view requests are rejected at the gateway, and browser-rendered
+  Inventory command results expose configuration-key presence rather than values.
+- World-page behavior is now documented and implemented: independent deterministic
+  shape/color identity using eight original MikroKhoros silhouettes—including Shield,
+  Seal, Star, and Heart—with an evenly proportioned Shield, an optically compact
+  rounded equilateral Triangle,
+  a straight-sided five-point Star with localized rounded outer tips, centered
+  geometry, and eight
+  evenly repeated broad Seal lobes. Each silhouette is optically sized as part of the
+  complete 24px family using apparent keyline, density, negative space, recognition,
+  and bright-color behavior. True vector area remains a measured guardrail, and every
+  filled-area centroid lands at the exact 256px view-box center. The page also uses
+  12 palette colors,
+  transparent Project Genie-style capsule controls, equal
+  rounded-square world targets, a faded blur transition from sidebar to world, scoped
+  live follow with ~1.8s scoped refresh and explicit manual exit, click/double-click
+  arbitration
+  (200ms) with 6px drag capture, exact-world bounded reports with `latest-seen` and
+  client-computed `N`, persistent exact-world My-view camera restoration, and
+  icon/interaction updates for held-object silhouettes and one-target occupancy.
+- The World page now keeps agent ordering stable across My view restoration, renders
+  My view on one line, opens a custom cell menu for occupied and empty positions,
+  scales contiguous cells and all cell visuals together with zoom, uses Phosphor
+  Bold interface icons, limits Project Genie glass to designated standalone
+  controls, gives floating surfaces light-only rims, and uses the plain Phosphor
+  Magnifying Glass for search while reserving Plus and Minus variants for zoom. The
+  command submit action also uses the Phosphor Arrow Elbow Down Left rather than a
+  text glyph. Clipped 32px glass controls use a 20px label line box so rounded
+  Google Sans Flex descenders remain complete without changing their one-line
+  ellipsis or compact control geometry. Repeating domain rows retain the local 12px
+  surface radius, while domain search uses the standalone-control capsule.
+- The loopback host atomically owns one listener lifecycle per server instance,
+  rejects a concurrent start, performs token-matched resource shutdown, joins
+  overlapping stops through the idle transition, supports immediate restart after
+  stop, and suppresses launch callbacks when shutdown wins first.
+- An object-bearing World-cell dropdown dismisses on the next empty-cell click and
+  consumes that click, while a subsequent activation opens the empty-cell dropdown
+  normally and drag capture continues into ordinary panning.
+- A floating World command console with a separate monospace input capsule and
+  resizable/minimizable Output, Agent, and Object information panel. Hover-selected
+  Agent/Object context stays exclusively in the panel; `C` keeps or releases the
+  current detail after pointer exit, while `1`, `2`, and `3` switch the three tabs
+  outside editable and modal/menu surfaces. Completion and syntax styling
+  come from the canonical command catalog, and the in-process console uses
+  the shared CLI tokenizer, parser, and executor with an exhaustive deny-by-default
+  allowlist: `help`, `world show`, `world template status`, `world object list`,
+  `world object view list`, and `world object move`. Typed object interfaces remain
+  behind the bounded object projection. Execution is one-in-flight, FIFO,
+  nonretrying, exact-world bound, and keeps only a bounded inert transcript in page
+  memory; successful object moves reload the authoritative World projection.
 - A user-global world catalog under `~/.mikrokhoros/worlds`, persistent current-world
   selection, temporary `--world` overrides, multi-world create/list/use/rename/delete,
   and recoverable world-file transactions without changing runtime identities.
@@ -127,9 +251,23 @@ follow [Semantic Versioning](https://semver.org/) once numbered releases begin.
 
 - Reorganized reader documentation around a product-first README, a durable
   human-operator guide, focused hands-on tours, and the generated CLI reference.
-- Defined the canonical cross-platform `khoros web` shell, its single app-view
-  dropdown, view-specific world scope, generic structured object interfaces, compact
-  visual system, exhaustive command placement, and selected Templates catalog state.
+- Defined the canonical cross-platform browser shell, its domain-native World,
+  Agent Manager, Inventory, Packages, Templates, and Settings hierarchy,
+  exact-object interfaces, compact visual system, and complete implemented command
+  placement.
+- Documented the five enabled web views, fixed Settings, searchable Help,
+  domain-native content, contextual action sheets, action-local exact-world
+  selection, confirmation, credential, controller, private-view, download, and
+  report-stream behavior.
+- Added the World-page contract for deterministic identity symbols,
+  interaction thresholds, exact-world report state, follow behavior, and My-view
+  camera/restorer memory semantics.
+- Documented the inline `All X agents` roster behavior, compact add-agent dialog
+  fields, and constrained `/api/v1/worlds` and `/api/v1/world-agents` browser mutation
+  contracts.
+- Documented the World command console layout, exact immediate-command allowlist,
+  selected-world binding, bounded completion/output behavior, nonretrying queue, and
+  the separate typed domain-projection plus contextual-execution transport.
 
 ### Fixed
 
@@ -171,5 +309,9 @@ follow [Semantic Versioning](https://semver.org/) once numbered releases begin.
 - Kept secret input, message and objective bodies, raw agent actions,
   credential-bearing URLs, management assignments, output, and queue state outside
   console history and completion data.
+- Added strict security claims for World command requests: exact session and same-origin
+  checks, strict `{worldID, source}` JSON, 8 KiB request and 4,096-character source
+  bounds, eight-suggestion and 65,536-byte output bounds, one in-flight execution,
+  no subprocess, inert memory-only transcript, and move-triggered projection reload.
 
 No numbered release has been published yet.
