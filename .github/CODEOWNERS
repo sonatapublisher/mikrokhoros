@@ -1,0 +1,7 @@
+# The maintainer owns the default review surface. Keep this file small so
+# CODEOWNERS remains a routing aid rather than a second governance system.
+* @iamducnhat
+
+# Security and automation changes should always request maintainer review.
+.github/ @iamducnhat
+SECURITY.md @iamducnhat

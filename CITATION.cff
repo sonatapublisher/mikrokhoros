@@ -6,6 +6,8 @@ authors:
   - name: MikroKhoros contributors
 license: Apache-2.0
 abstract: A persistent, object-capability world runtime for concrete AI agents.
+repository-code: https://github.com/sonatapublisher/mikrokhoros
+url: https://github.com/sonatapublisher/mikrokhoros
 keywords:
   - AI agents
   - multi-agent systems

@@ -1,2 +1,8 @@
-blank_issues_enabled: true
-contact_links: []
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and open-ended design discussion
+    url: https://github.com/sonatapublisher/mikrokhoros/discussions
+    about: Use Discussions for setup questions, use cases, and product direction.
+  - name: Security vulnerability
+    url: https://github.com/sonatapublisher/mikrokhoros/security/policy
+    about: Do not disclose suspected vulnerabilities in a public issue.
