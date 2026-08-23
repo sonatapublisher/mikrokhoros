@@ -61,6 +61,11 @@ jobs:
           build_arch: amd64
           # Apply Swift's compatibility maps for the Windows SDK on this runner.
           update-sdk-modules: true
+      - name: Select the macOS 15.2 SDK
+        if: runner.os == 'macOS'
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_16.2.app/Contents/Developer
+          xcrun --sdk macosx --show-sdk-version
       - name: Show toolchain
         run: swift --version
       - name: Run tests
