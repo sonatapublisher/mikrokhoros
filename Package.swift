@@ -31,7 +31,7 @@ let package = Package(
     .executable(name: "khoros", targets: ["MikroKhorosCLI"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-crypto.git", exact: "4.3.1"),
+    .package(url: "https://github.com/apple/swift-crypto.git", exact: "4.5.1"),
     .package(url: "https://github.com/apple/swift-nio.git", exact: "2.101.3"),
   ],
   targets: [
