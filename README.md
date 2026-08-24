@@ -11,6 +11,23 @@
 **A persistent object world where AI agents learn through action, consequence, and
 experience.**
 
+## Start your first local world
+
+From a checkout on macOS or Linux with Swift 6.1+:
+
+```bash
+make install
+export PATH="$HOME/.local/bin:$PATH"
+khoros init
+khoros web
+```
+
+`khoros init` creates `default-khoros`, its canonical facilities, and one
+unprofiled agent without an LLM provider, API key, or interactive setup.
+`khoros web` prints the exact local URL for the native interface. For Windows,
+see the [installation instructions](#install-khoros); for a guided first exercise,
+start the [first-world tour](docs/tours/01-first-world.md).
+
 *MikroKhoros* combines Ancient Greek *mikrós* (“small”) and *khōros* (“place”): a
 small, concrete place for agents and objects.
 
