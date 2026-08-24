@@ -8,7 +8,14 @@ declaration in source, this documentation, and its regression fixture. The typed
 `private let privateKey: Curve25519.Signing.PrivateKey` declaration in
 `Sources/MikroKhoros/Credit.swift` contains no key value or assignment. The
 regression check in `scripts/test-secret-allowlist.py` fails if that exception
-becomes broader or if the declaration gains a value.
+becomes broader or if the declaration gains a value. CI checksum-verifies its
+pinned scanner before exporting its directory onto `PATH` in the same workflow
+step. The regression helper invokes only the fixed `gitleaks` command name, never
+executes an environment-supplied path, and fails rather than skipping when the
+dedicated hosted secret job requires its verified scanner. A workflow regression
+asserts that this requirement and the same-step `PATH` export precede the four-test
+suite. Other local or hosted preflight lanes may skip only this redundant scan when
+they do not install gitleaks; the required secret job remains fail closed.
 
 ## Public launch-surface validation
 
@@ -35,6 +42,14 @@ tree equals the reviewed publication tree. Pull-request validation checks out th
 exact head commit with complete history so the same topology is measured before
 merge and on `main`. Diagnostics contain paths and categories only; they never print
 matched input.
+
+The POSIX terminal wrapper builds the current package, obtains the binary directory
+from SwiftPM's `--show-bin-path`, resolves that directory physically, and requires a
+regular executable `khoros` rather than a symlink. It then starts the Python PTY
+driver from that directory with no executable-path argument. The driver revalidates
+the inherited directory and launches only the fixed `./khoros` command. An external
+SwiftPM `--scratch-path` remains supported through `SWIFT_BUILD_FLAGS` without
+turning an arbitrary path into the launched command.
 
 This document defines the implemented trust model for the CLI and complete local
 mikrokhoros Web browser interface. Private vulnerability reporting is described in

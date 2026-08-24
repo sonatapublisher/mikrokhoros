@@ -1068,17 +1068,28 @@ def validate_url_claims(
                 except ValueError:
                     errors.append(f"{relative_path}: malformed URL content")
                     continue
-                product_like = (
-                    host == "mikrokhoros.org"
-                    or host.endswith(".mikrokhoros.org")
-                    or value.lower().startswith("https://mikrokhoros.org")
+                host_tokens = tuple(
+                    token for token in re.split(r"[^a-z0-9]+", host.casefold()) if token
                 )
-                repository_marker = "/sonatapublisher/mikrokhoros" in parsed.path.lower()
+                username_tokens = tuple(
+                    token
+                    for token in re.split(r"[^a-z0-9]+", (parsed.username or "").casefold())
+                    if token
+                )
+                product_like = (
+                    "mikrokhoros" in host_tokens
+                    or "mikrokhoros" in username_tokens
+                    or host == "mikrokhoros.org"
+                    or host.endswith(".mikrokhoros.org")
+                )
+                repository_segments = tuple(
+                    urllib.parse.unquote(segment).casefold()
+                    for segment in parsed.path.split("/")
+                    if segment
+                )
                 repository_like = (
-                    repository_marker
-                    or "github.com" in parsed.netloc.lower()
-                    and "mikrokhoros" in value.lower()
-                    or value.lower().startswith(REPOSITORY_URL)
+                    len(repository_segments) >= 2
+                    and repository_segments[:2] == ("sonatapublisher", "mikrokhoros")
                 )
                 if product_like and value != HOMEPAGE_URL:
                     errors.append(f"{relative_path}: product URL claim is absent from the fact contract")

@@ -71,8 +71,7 @@ No package-manager bootstrap or third-party dependency installation is required.
 make preflight
 make test SWIFT_BUILD_FLAGS="--scratch-path /tmp/mikrokhoros-tests"
 make release SWIFT_BUILD_FLAGS="--scratch-path /tmp/mikrokhoros-release"
-KHOROS_BIN="$(swift build -c release --scratch-path /tmp/mikrokhoros-release --show-bin-path)/khoros" \
-  ./scripts/test-terminal.sh
+make test-terminal SWIFT_BUILD_FLAGS="-c release --scratch-path /tmp/mikrokhoros-release"
 git diff --check
 ```
 

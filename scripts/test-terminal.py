@@ -72,17 +72,41 @@ def drain(master: int, output: bytearray) -> None:
         output.extend(chunk)
 
 
+def validated_build_directory() -> pathlib.Path:
+    """Validate the SwiftPM binary directory inherited from the shell wrapper.
+
+    The wrapper changes into the physical directory returned by SwiftPM's
+    ``--show-bin-path`` before starting this process. No executable path crosses
+    the Python command-line boundary: only a regular, non-symlink ``./khoros``
+    in the inherited working directory is eligible for the fixed launch below.
+    """
+    try:
+        build_directory = pathlib.Path.cwd().resolve(strict=True)
+        candidate = build_directory / "khoros"
+        if candidate.is_symlink():
+            raise ValueError("khoros binary must not be a symbolic link")
+        resolved = candidate.resolve(strict=True)
+    except OSError as error:
+        raise ValueError("khoros binary does not exist") from error
+    if resolved.parent != build_directory or not resolved.is_file():
+        raise ValueError("khoros binary is not a regular file in the SwiftPM directory")
+    if not os.access(resolved, os.X_OK):
+        raise ValueError("khoros binary is not executable")
+    return build_directory
+
+
 def main() -> int:
     if os.name != "posix":
         print("terminal PTY smoke test is POSIX-only; Windows uses native console tests")
         return 0
-    if len(sys.argv) != 2:
-        print(f"usage: {sys.argv[0]} <khoros-binary>", file=sys.stderr)
+    if len(sys.argv) != 1:
+        print(f"usage: {sys.argv[0]}", file=sys.stderr)
         return 2
 
-    binary = pathlib.Path(sys.argv[1]).resolve()
-    if not binary.is_file():
-        print(f"khoros binary does not exist: {binary}", file=sys.stderr)
+    try:
+        build_directory = validated_build_directory()
+    except (OSError, ValueError) as error:
+        print(f"invalid khoros binary: {error}", file=sys.stderr)
         return 2
 
     with tempfile.TemporaryDirectory(prefix="mikrokhoros-pty-") as product_home:
@@ -98,7 +122,8 @@ def main() -> int:
             }
         )
         process = subprocess.Popen(
-            [str(binary)],
+            ["./khoros"],
+            cwd=build_directory,
             stdin=slave,
             stdout=slave,
             stderr=slave,

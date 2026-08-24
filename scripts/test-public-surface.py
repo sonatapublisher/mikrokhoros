@@ -36,6 +36,12 @@ assert SPEC and SPEC.loader
 CHECK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CHECK)
 PRODUCT_TOKEN = "Mikro" + "Khoros"
+TERMINAL_SPEC = importlib.util.spec_from_file_location(
+    "test_terminal", ROOT / "scripts/test-terminal.py"
+)
+assert TERMINAL_SPEC and TERMINAL_SPEC.loader
+TERMINAL = importlib.util.module_from_spec(TERMINAL_SPEC)
+TERMINAL_SPEC.loader.exec_module(TERMINAL)
 
 
 class PublicSurfaceTests(unittest.TestCase):
@@ -129,6 +135,53 @@ class PublicSurfaceTests(unittest.TestCase):
                     artifact.flush()
                     errors = CHECK.validate_url_claims(facts, [Path(artifact.name)])
                 self.assertTrue(any("absent from the fact contract" in error for error in errors))
+
+    def test_url_claims_reject_deceptive_product_authorities(self) -> None:
+        facts = CHECK.load_facts()
+        samples = (
+            "https://evil-mikrokhoros.org/",
+            "https://mikrokhoros.org.evil.example/",
+            "https://mikrokhoros.org@evil.example/",
+            "https://github.com/sonatapublisher/mikrokhoros?preview=1",
+            "https://github.com/sonatapublisher/mikrokhoros/private-internal-path",
+        )
+        for sample in samples:
+            with self.subTest(sample=sample):
+                with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=ROOT) as artifact:
+                    artifact.write(sample)
+                    artifact.flush()
+                    errors = CHECK.validate_url_claims(facts, [Path(artifact.name)])
+                self.assertTrue(any("absent from the fact contract" in error for error in errors))
+
+    def test_terminal_binary_is_fixed_to_inherited_swiftpm_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            build_directory = Path(directory)
+            binary = build_directory / "khoros"
+            binary.write_bytes(b"fixture")
+            binary.chmod(0o755)
+            with mock.patch.object(
+                TERMINAL.pathlib.Path,
+                "cwd",
+                return_value=build_directory,
+            ):
+                self.assertEqual(
+                    TERMINAL.validated_build_directory(),
+                    build_directory.resolve(),
+                )
+                binary.unlink()
+                outside = build_directory / "outside"
+                outside.write_bytes(b"fixture")
+                outside.chmod(0o755)
+                binary.symlink_to(outside)
+                with self.assertRaisesRegex(ValueError, "symbolic link"):
+                    TERMINAL.validated_build_directory()
+
+    def test_terminal_wrapper_derives_the_binary_directory_from_swiftpm(self) -> None:
+        wrapper = (ROOT / "scripts/test-terminal.sh").read_text(encoding="utf-8")
+        self.assertIn("swift build $SWIFT_BUILD_FLAGS --show-bin-path", wrapper)
+        self.assertIn('cd "$build_directory"', wrapper)
+        self.assertIn('exec python3 "$project_root/scripts/test-terminal.py"', wrapper)
+        self.assertNotIn("KHOROS_BIN", wrapper)
 
     def test_malformed_urls_fail_closed_without_echoing_content(self) -> None:
         facts = CHECK.load_facts()

@@ -17,8 +17,8 @@
 
 from __future__ import annotations
 
-import re
 import os
+import re
 import shutil
 import subprocess
 import unittest
@@ -27,6 +27,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / ".gitleaks.toml"
+WORKFLOW = ROOT / ".github/workflows/ci.yml"
 SOURCE_PATH = "Sources/" + "Mikro" + "Khoros" + "/Credit.swift"
 DECLARATION = "private let privateKey: Curve25519.Signing.PrivateKey"
 KNOWN_COMMIT = "d2f11844ec6ba70ba1e2bf5317cd22720c813821"
@@ -51,19 +52,14 @@ def git_source(revision: str) -> str:
 
 
 def gitleaks_binary() -> str | None:
-    """Return the explicitly configured or locally available gitleaks binary.
+    """Return the fixed scanner command when it is available on ``PATH``.
 
-    CI supplies an absolute path after verifying its release checksum. Local
-    unit runs may use an already installed binary, but never download one.
+    CI supplies the pinned scanner directory on ``PATH`` after verifying its
+    release checksum. Local unit runs may use an already installed binary, but
+    never download one. Returning the command name instead of an environment-
+    supplied executable path keeps the subprocess invocation allowlisted.
     """
-
-    configured = os.environ.get("GITLEAKS_BIN")
-    if configured:
-        path = Path(configured)
-        if not path.is_file() or not os.access(path, os.X_OK):
-            raise FileNotFoundError(f"configured GITLEAKS_BIN is not executable: {path}")
-        return str(path)
-    return shutil.which("gitleaks")
+    return "gitleaks" if shutil.which("gitleaks") else None
 
 
 class SecretAllowlistTests(unittest.TestCase):
@@ -79,6 +75,13 @@ class SecretAllowlistTests(unittest.TestCase):
         self.assertEqual(config.count('regexTarget = "line"'), 3)
         self.assertNotIn("privateKey.*=", config)
         self.assertNotIn("generic-api-key", config)
+
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        path_export = 'export PATH="${RUNNER_TEMP}:${PATH}"'
+        test_command = "make test-secrets"
+        self.assertIn('MIKROKHOROS_REQUIRE_GITLEAKS: "1"', workflow)
+        self.assertIn(path_export, workflow)
+        self.assertLess(workflow.index(path_export), workflow.index(test_command))
 
     def test_current_declaration_has_no_value(self) -> None:
         matches = [
@@ -102,6 +105,8 @@ class SecretAllowlistTests(unittest.TestCase):
     def test_full_history_scan_uses_this_allowlist_when_available(self) -> None:
         binary = gitleaks_binary()
         if binary is None:
+            if os.environ.get("MIKROKHOROS_REQUIRE_GITLEAKS") == "1":
+                self.fail("the pinned gitleaks command must be available on PATH in CI")
             self.skipTest("gitleaks is not installed; CI installs its pinned binary")
 
         result = subprocess.run(
