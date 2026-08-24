@@ -44,6 +44,7 @@ jobs:
         shell: bash
         env:
           GITLEAKS_BIN: ${{ runner.temp }}/gitleaks
+          MIKROKHOROS_REQUIRE_GITLEAKS: "1"
         run: |
           set -euo pipefail
           "${GITLEAKS_BIN}" git \

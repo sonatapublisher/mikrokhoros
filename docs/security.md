@@ -12,7 +12,10 @@ becomes broader or if the declaration gains a value. CI checksum-verifies its
 pinned scanner before exporting its directory onto `PATH` in the same workflow
 step. The regression helper invokes only the fixed `gitleaks` command name, never
 executes an environment-supplied path, and fails rather than skipping when the
-verified scanner is unavailable in GitHub Actions.
+dedicated hosted secret job requires its verified scanner. A workflow regression
+asserts that this requirement and the same-step `PATH` export precede the four-test
+suite. Other local or hosted preflight lanes may skip only this redundant scan when
+they do not install gitleaks; the required secret job remains fail closed.
 
 ## Public launch-surface validation
 

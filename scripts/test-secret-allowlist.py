@@ -27,6 +27,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / ".gitleaks.toml"
+WORKFLOW = ROOT / ".github/workflows/ci.yml"
 SOURCE_PATH = "Sources/" + "Mikro" + "Khoros" + "/Credit.swift"
 DECLARATION = "private let privateKey: Curve25519.Signing.PrivateKey"
 KNOWN_COMMIT = "d2f11844ec6ba70ba1e2bf5317cd22720c813821"
@@ -75,6 +76,13 @@ class SecretAllowlistTests(unittest.TestCase):
         self.assertNotIn("privateKey.*=", config)
         self.assertNotIn("generic-api-key", config)
 
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        path_export = 'export PATH="${RUNNER_TEMP}:${PATH}"'
+        test_command = "make test-secrets"
+        self.assertIn('MIKROKHOROS_REQUIRE_GITLEAKS: "1"', workflow)
+        self.assertIn(path_export, workflow)
+        self.assertLess(workflow.index(path_export), workflow.index(test_command))
+
     def test_current_declaration_has_no_value(self) -> None:
         matches = [
             line.strip()
@@ -97,7 +105,7 @@ class SecretAllowlistTests(unittest.TestCase):
     def test_full_history_scan_uses_this_allowlist_when_available(self) -> None:
         binary = gitleaks_binary()
         if binary is None:
-            if os.environ.get("GITHUB_ACTIONS") == "true":
+            if os.environ.get("MIKROKHOROS_REQUIRE_GITLEAKS") == "1":
                 self.fail("the pinned gitleaks command must be available on PATH in CI")
             self.skipTest("gitleaks is not installed; CI installs its pinned binary")
 
