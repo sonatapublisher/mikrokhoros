@@ -52,7 +52,7 @@ jobs:
             --redact \
             --log-level error \
             '--log-opts=--all --full-history --reflog'
-          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
+          export PATH="${RUNNER_TEMP}:${PATH}"
           make test-secrets
 
   format:
@@ -128,6 +128,6 @@ jobs:
       - name: Exercise interactive terminal
         if: runner.os != 'Windows'
         shell: bash
-        run: KHOROS_BIN="$(swift build -c release --show-bin-path)/khoros" ./scripts/test-terminal.sh
+        run: make test-terminal SWIFT_BUILD_FLAGS="-c release"
       - name: Smoke-test CLI product
         run: swift run -c release khoros --help

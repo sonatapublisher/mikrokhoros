@@ -153,22 +153,35 @@ class PublicSurfaceTests(unittest.TestCase):
                     errors = CHECK.validate_url_claims(facts, [Path(artifact.name)])
                 self.assertTrue(any("absent from the fact contract" in error for error in errors))
 
-    def test_terminal_binary_must_resolve_inside_build_root(self) -> None:
-        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
-            build_root = Path(directory)
-            release_directory = build_root / "arm64-apple-macosx" / "release"
-            release_directory.mkdir(parents=True)
-            binary = release_directory / "khoros"
+    def test_terminal_binary_is_fixed_to_inherited_swiftpm_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            build_directory = Path(directory)
+            binary = build_directory / "khoros"
             binary.write_bytes(b"fixture")
-            with mock.patch.object(TERMINAL, "BUILD_ROOT", build_root):
+            binary.chmod(0o755)
+            with mock.patch.object(
+                TERMINAL.pathlib.Path,
+                "cwd",
+                return_value=build_directory,
+            ):
                 self.assertEqual(
-                    TERMINAL.validated_build_directory(str(binary)),
-                    release_directory,
+                    TERMINAL.validated_build_directory(),
+                    build_directory.resolve(),
                 )
-                with self.assertRaises(ValueError):
-                    TERMINAL.validated_build_directory(
-                        str(build_root / ".." / "outside" / "khoros")
-                    )
+                binary.unlink()
+                outside = build_directory / "outside"
+                outside.write_bytes(b"fixture")
+                outside.chmod(0o755)
+                binary.symlink_to(outside)
+                with self.assertRaisesRegex(ValueError, "symbolic link"):
+                    TERMINAL.validated_build_directory()
+
+    def test_terminal_wrapper_derives_the_binary_directory_from_swiftpm(self) -> None:
+        wrapper = (ROOT / "scripts/test-terminal.sh").read_text(encoding="utf-8")
+        self.assertIn("swift build $SWIFT_BUILD_FLAGS --show-bin-path", wrapper)
+        self.assertIn('cd "$build_directory"', wrapper)
+        self.assertIn('exec python3 "$project_root/scripts/test-terminal.py"', wrapper)
+        self.assertNotIn("KHOROS_BIN", wrapper)
 
     def test_malformed_urls_fail_closed_without_echoing_content(self) -> None:
         facts = CHECK.load_facts()

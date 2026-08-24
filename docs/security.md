@@ -9,9 +9,10 @@ declaration in source, this documentation, and its regression fixture. The typed
 `Sources/MikroKhoros/Credit.swift` contains no key value or assignment. The
 regression check in `scripts/test-secret-allowlist.py` fails if that exception
 becomes broader or if the declaration gains a value. CI checksum-verifies its
-pinned scanner before placing the scanner directory on `PATH`; the regression
-helper invokes only the fixed `gitleaks` command name and never executes an
-environment-supplied path.
+pinned scanner before exporting its directory onto `PATH` in the same workflow
+step. The regression helper invokes only the fixed `gitleaks` command name, never
+executes an environment-supplied path, and fails rather than skipping when the
+verified scanner is unavailable in GitHub Actions.
 
 ## Public launch-surface validation
 
@@ -39,10 +40,13 @@ exact head commit with complete history so the same topology is measured before
 merge and on `main`. Diagnostics contain paths and categories only; they never print
 matched input.
 
-The POSIX terminal smoke test accepts only a `khoros` executable that resolves
-inside this checkout's `.build` tree. It launches the fixed `./khoros` command
-from that validated directory, so a caller cannot turn the helper's argument
-into an arbitrary executable or filesystem location.
+The POSIX terminal wrapper builds the current package, obtains the binary directory
+from SwiftPM's `--show-bin-path`, resolves that directory physically, and requires a
+regular executable `khoros` rather than a symlink. It then starts the Python PTY
+driver from that directory with no executable-path argument. The driver revalidates
+the inherited directory and launches only the fixed `./khoros` command. An external
+SwiftPM `--scratch-path` remains supported through `SWIFT_BUILD_FLAGS` without
+turning an arbitrary path into the launched command.
 
 This document defines the implemented trust model for the CLI and complete local
 mikrokhoros Web browser interface. Private vulnerability reporting is described in

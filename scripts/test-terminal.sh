@@ -18,18 +18,35 @@ set -eu
 project_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$project_root"
 
-if [ -n "${KHOROS_BIN:-}" ]; then
-  khoros_binary=$KHOROS_BIN
-elif [ -n "${SWIFT_BUILD_FLAGS:-}" ]; then
+if [ -n "${SWIFT_BUILD_FLAGS:-}" ]; then
   # shellcheck disable=SC2086
   swift build $SWIFT_BUILD_FLAGS
   # shellcheck disable=SC2086
   build_directory=$(swift build $SWIFT_BUILD_FLAGS --show-bin-path)
-  khoros_binary="$build_directory/khoros"
 else
   swift build
   build_directory=$(swift build --show-bin-path)
-  khoros_binary="$build_directory/khoros"
 fi
 
-python3 "$project_root/scripts/test-terminal.py" "$khoros_binary"
+case "$build_directory" in
+  /*) ;;
+  *)
+    echo "SwiftPM returned a non-absolute binary directory" >&2
+    exit 2
+    ;;
+esac
+
+if [ ! -d "$build_directory" ]; then
+  echo "SwiftPM binary directory does not exist" >&2
+  exit 2
+fi
+
+build_directory=$(CDPATH='' cd -P -- "$build_directory" && pwd)
+khoros_binary="$build_directory/khoros"
+if [ -L "$khoros_binary" ] || [ ! -f "$khoros_binary" ] || [ ! -x "$khoros_binary" ]; then
+  echo "SwiftPM binary directory does not contain a regular executable khoros" >&2
+  exit 2
+fi
+
+cd "$build_directory"
+exec python3 "$project_root/scripts/test-terminal.py"

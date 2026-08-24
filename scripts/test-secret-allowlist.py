@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -96,6 +97,8 @@ class SecretAllowlistTests(unittest.TestCase):
     def test_full_history_scan_uses_this_allowlist_when_available(self) -> None:
         binary = gitleaks_binary()
         if binary is None:
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                self.fail("the pinned gitleaks command must be available on PATH in CI")
             self.skipTest("gitleaks is not installed; CI installs its pinned binary")
 
         result = subprocess.run(

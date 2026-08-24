@@ -59,7 +59,7 @@ Run these checks from the repository root:
 make preflight
 make test
 make release
-KHOROS_BIN="$(swift build -c release --show-bin-path)/khoros" ./scripts/test-terminal.sh
+make test-terminal SWIFT_BUILD_FLAGS="-c release"
 git diff --check
 ```
 
