@@ -8,3 +8,15 @@ description = "Exact non-secret Curve25519 private-key type declaration in Credi
 paths = ['^Sources/MikroKhoros/Credit\.swift$']
 regexTarget = "line"
 regexes = ['^\s*private let privateKey: Curve25519\.Signing\.PrivateKey\s*$']
+
+[[allowlists]]
+description = "Exact documentation reference to the reviewed non-secret declaration"
+paths = ['^docs/security\.md$']
+regexTarget = "line"
+regexes = ['^`private let privateKey: Curve25519\.Signing\.PrivateKey` declaration in$']
+
+[[allowlists]]
+description = "Exact regression fixture for the reviewed non-secret declaration"
+paths = ['^scripts/test-secret-allowlist\.py$']
+regexTarget = "line"
+regexes = ['^DECLARATION = "private let privateKey: Curve25519\.Signing\.PrivateKey"$']

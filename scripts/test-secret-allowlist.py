@@ -32,6 +32,14 @@ DECLARATION = "private let privateKey: Curve25519.Signing.PrivateKey"
 KNOWN_COMMIT = "d2f11844ec6ba70ba1e2bf5317cd22720c813821"
 PATH_PATTERN = r"^Sources/" + "Mikro" + "Khoros" + r"/Credit\.swift$"
 REGEX_PATTERN = r"^\s*private let privateKey: Curve25519\.Signing\.PrivateKey\s*$"
+DOCS_PATH_PATTERN = r"^docs/security\.md$"
+DOCS_REGEX_PATTERN = (
+    r"^`private let privateKey: Curve25519\.Signing\.PrivateKey` declaration in$"
+)
+TEST_PATH_PATTERN = r"^scripts/test-secret-allowlist\.py$"
+TEST_REGEX_PATTERN = (
+    r'^DECLARATION = "private let privateKey: Curve25519\.Signing\.PrivateKey"$'
+)
 
 
 def git_source(revision: str) -> str:
@@ -64,6 +72,11 @@ class SecretAllowlistTests(unittest.TestCase):
         self.assertIn(f"paths = ['{PATH_PATTERN}']", config)
         self.assertIn('regexTarget = "line"', config)
         self.assertIn(f"regexes = ['{REGEX_PATTERN}']", config)
+        self.assertIn(f"paths = ['{DOCS_PATH_PATTERN}']", config)
+        self.assertIn(f"regexes = ['{DOCS_REGEX_PATTERN}']", config)
+        self.assertIn(f"paths = ['{TEST_PATH_PATTERN}']", config)
+        self.assertIn(f"regexes = ['{TEST_REGEX_PATTERN}']", config)
+        self.assertEqual(config.count('regexTarget = "line"'), 3)
         self.assertNotIn("privateKey.*=", config)
         self.assertNotIn("generic-api-key", config)
 

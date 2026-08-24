@@ -3,7 +3,8 @@
 ## Repository secret scanning
 
 The repository uses the default gitleaks rules through [`.gitleaks.toml`](../.gitleaks.toml).
-Its only exception is path- and line-exact: the typed
+Three path- and line-exact entries cover the same reviewed non-secret type
+declaration in source, this documentation, and its regression fixture. The typed
 `private let privateKey: Curve25519.Signing.PrivateKey` declaration in
 `Sources/MikroKhoros/Credit.swift` contains no key value or assignment. The
 regression check in `scripts/test-secret-allowlist.py` fails if that exception
