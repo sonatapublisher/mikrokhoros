@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import re
-import os
 import shutil
 import subprocess
 import unittest
@@ -51,19 +50,14 @@ def git_source(revision: str) -> str:
 
 
 def gitleaks_binary() -> str | None:
-    """Return the explicitly configured or locally available gitleaks binary.
+    """Return the fixed scanner command when it is available on ``PATH``.
 
-    CI supplies an absolute path after verifying its release checksum. Local
-    unit runs may use an already installed binary, but never download one.
+    CI supplies the pinned scanner directory on ``PATH`` after verifying its
+    release checksum. Local unit runs may use an already installed binary, but
+    never download one. Returning the command name instead of an environment-
+    supplied executable path keeps the subprocess invocation allowlisted.
     """
-
-    configured = os.environ.get("GITLEAKS_BIN")
-    if configured:
-        path = Path(configured)
-        if not path.is_file() or not os.access(path, os.X_OK):
-            raise FileNotFoundError(f"configured GITLEAKS_BIN is not executable: {path}")
-        return str(path)
-    return shutil.which("gitleaks")
+    return "gitleaks" if shutil.which("gitleaks") else None
 
 
 class SecretAllowlistTests(unittest.TestCase):

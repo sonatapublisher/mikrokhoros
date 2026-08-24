@@ -30,6 +30,8 @@ import time
 
 
 ANSI_SEQUENCE = re.compile(rb"\x1b\[[0-?]*[ -/]*[@-~]")
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+BUILD_ROOT = (ROOT / ".build").resolve()
 
 
 def read_until(master: int, output: bytearray, marker: bytes, timeout: float) -> None:
@@ -72,6 +74,37 @@ def drain(master: int, output: bytearray) -> None:
         output.extend(chunk)
 
 
+def validated_build_directory(argument: str) -> pathlib.Path:
+    """Return the trusted SwiftPM directory containing the release binary.
+
+    The shell wrapper supplies SwiftPM's binary path, but this script must not
+    turn arbitrary command-line text into an executable command or filesystem
+    target. The candidate must be named ``khoros``, be lexically below this
+    checkout's ``.build`` directory, and resolve to a regular file below the
+    same root. The process itself is then launched as the fixed ``./khoros``
+    command from that validated directory.
+    """
+    candidate = pathlib.Path(os.path.normpath(argument))
+    try:
+        candidate.relative_to(BUILD_ROOT)
+    except ValueError as error:
+        raise ValueError("khoros binary must be inside the repository .build directory") from error
+    if candidate.name != "khoros":
+        raise ValueError("terminal smoke test accepts only the khoros executable")
+
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as error:
+        raise ValueError("khoros binary does not exist") from error
+    try:
+        resolved.relative_to(BUILD_ROOT)
+    except ValueError as error:
+        raise ValueError("khoros binary symlink escapes the repository .build directory") from error
+    if not resolved.is_file():
+        raise ValueError("khoros binary is not a regular file")
+    return resolved.parent
+
+
 def main() -> int:
     if os.name != "posix":
         print("terminal PTY smoke test is POSIX-only; Windows uses native console tests")
@@ -80,9 +113,10 @@ def main() -> int:
         print(f"usage: {sys.argv[0]} <khoros-binary>", file=sys.stderr)
         return 2
 
-    binary = pathlib.Path(sys.argv[1]).resolve()
-    if not binary.is_file():
-        print(f"khoros binary does not exist: {binary}", file=sys.stderr)
+    try:
+        build_directory = validated_build_directory(sys.argv[1])
+    except (OSError, ValueError) as error:
+        print(f"invalid khoros binary: {error}", file=sys.stderr)
         return 2
 
     with tempfile.TemporaryDirectory(prefix="mikrokhoros-pty-") as product_home:
@@ -98,7 +132,8 @@ def main() -> int:
             }
         )
         process = subprocess.Popen(
-            [str(binary)],
+            ["./khoros"],
+            cwd=build_directory,
             stdin=slave,
             stdout=slave,
             stderr=slave,

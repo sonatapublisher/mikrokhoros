@@ -52,6 +52,7 @@ jobs:
             --redact \
             --log-level error \
             '--log-opts=--all --full-history --reflog'
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
           make test-secrets
 
   format:

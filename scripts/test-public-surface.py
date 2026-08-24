@@ -36,6 +36,12 @@ assert SPEC and SPEC.loader
 CHECK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CHECK)
 PRODUCT_TOKEN = "Mikro" + "Khoros"
+TERMINAL_SPEC = importlib.util.spec_from_file_location(
+    "test_terminal", ROOT / "scripts/test-terminal.py"
+)
+assert TERMINAL_SPEC and TERMINAL_SPEC.loader
+TERMINAL = importlib.util.module_from_spec(TERMINAL_SPEC)
+TERMINAL_SPEC.loader.exec_module(TERMINAL)
 
 
 class PublicSurfaceTests(unittest.TestCase):
@@ -129,6 +135,40 @@ class PublicSurfaceTests(unittest.TestCase):
                     artifact.flush()
                     errors = CHECK.validate_url_claims(facts, [Path(artifact.name)])
                 self.assertTrue(any("absent from the fact contract" in error for error in errors))
+
+    def test_url_claims_reject_deceptive_product_authorities(self) -> None:
+        facts = CHECK.load_facts()
+        samples = (
+            "https://evil-mikrokhoros.org/",
+            "https://mikrokhoros.org.evil.example/",
+            "https://mikrokhoros.org@evil.example/",
+            "https://github.com/sonatapublisher/mikrokhoros?preview=1",
+            "https://github.com/sonatapublisher/mikrokhoros/private-internal-path",
+        )
+        for sample in samples:
+            with self.subTest(sample=sample):
+                with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=ROOT) as artifact:
+                    artifact.write(sample)
+                    artifact.flush()
+                    errors = CHECK.validate_url_claims(facts, [Path(artifact.name)])
+                self.assertTrue(any("absent from the fact contract" in error for error in errors))
+
+    def test_terminal_binary_must_resolve_inside_build_root(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            build_root = Path(directory)
+            release_directory = build_root / "arm64-apple-macosx" / "release"
+            release_directory.mkdir(parents=True)
+            binary = release_directory / "khoros"
+            binary.write_bytes(b"fixture")
+            with mock.patch.object(TERMINAL, "BUILD_ROOT", build_root):
+                self.assertEqual(
+                    TERMINAL.validated_build_directory(str(binary)),
+                    release_directory,
+                )
+                with self.assertRaises(ValueError):
+                    TERMINAL.validated_build_directory(
+                        str(build_root / ".." / "outside" / "khoros")
+                    )
 
     def test_malformed_urls_fail_closed_without_echoing_content(self) -> None:
         facts = CHECK.load_facts()

@@ -8,7 +8,10 @@ declaration in source, this documentation, and its regression fixture. The typed
 `private let privateKey: Curve25519.Signing.PrivateKey` declaration in
 `Sources/MikroKhoros/Credit.swift` contains no key value or assignment. The
 regression check in `scripts/test-secret-allowlist.py` fails if that exception
-becomes broader or if the declaration gains a value.
+becomes broader or if the declaration gains a value. CI checksum-verifies its
+pinned scanner before placing the scanner directory on `PATH`; the regression
+helper invokes only the fixed `gitleaks` command name and never executes an
+environment-supplied path.
 
 ## Public launch-surface validation
 
@@ -35,6 +38,11 @@ tree equals the reviewed publication tree. Pull-request validation checks out th
 exact head commit with complete history so the same topology is measured before
 merge and on `main`. Diagnostics contain paths and categories only; they never print
 matched input.
+
+The POSIX terminal smoke test accepts only a `khoros` executable that resolves
+inside this checkout's `.build` tree. It launches the fixed `./khoros` command
+from that validated directory, so a caller cannot turn the helper's argument
+into an arbitrary executable or filesystem location.
 
 This document defines the implemented trust model for the CLI and complete local
 mikrokhoros Web browser interface. Private vulnerability reporting is described in
