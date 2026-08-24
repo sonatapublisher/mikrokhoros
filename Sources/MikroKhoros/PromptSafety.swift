@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 import Foundation
 
-/// Deterministic boundaries for text crossing between MikroKhoros and an LLM.
+/// Deterministic boundaries for text crossing between mikrokhoros and an LLM.
 /// These checks reduce the impact of prompt injection, but they are not an
 /// authorization system. World permissions remain enforced by the runtime.
 public enum PromptSafety {
@@ -39,14 +39,14 @@ public enum PromptSafety {
       throw MikroKhorosError.runtime(
         "model.output_too_large",
         "model output exceeded the execution limit and was not executed",
-        suggestions: ["return a shorter batch of MikroKhoros actions"]
+        suggestions: ["return a shorter batch of mikrokhoros actions"]
       )
     }
     guard !response.unicodeScalars.contains(where: isInvisibleFormatScalar) else {
       throw MikroKhorosError.runtime(
         "model.output_invisible_character",
         "model output contained an invisible formatting character and was not executed",
-        suggestions: ["return visible plain-text MikroKhoros action lines"]
+        suggestions: ["return visible plain-text mikrokhoros action lines"]
       )
     }
     guard
@@ -57,7 +57,7 @@ public enum PromptSafety {
       throw MikroKhorosError.runtime(
         "model.output_control_character",
         "model output contained a control character and was not executed",
-        suggestions: ["return plain-text MikroKhoros action lines"]
+        suggestions: ["return plain-text mikrokhoros action lines"]
       )
     }
     if containsProtectedVerbatimWindow(
@@ -68,7 +68,7 @@ public enum PromptSafety {
       throw MikroKhorosError.runtime(
         "model.output_instruction_leakage",
         "model output copied protected runtime instructions and was not executed",
-        suggestions: ["return only the chosen MikroKhoros action without copying runtime text"]
+        suggestions: ["return only the chosen mikrokhoros action without copying runtime text"]
       )
     }
     if containsProtectedVerbatimWindow(
@@ -79,7 +79,7 @@ public enum PromptSafety {
       throw MikroKhorosError.runtime(
         "model.output_prompt_echo",
         "model output copied the current request envelope and was not executed",
-        suggestions: ["return only the chosen MikroKhoros action without copying request data"]
+        suggestions: ["return only the chosen mikrokhoros action without copying request data"]
       )
     }
     for message in history where isProtectedHistoricalContext(message) {
@@ -91,7 +91,7 @@ public enum PromptSafety {
         throw MikroKhorosError.runtime(
           "model.output_history_echo",
           "model output copied earlier model-visible context and was not executed",
-          suggestions: ["return only the chosen MikroKhoros action without copying prior context"]
+          suggestions: ["return only the chosen mikrokhoros action without copying prior context"]
         )
       }
     }

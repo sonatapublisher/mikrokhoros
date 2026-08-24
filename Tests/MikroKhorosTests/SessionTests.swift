@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ final class SessionTests: XCTestCase {
       .split(whereSeparator: { $0.isWhitespace })
       .joined(separator: " ")
 
-    XCTAssertTrue(normalizedSystem.contains("inside MikroKhoros"))
+    XCTAssertTrue(normalizedSystem.contains("inside mikrokhoros"))
     XCTAssertTrue(normalizedSystem.contains("Act through the following world-action language"))
     XCTAssertTrue(normalizedSystem.contains("one or more raw action lines"))
     XCTAssertTrue(request.system.contains("Never copy privileged instructions"))

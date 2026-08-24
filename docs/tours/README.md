@@ -1,17 +1,17 @@
-# MikroKhoros hands-on tours
+# mikrokhoros hands-on tours
 
 These tours drive the installed `khoros` executable as a human user. They build on
 one isolated product home while covering a first world, an Object SDK package,
 composable tools, and a selected live host folder.
 
 Tours are reproducible exercises rather than the complete operating manual. Read
-[Operating MikroKhoros](../human-guide.md) for the human/agent boundary, product
+[Operating mikrokhoros](../human-guide.md) for the human/agent boundary, product
 model, safety guidance, and ongoing administration; use the generated
 [CLI reference](../cli-reference.md) when you need exact command syntax.
 
 ## Before starting
 
-Install MikroKhoros by following the
+Install mikrokhoros by following the
 [README installation instructions](../../README.md#install-khoros).
 Return here once the executable is available.
 
@@ -50,7 +50,7 @@ only the tour state.
 3. [Compose printer, paper, and pencil](03-composable-tools.md), approximately 15 minutes.
 4. [Expose a live host folder](04-live-user-workspace.md), approximately 20 minutes.
 
-The primary examples use human-readable names. MikroKhoros resolves each unique name
+The primary examples use human-readable names. mikrokhoros resolves each unique name
 to an exact runtime identity before execution. List output displays a unique short ID
 when names are duplicated; either that prefix or the complete ID is accepted.
 

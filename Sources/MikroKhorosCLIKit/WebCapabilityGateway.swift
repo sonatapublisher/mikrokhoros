@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ enum WebPresentationContext {
 /// Exhaustive browser placement for the live human command catalog.
 ///
 /// The browser consumes only the neutral descriptors. Command parsing and
-/// execution remain in CLIKit so MikroKhoros Web cannot acquire a
+/// execution remain in CLIKit so mikrokhoros Web cannot acquire a
 /// second command grammar or dispatch table.
 public enum CLIWebCapabilityRegistry {
   public static func descriptors() -> [WebCapabilityDescriptor] {
@@ -113,7 +113,7 @@ public enum CLIWebCapabilityRegistry {
   private static func presentationSummary(for definition: CommandDefinition) -> String {
     switch definition.kind {
     case .web:
-      "Show the running MikroKhoros Web host."
+      "Show the running mikrokhoros Web host."
     case .configPath:
       "Show which configuration file is selected without exposing its host path."
     case .worldInspect:

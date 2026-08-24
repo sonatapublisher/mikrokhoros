@@ -41,7 +41,7 @@ khoros shell agent \
   --action 'drop west' \
   --action 'move east 5' \
   --action 'move south 5' \
-  --action 'object (print ("Hello from MikroKhoros"))'
+  --action 'object (print ("Hello from mikrokhoros"))'
 khoros world object view show Paper contents
 ```
 
@@ -59,7 +59,7 @@ khoros shell agent \
 khoros world object view show Paper contents
 ```
 
-The paper now contains `Hello from MikroKhoros!`; the pencil also has durability
+The paper now contains `Hello from mikrokhoros!`; the pencil also has durability
 `99/100`.
 
 ## 5. Recover the Eye

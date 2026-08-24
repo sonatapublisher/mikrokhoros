@@ -1,0 +1,10 @@
+title = "mikrokhoros secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact non-secret Curve25519 private-key type declaration in Credit.swift"
+paths = ['^Sources/MikroKhoros/Credit\.swift$']
+regexTarget = "line"
+regexes = ['^\s*private let privateKey: Curve25519\.Signing\.PrivateKey\s*$']

@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -409,7 +409,7 @@ public enum ConsoleHelp {
       Ctrl-D              Exit only while the queue is idle.
 
     Prefix a command path with & to pause pending FIFO work when that item fails.
-    The console accepts MikroKhoros human commands, not operating-system shell syntax.
+    The console accepts mikrokhoros human commands, not operating-system shell syntax.
     """
   }
 }
@@ -512,9 +512,9 @@ public enum CommandCatalog {
       return .init(
         kind: kind,
         path: ["web"],
-        summary: "Start MikroKhoros Web.",
+        summary: "Start mikrokhoros Web.",
         longDescription:
-          "Serve MikroKhoros Web from the foreground khoros process on stable loopback port 47567. Use --port for one exact custom port or --available-port to let the operating system choose an available port. This command accepts the --config and --world global options, but not --output or --color because the browser owns its presentation.",
+          "Serve mikrokhoros Web from the foreground khoros process on stable loopback port 47567. Use --port for one exact custom port or --available-port to let the operating system choose an available port. This command accepts the --config and --world global options, but not --output or --color because the browser owns its presentation.",
         examples: [
           "khoros web",
           "khoros web --port 47568",
@@ -1037,7 +1037,7 @@ public enum CommandCatalog {
       return .init(
         kind: kind,
         path: ["world", "list"],
-        summary: "List worlds in this MikroKhoros application.",
+        summary: "List worlds in this mikrokhoros application.",
         fields: [.flag("--all")]
       )
     case .worldUse:
@@ -1241,7 +1241,7 @@ public enum CommandCatalog {
 
   public static func renderHelp(path: [String] = [], includeAll: Bool = false) -> String {
     var lines = [
-      "MikroKhoros — persistent multi-agent world runtime",
+      "mikrokhoros — persistent multi-agent world runtime",
       "",
       "Usage:",
       "  khoros [--config <file>] [--world <world-selector>]",

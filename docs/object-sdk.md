@@ -1,7 +1,7 @@
-# MikroKhoros Object SDK
+# mikrokhoros Object SDK
 
 The Object SDK is the developer-facing Swift API and package contract used to build
-objects for MikroKhoros. It is not an object in Inventory or in a world. An object
+objects for mikrokhoros. It is not an object in Inventory or in a world. An object
 package is the installable artifact; an Inventory source is the human-owned template;
 a deployment creates an independent concrete world instance.
 
@@ -79,7 +79,7 @@ cannot invoke an object-only function.
 Trusted host object implementations register constrained handlers with
 `registerAgentFunction`, `registerObjectFunction`, or `registerSharedFunction`.
 Each handler receives `AgentObjectContext`; the unrestricted runtime context remains
-internal to MikroKhoros.
+internal to mikrokhoros.
 
 `ObjectWorldReadService.inspect(at:)` and
 `ObjectWorldWriteService.invoke(at:function:arguments:)` resolve an exact coordinate
@@ -89,7 +89,7 @@ immediate container space; resolution never searches for another compatible obje
 
 Nested invocation identity contains a root invocation ID, current invocation ID,
 target object, optional calling object, original agent, world, depth, and target
-lineage. MikroKhoros creates these fields. A nested object cannot replace the
+lineage. mikrokhoros creates these fields. A nested object cannot replace the
 original agent identity. The configured invocation-depth limit prevents recursive
 cycles.
 

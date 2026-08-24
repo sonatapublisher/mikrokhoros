@@ -14,7 +14,7 @@ and searchable Help are implemented through typed services.
 1. PRODUCT EXPRESSION
 
 The browser is the graphical human-management surface for the installed
-MikroKhoros product. It projects typed services into deliberately
+mikrokhoros product. It projects typed services into deliberately
 designed domain views. The command catalog supplies execution and searchable Help
 infrastructure; typed domain projections supply the visible browser hierarchy.
 A selected Inventory source or concrete world object uses
@@ -113,20 +113,20 @@ Index  Token            Value
 11     bright-indigo    #4A57D1
 
 Interface chrome uses the vendored Phosphor Bold set at the compact 14...16px
-control scale. Entity identity uses the original MikroKhoros Identity Shapes set.
+control scale. Entity identity uses the original mikrokhoros Identity Shapes set.
 Search fields use the plain Phosphor Magnifying Glass. Magnifying Glass Plus and
 Minus are reserved for the explicit World zoom actions.
 
 The shape/color identity is independent:
 
-- The first canonical identity byte selects one of eight deterministic MikroKhoros
+- The first canonical identity byte selects one of eight deterministic mikrokhoros
   Identity Shapes by integer-division buckets of 0x20.
 - The second canonical identity byte selects one of 12 canonical colors by modulo 12.
 - The two axes are independent; remaining bytes do not change shape or color.
 - Identity symbols are project-owned, filled, single-body SVG silhouettes from the
   exact bundled allowlist; no runtime external source is permitted.
 
-The visual origin of identity symbols is the `MikroKhoros Identity Shapes` set, not
+The visual origin of identity symbols is the `mikrokhoros Identity Shapes` set, not
 an interface-control or agent-/object-specific glyph library.
 
 2.4 CONTRAST RULES

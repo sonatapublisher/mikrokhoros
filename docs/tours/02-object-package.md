@@ -4,7 +4,7 @@ This tour follows the Object SDK lifecycle using the repository's declarative la
 package installation, Inventory configuration, a write-only credential, capability
 grant, management action, deployment, and source/copy independence.
 
-Set `MIKROKHOROS_SOURCE` to a MikroKhoros checkout containing `examples/`:
+Set `MIKROKHOROS_SOURCE` to a mikrokhoros checkout containing `examples/`:
 
 ```bash
 export MIKROKHOROS_SOURCE="$(git -C . rev-parse --show-toplevel)"

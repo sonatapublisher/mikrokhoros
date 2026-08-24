@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ final class WebBackendTests: XCTestCase {
 
   func testWebCommandPresentsBoundedPortCollisionGuidance() async {
     for (listener, expectedText) in [
-      (WebPortListenerHint.mikroKhoros, "identifies as MikroKhoros Web"),
+      (WebPortListenerHint.mikroKhoros, "identifies as mikrokhoros Web"),
       (.other, "another local service"),
     ] {
       let io = WebCommandIO()

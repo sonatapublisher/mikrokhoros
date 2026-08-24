@@ -1,7 +1,7 @@
-# Operating MikroKhoros
+# Operating mikrokhoros
 
-MikroKhoros is operated by a human through the local `khoros` CLI or the native
-MikroKhoros Web interface. This guide explains the durable operating model, the
+mikrokhoros is operated by a human through the local `khoros` CLI or the native
+mikrokhoros Web interface. This guide explains the durable operating model, the
 safety boundaries around it, and where to find the right kind of detail. It is not a
 replacement for the generated command reference or the hands-on tours.
 
@@ -30,7 +30,7 @@ outside both local interfaces.
 
 ## Operating model
 
-MikroKhoros keeps the human administrative surface separate from the world-facing
+mikrokhoros keeps the human administrative surface separate from the world-facing
 agent surface:
 
 - A human owns and administers user-global agents, packages, Inventory sources,
@@ -83,7 +83,7 @@ name, a coordinate, or a selector prefix never confers authority by itself.
 
 ## Installation and first path
 
-MikroKhoros is a Swift 6.1 package for macOS 13+, Linux with Swift 6.1+, and Windows
+mikrokhoros is a Swift 6.1 package for macOS 13+, Linux with Swift 6.1+, and Windows
 with Swift 6.1+. The repository [README installation section](../README.md#install-khoros)
 is the canonical home for the current macOS/Linux and Windows instructions. Return
 here after `khoros` is available to choose a first path and understand the operating
@@ -107,10 +107,10 @@ otherwise makes no change.
 Use the generated [CLI reference](cli-reference.md) for the explicit bare-world,
 templated-world, template-status, and world-selection command forms.
 
-### Use MikroKhoros Web
+### Use mikrokhoros Web
 
 Run `khoros web` with or without an existing world. The native `khoros` executable
-serves MikroKhoros Web in the foreground; there is no separate `.app` or Node
+serves mikrokhoros Web in the foreground; there is no separate `.app` or Node
 process. By default it binds exactly `127.0.0.1:47567`. Use `--port <1...65535>` for
 one exact custom port or `--available-port` to let the operating system select an
 available port atomically. The two port options are mutually exclusive, and an exact
@@ -119,11 +119,11 @@ port never falls back silently.
 The command prints one short-lived local URL; open that exact URL in a browser and
 keep the command running. Use `khoros --world <selector> web` to choose an initial
 world without changing the saved current-world pointer. `web` accepts `--config` and
-`--world`, but not `--output` or `--color`; MikroKhoros Web owns its browser
+`--world`, but not `--output` or `--color`; mikrokhoros Web owns its browser
 presentation. Do not replace `127.0.0.1` with `localhost` or change the bound port;
 the host rejects alternate and forwarded authorities. Ctrl-C stops the host.
 
-When an exact port is occupied, a listener that identifies as MikroKhoros Web means
+When an exact port is occupied, a listener that identifies as mikrokhoros Web means
 another terminal already owns that address; use its printed launch URL or start a
 separate host with `--port` or `--available-port`. An unknown local listener requires
 a different port. The marker is bounded diagnostic guidance, not authentication or
@@ -182,7 +182,7 @@ Settings is the fixed sidebar-footer control:
 The browser uses native domain projections and contextual action sheets. A generic
 mapping is reserved for a selected exact Inventory source or selected exact world
 object through its declared `ObjectManagementInterface`; it is not a replacement for
-MikroKhoros Web domain pages. Exact-ID inputs offer bounded completion.
+mikrokhoros Web domain pages. Exact-ID inputs offer bounded completion.
 Consequential actions require a prepare/review/confirm step; prepared plans expire
 and can be used once. Credential values are write-only and cleared after submission.
 Private world inspection requires explicit reveal, export is a download, and report
@@ -238,10 +238,9 @@ the same world. A conflicting world selection for an assigned agent fails withou
 mutation. Browser-side world entry is not an identity-creation operation and does not
 auto-run provider processing.
 
-Profiles can use the supported OpenAI, OpenAI-compatible, Azure OpenAI, Anthropic,
-Gemini, Ollama, LM Studio, vLLM, or role-separated coding-agent adapters. Provider
-credentials remain human-controlled; adapter and model selection do not change the
-agent's world authority.
+Profiles can use supported external model services, compatible local servers, or
+role-separated coding-agent adapters. Provider credentials remain human-controlled;
+adapter and model selection do not change the agent's world authority.
 
 ### Messages, objectives, and facilities
 
@@ -353,7 +352,7 @@ JavaScript packages remain unavailable until a sandboxed adapter exists.
 
 The normal lifecycle is:
 
-1. In MikroKhoros Web, install a package from **Trusted package source** using
+1. In mikrokhoros Web, install a package from **Trusted package source** using
    an exact available `builtin:<catalog-name>` source or an HTTPS URL, then create or
    inspect its Inventory source. The CLI's `inventory install` command separately
    accepts its documented path-or-URL input.
@@ -608,7 +607,7 @@ result; the tour index includes focused recovery guidance.
 
 The current storage contract is intentionally a clean break: world schema 7,
 AgentStore schema 3, and administrative snapshot schema 2. Coin/single-hand and
-other older files are rejected before load. MikroKhoros has no automatic migration,
+other older files are rejected before load. mikrokhoros has no automatic migration,
 explicit legacy import, or compatibility conversion. The retired `--workspace`
 option returns unsupported-format guidance and never mutates state.
 

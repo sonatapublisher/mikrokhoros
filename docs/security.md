@@ -1,7 +1,42 @@
-# MikroKhoros security architecture
+# mikrokhoros security architecture
+
+## Repository secret scanning
+
+The repository uses the default gitleaks rules through [`.gitleaks.toml`](../.gitleaks.toml).
+Its only exception is path- and line-exact: the typed
+`private let privateKey: Curve25519.Signing.PrivateKey` declaration in
+`Sources/MikroKhoros/Credit.swift` contains no key value or assignment. The
+regression check in `scripts/test-secret-allowlist.py` fails if that exception
+becomes broader or if the declaration gains a value.
+
+## Public launch-surface validation
+
+The dependency-free `scripts/check-public-surface.py` discovers every Git-tracked
+regular text file, excluding only test fixtures and developer scripts, and scans
+the shipped Web resources and documentation as well as technical source for
+lowercase public copy. Explicit Swift module/target/import names and documented
+storage paths are masked only in their technical contexts. The check applies NFKC
+normalization and one bounded pass over HTML, URL, and Unicode escape forms before
+rejecting account, authentication, instruction-role, tool-schema, provider,
+secret, local-path, private-endpoint, and publication-draft content. It also
+verifies the exact [`public-facts.json`](public-facts.json) claims, trailing-slash
+product URL, CTA allowlist, approved asset hashes/dimensions, byte identity against
+the recorded asset-review baseline, and generated text passed with
+`--build-output`. The fact contract is closed to unknown root fields. It owns the
+canonical public identity and names the source paths that own runtime claims.
+
+The publication gate requires one complete launch-content commit followed by one
+commit that replaces only the `sourceRevision` and `sourceTree` lines. The bound
+commit and tree must identify the content commit, which is the publication commit's
+sole parent. Validation accepts that facts-only commit as a branch tip or as a
+direct parent of the GitHub merge commit. A merge is valid only when its complete
+tree equals the reviewed publication tree. Pull-request validation checks out the
+exact head commit with complete history so the same topology is measured before
+merge and on `main`. Diagnostics contain paths and categories only; they never print
+matched input.
 
 This document defines the implemented trust model for the CLI and complete local
-MikroKhoros Web browser interface. Private vulnerability reporting is described in
+mikrokhoros Web browser interface. Private vulnerability reporting is described in
 [`SECURITY.md`](../SECURITY.md), and product behavior is specified in
 [`design.md`](design.md).
 
@@ -24,7 +59,7 @@ escape the world action and mediated object-service boundaries.
 Higher-trust components are:
 
 - the human administration CLI and its validated configuration;
-- compiled MikroKhoros runtime code;
+- compiled mikrokhoros runtime code;
 - runtime-issued world, agent, object, Inventory, deployment, report, and invocation
   identities;
 - the root treasury authority’s pinned Ed25519 public key and verified world-local
@@ -381,7 +416,7 @@ future delivery without changing stored reports.
   messages, notes, documents, and object state, but never credential values.
 - Provider errors use bounded stable categories and exclude response bodies, headers,
   tokens, and endpoint-controlled text.
-- Direct OpenAI Responses requests disable provider-side storage. Gemini credentials
+- Direct model-service requests disable service-side storage. External credentials
   use a header. Custom credential-bearing endpoints require TLS.
 
 ### World-template integrity
@@ -423,7 +458,7 @@ Authorization and exact runtime identity checks remain independent of those valu
 
 ## Loopback browser boundary
 
-`khoros web` serves MikroKhoros Web from the native `khoros` executable and binds
+`khoros web` serves mikrokhoros Web from the native `khoros` executable and binds
 only `127.0.0.1`. The default is exact port `47567`; `--port <1...65535>` selects one
 other exact port without fallback, and `--available-port` is the sole mode that
 atomically asks the operating system to select an available port. The options are
@@ -439,7 +474,7 @@ matching lifecycle is idle; a stop that wins before launch suppresses the callba
 The listening bootstrap does not opt into cross-process address reuse. Stable and
 explicit-port startup never probes for a replacement port. After a bind collision,
 a bounded loopback-only `HEAD /` probe may use
-`x-mikrokhoros-listener: khoros-web/1` to distinguish a reachable MikroKhoros Web
+`x-mikrokhoros-listener: khoros-web/1` to distinguish a reachable mikrokhoros Web
 listener from another reachable local service. This marker is spoofable diagnostic
 metadata, not identity, authentication, authorization, or permission to reuse an
 existing session. A failure without a confirmed reachable listener stays a generic
@@ -473,7 +508,7 @@ key is single-valued and bounded. The hint only selects a client projection afte
 normal session exchange and never authorizes data access or mutation. All other
 static assets reject queries. API routes keep their endpoint-specific query contracts,
 including query-free mutation routes. This permits an active-session same-origin
-MikroKhoros Web deep link or reload without broadening the resource or API surface.
+mikrokhoros Web deep link or reload without broadening the resource or API surface.
 
 Local storage is limited to bounded presentation preferences: exact-world pin IDs,
 latest-seen report IDs, My-view container/camera/zoom/keyboard state, last
@@ -755,7 +790,7 @@ the Windows job does not run that script.
 - A future JavaScript adapter requires process isolation, CPU/memory/time quotas,
   filesystem and network policy, SSRF controls, audited capability handles, and
   adversarial testing.
-- MikroKhoros Web is a local single-user browser interface, not a remote or multi-tenant
+- mikrokhoros Web is a local single-user browser interface, not a remote or multi-tenant
   service. Its contextual capability execution does not broaden the authority of the
   corresponding CLI command, capability, lock, transaction, exact-world, or
   confirmation boundary.
@@ -768,8 +803,6 @@ the Windows job does not run that script.
 - [OWASP LLM07:2025 System Prompt Leakage](https://genai.owasp.org/llmrisk/llm072025-system-prompt-leakage/)
 - [OWASP LLM Prompt Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html)
 - [OWASP AI Agent Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html)
-- [OpenAI: Improving instruction hierarchy in frontier LLMs](https://openai.com/index/instruction-hierarchy-challenge/)
-- [OpenAI: Understanding prompt injections](https://openai.com/safety/prompt-injections/)
 - [Peng et al.: RepeatLeakage](https://doi.org/10.1609/aaai.v39i25.34832)
 
 These publications inform defense in depth. Runtime validation and regression tests

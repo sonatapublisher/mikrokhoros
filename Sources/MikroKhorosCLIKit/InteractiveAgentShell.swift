@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ enum InteractiveAgentShell {
   ) -> String {
     let style = ShellStyle(color: color)
     let separator = unicode ? " · " : " - "
-    return "\(style.heading("MikroKhoros agent shell"))  "
+    return "\(style.heading("mikrokhoros agent shell"))  "
       + "\(style.dim(":help for actions\(separator)Ctrl-C to exit when empty"))\n"
       + stateHeader(agent: agent, runtime: runtime, color: color, unicode: unicode)
   }

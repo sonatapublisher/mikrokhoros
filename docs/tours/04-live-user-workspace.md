@@ -97,7 +97,7 @@ khoros doctor
 khoros world object view show 'Tour Workspace' readiness
 ```
 
-Restarting or inspecting MikroKhoros does not repeat the host-file write. The
+Restarting or inspecting mikrokhoros does not repeat the host-file write. The
 world journal retains a bounded external-effect receipt while live content is
 reconciled on the next relevant interaction.
 

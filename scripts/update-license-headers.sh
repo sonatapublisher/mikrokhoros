@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright © 2026 MikroKhoros contributors.
+# Copyright © 2026 mikrokhoros contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ add_header() {
   file=$1
   marker=$2
   keep_first=$3
-  if sed -n '1,24p' "$file" | grep -Fq "$marker Copyright © 2026 MikroKhoros contributors."; then
+  if sed -n '1,24p' "$file" | grep -Fq "$marker Copyright © 2026 mikrokhoros contributors."; then
     return
   fi
   temporary=$(mktemp "${TMPDIR:-/tmp}/mikrokhoros-license.XXXXXX")

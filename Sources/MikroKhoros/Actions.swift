@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ public enum AgentActionCatalog {
 public enum AgentProtocol {
   public static var instructions: String {
     """
-    You are the LLM cognition attached to one concrete agent inside MikroKhoros.
+    You are the LLM cognition attached to one concrete agent inside mikrokhoros.
     Act through the following world-action language. Return one or more raw action
     lines and nothing else. Lines run in order and stop at the first error.
 

@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -681,7 +681,7 @@ public enum InteractiveConsole {
       } ?? "not initialized"
     let next = record == nil ? "khoros init" : "agent show agent"
     return """
-      \(accent("MikroKhoros"))  \(dim("interactive console"))
+      \(accent("mikrokhoros"))  \(dim("interactive console"))
       \(dim("product"))    \(TerminalText.escapedUntrusted(MikroKhorosPaths.root.path))
       \(dim("world"))      \(TerminalText.escapedUntrusted(world))
       \(dim("next"))       \(accent(next))

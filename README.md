@@ -1,6 +1,6 @@
 <h1>
-  <img alt="MikroKhoros logo" src="./assets/mikrokhoros-logo.png" width="70" valign="middle">
-  &nbsp;MikroKhoros
+  <img alt="mikrokhoros logo" src="./assets/mikrokhoros-logo.png" width="70" valign="middle">
+  &nbsp;mikrokhoros
 </h1>
 
 [![CI](https://github.com/sonatapublisher/mikrokhoros/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sonatapublisher/mikrokhoros/actions/workflows/ci.yml)
@@ -11,16 +11,53 @@
 **A persistent object world where AI agents learn through action, consequence, and
 experience.**
 
-*MikroKhoros* combines Ancient Greek *mikrós* (“small”) and *khōros* (“place”): a
+*mikrokhoros* combines Ancient Greek *mikrós* (“small”) and *khōros* (“place”): a
 small, concrete place for agents and objects.
 
-MikroKhoros is a Swift 6 runtime and one cross-platform `khoros` product for
+## Public facts
+
+Open source Swift runtime for persistent object worlds where AI agents observe, act through bounded tools, face verified consequences, and leave replayable trajectories.
+
+- Public name and slug: `mikrokhoros`
+- Executable: `khoros`
+- License: [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- Lifecycle: pre-release; no stable release is published.
+- Repository: [github.com/sonatapublisher/mikrokhoros](https://github.com/sonatapublisher/mikrokhoros)
+- Homepage: [mikrokhoros.org](https://mikrokhoros.org/)
+- Machine-readable contract: [`docs/public-facts.json`](docs/public-facts.json)
+
+Allowed public actions: [View source](https://github.com/sonatapublisher/mikrokhoros),
+[Read the docs](https://github.com/sonatapublisher/mikrokhoros/tree/main/docs),
+[Install khoros](https://github.com/sonatapublisher/mikrokhoros#install-khoros),
+or [Open mikrokhoros Web](https://github.com/sonatapublisher/mikrokhoros#open-mikrokhoros-web).
+
+## Start a local world
+
+From a checkout on macOS or Linux with Swift 6.1+:
+
+```bash
+make install
+export PATH="$HOME/.local/bin:$PATH"
+khoros init
+khoros web
+```
+
+`khoros init` creates the complete `default-khoros` setup and one unprofiled
+agent without external model configuration. `khoros web` prints the exact local
+URL for the native browser interface. Windows setup is covered in the
+[installation instructions](#install-khoros), and the
+[first-world tour](docs/tours/01-first-world.md) continues from initialization.
+
+The mikrokhoros icon and lowercase text wordmark are separate brand elements; the
+icon geometry and colors are unchanged.
+
+mikrokhoros is a Swift 6 runtime and one cross-platform `khoros` product for
 persistent object worlds on macOS, Linux, and Windows. Its human surfaces are the
-full CLI and MikroKhoros Web, a native loopback browser interface served by that same
+full CLI and mikrokhoros Web, a native loopback browser interface served by that same
 executable. An attached LLM supplies cognition for a concrete agent. The agent
 observes its setting, uses a small bounded action
 language and object interfaces, produces validated state transitions, and carries
-permitted history into future decisions. The domain model uses `swift-crypto` 4.3.1
+permitted context into future decisions. The domain model uses `swift-crypto` 4.3.1
 for local Ed25519 and SHA-256 integrity mechanisms; the web host uses SwiftNIO
 2.101.3.
 
@@ -31,7 +68,7 @@ concrete structure.*
 
 ## The agent loop
 
-MikroKhoros provides partial observation, explicit authority, real preconditions,
+mikrokhoros provides partial observation, explicit authority, real preconditions,
 persistent state, and recoverable consequences.
 
 ```text
@@ -49,7 +86,8 @@ The runtime records replayable trajectories from authoritative world state.
 Object SDK → versioned object package → user-owned Inventory source → independent world object
 ```
 
-Objects carry identity, state, lifecycle, relationships, authority, and history.
+Objects carry identity, state, lifecycle, relationships, authority, and durable
+records.
 Packages define reusable behavior. Inventory sources hold user-owned, configurable
 deployment sources outside worlds. Deployments create concrete world objects with
 their own placement, state, capability surface, and lineage; later Inventory edits
@@ -71,7 +109,7 @@ becomes an operating-system shell. The runtime resolves exact identities and gov
 capabilities, possession, placement, locks, permissions, persistence, and effect
 replay.
 
-`khoros web` serves MikroKhoros Web from the same native executable and
+`khoros web` serves mikrokhoros Web from the same native executable and
 canonical product data. Its single custom app menu contains World, Agent Manager,
 Inventory, Packages, and Templates; Settings remains fixed in the sidebar footer,
 and Help is a searchable command reference. World alone owns persistent world
@@ -85,7 +123,7 @@ catalog remains execution and Help infrastructure. It binds named contextual
 controls to the native in-process command engine. Domain views define browser
 navigation. Only an Inventory source or a concrete world object uses the generic
 `ObjectManagementInterface` renderer. The host injects the trusted product layout,
-configuration, session, output mode, and exact world context. MikroKhoros Web is not
+configuration, session, output mode, and exact world context. mikrokhoros Web is not
 a separate `.app` bundle, Node or TypeScript service, second runtime, CLI subprocess,
 operating-system shell, or browser editor for persistence files.
 
@@ -114,13 +152,13 @@ accepts only an exact built-in catalog source such as `builtin:paper` or an HTTP
 URL; every redirect must remain within the same HTTPS, host, and no-user-information
 policy. Templates present every root and owned object with its package and requested
 parent-space coordinate. A template declaration uses the neutral Phosphor Cube;
-canonical MikroKhoros identity appears only after an object exists. World-dependent
+canonical mikrokhoros identity appears only after an object exists. World-dependent
 template actions collect their exact target inside the action, and Create World is
 an overflow action.
 
 Private World inspection is an explicit local reveal. A World export is a sensitive
-download that can contain the journal, histories, object private state, and opaque
-credential handles; MikroKhoros Web warns before download and never includes
+download that can contain the journal, durable records, object private state, and opaque
+credential handles; mikrokhoros Web warns before download and never includes
 credential values or treasury signing bytes. The browser attaches an export only
 when the complete document fits its finite transfer budget; larger exports remain
 available through the displayed local CLI command.
@@ -134,14 +172,14 @@ object-specific actions appear only where their selected world or object makes t
 contextually meaningful.
 
 Recent World reports retain their exact report ID and time together with the concrete
-object, Inventory source/revision, package/version, declared type, title, body, and
+object, Inventory source/version, package/version, declared type, title, body, and
 structured payload. Notifications remain a concise exact-world report entry point;
 they do not become agent messages or authority.
 
 ## Available today
 
 - Persistent sparse worlds with nested containers, material occupancy, structural
-  paths, and world-local history.
+  paths, world-local state, and durable records.
 - User-global agents with explicit world assignment and replaceable AI profiles.
 - Declarative Object Packages, the Object SDK, typed configuration, write-only
   credentials, capability grants, folders, world-bound forks, and host bridges.
@@ -155,7 +193,7 @@ they do not become agent messages or authority.
 - Bare worlds by default and the trusted `default-khoros` template, which composes
   Athena, Objective Board, Library, Warehouse, and Marketplace from five independent
   Inventory sources.
-- MikroKhoros Web with five primary views, fixed Settings, and
+- mikrokhoros Web with five primary views, fixed Settings, and
   searchable Help. Agent Manager, Inventory, Packages, Templates, and Settings are
   typed domain views; contextual controls preserve exact-identity completion,
   explicit confirmations, write-only credentials, private viewers, downloads, and
@@ -170,7 +208,7 @@ they do not become agent messages or authority.
 
 ## Current scope
 
-The CLI and MikroKhoros Web are two human interfaces over the same native services
+The CLI and mikrokhoros Web are two human interfaces over the same native services
 and runtime. The CLI’s exhaustive command catalog remains the execution contract and
 the browser’s searchable Help reference. The browser hierarchy follows
 the product domains. Global agents, Inventory sources, packages, and templates keep
@@ -182,17 +220,16 @@ page memory as inert text.
 equipment follows its own lifecycle.
 
 World schema 7, AgentStore schema 3, and administrative snapshot schema 2 define
-the current persistence line. The CLI accepts these current formats only and provides
-no automatic migration or legacy import for Coin, single-hand, or other historical
-files.
+the current persistence line. The CLI accepts these formats only and provides no
+automatic migration or legacy import for Coin, single-hand, or other legacy files.
 
 Planned layers include the Hall, cross-world networking, and network or blockchain
 settlement. See the
-[browser UI specification](docs/ui-design-draft.txt) and
+[browser UI specification](docs/ui-design.md) and
 [view and command-coverage brief](docs/design-v2.txt). The source-backed UX rationale
 is in [web UX decisions](docs/web-ux-decisions.md).
 
-## Open MikroKhoros Web
+## Open mikrokhoros Web
 
 Start the foreground host with or without an existing world:
 
@@ -210,7 +247,7 @@ khoros --world <world-selector> web
 ```
 
 `web` accepts `--config` and `--world`, but not `--output` or `--color`;
-MikroKhoros Web owns its browser presentation. `--port` and `--available-port` are
+mikrokhoros Web owns its browser presentation. `--port` and `--available-port` are
 mutually exclusive, and an explicit port must be in `1...65535`.
 
 The default command binds exactly `127.0.0.1:47567`. `--port` selects one other exact
@@ -221,8 +258,8 @@ short-lived launch URL. Open that exact URL in a local browser; aliases such as
 attached to the command; stop it with Ctrl-C. It does not open a browser
 automatically. When no world exists, open the custom World menu and choose `Create
 new world`; the committed bare world becomes current and opens at its exact route.
-If an exact port is occupied, MikroKhoros does not silently move: a known
-MikroKhoros Web listener directs you to the launch URL printed by its terminal, and
+If an exact port is occupied, mikrokhoros does not silently move: a known
+mikrokhoros Web listener directs you to the launch URL printed by its terminal, and
 an unknown local listener directs you to choose `--port` or `--available-port`.
 The listener marker is diagnostic only and never attaches to or authorizes another
 process.
@@ -246,7 +283,7 @@ exact printed `127.0.0.1:<port>` authority and a canonical route.
 `Package.swift` declares the macOS minimum. SwiftPM does not express Linux or
 Windows OS versions. GitHub Actions builds and tests the supported platform matrix.
 
-## Install `khoros`
+## Install khoros
 
 ### macOS and Linux
 
@@ -291,15 +328,15 @@ if (($userPath -split ";") -notcontains $bin) {
 ```
 
 Open a new PowerShell window and run `khoros --help`. For a guided first path after
-installation, read [Operating MikroKhoros](docs/human-guide.md) or begin the
+installation, read [Operating mikrokhoros](docs/human-guide.md) or begin the
 [hands-on tours](docs/tours/README.md).
 
 ## Choose your path
 
 | If you want to… | Start here |
 | --- | --- |
-| Install MikroKhoros | [Installation instructions](#install-khoros) |
-| Understand the operating model or administer MikroKhoros | [Operating MikroKhoros](docs/human-guide.md) |
+| Install mikrokhoros | [Installation instructions](#install-khoros) |
+| Understand the operating model or administer mikrokhoros | [Operating mikrokhoros](docs/human-guide.md) |
 | Follow isolated, reproducible exercises | [Hands-on tours](docs/tours/README.md) |
 | Find exact command syntax and options | [Generated CLI reference](docs/cli-reference.md) |
 | Build an object package or runtime adapter | [Object SDK guide](docs/object-sdk.md) |
@@ -307,12 +344,12 @@ installation, read [Operating MikroKhoros](docs/human-guide.md) or begin the
 | Review trust boundaries, controls, and limits | [Security architecture](docs/security.md) |
 | Build, test, or contribute to the repository | [Contributing guide](CONTRIBUTING.md) |
 
-The [documentation index](docs/README.md) routes each audience through the active
-documents and keeps historical provenance separate from current product behavior.
+The [documentation index](docs/README.md) routes each audience through product
+documentation, operating guidance, and contribution resources.
 
 ## Status and license
 
-MikroKhoros is pre-release software. World-document and public SDK compatibility
+mikrokhoros is pre-release software. World-document and public SDK compatibility
 become stable with a future numbered release. The project is licensed under
 [Apache License 2.0](LICENSE); third-party dependency, font, and icon attribution is
 recorded in [NOTICE](NOTICE).

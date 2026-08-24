@@ -1,4 +1,4 @@
-# MikroKhoros Web design QA
+# mikrokhoros Web design QA
 
 Date: 2026-08-23
 
@@ -8,7 +8,7 @@ the authority for Linux and native Windows execution.
 
 ## Application structure
 
-The custom MikroKhoros Web menu contains five primary destinations, in order:
+The custom mikrokhoros Web menu contains five primary destinations, in order:
 
 1. World
 2. Agent Manager
@@ -53,7 +53,7 @@ Inventory source or exact selected World object's structured
   the same frame with exact matching left and right edges. Shared detail sections
   use a 16px section cadence, 8px paired-field/control gap, and 6px label-to-content
   gap without ad-hoc horizontal offsets.
-- Phosphor supplies every web control icon. MikroKhoros agent and object
+- Phosphor supplies every web control icon. mikrokhoros agent and object
   identities use the original single-body filled shapes.
 - The eight deterministic identity shapes and twelve deterministic identity colors
   are independent axes. World zoom scales cells, dots, fills, outlines, held-object

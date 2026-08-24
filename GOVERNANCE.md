@@ -1,6 +1,6 @@
 # Governance
 
-MikroKhoros currently uses a maintainer-led model appropriate for an early project.
+mikrokhoros currently uses a maintainer-led model appropriate for an early project.
 Maintainers set release scope, review contributions, preserve the product and
 security invariants in `docs/design.md`, and make final merge decisions.
 

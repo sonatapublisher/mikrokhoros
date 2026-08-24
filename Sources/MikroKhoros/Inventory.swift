@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2292,7 +2292,7 @@ enum BoundedPackageFile {
 
 /// Origin-specific constraints for acquiring an object package.
 ///
-/// Browser requests stay inside the MikroKhoros Web boundary: a built-in
+/// Browser requests stay inside the mikrokhoros Web boundary: a built-in
 /// catalog name is resolved locally, while each remote request in the redirect
 /// chain must remain an HTTPS URL with a host and no embedded credentials.
 /// Command-line requests preserve the documented loopback HTTP development

@@ -1,6 +1,6 @@
-# Contributing to MikroKhoros
+# Contributing to mikrokhoros
 
-Thank you for helping build MikroKhoros. Contributions are welcome as bug reports,
+Thank you for helping build mikrokhoros. Contributions are welcome as bug reports,
 design discussions, documentation, tests, and focused code changes.
 
 By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
