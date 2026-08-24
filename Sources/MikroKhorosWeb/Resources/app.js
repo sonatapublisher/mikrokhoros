@@ -8,7 +8,7 @@ const WEB_VIEW_META = {
   inventory: { label: "Inventory", icon: "archive", description: "Browse user-owned sources available to packages and Worlds." },
   packages: { label: "Packages", icon: "package", description: "Install and inspect object packages." },
   templates: { label: "Templates", icon: "file-text", description: "Inspect trusted templates and their exact source lineage." },
-  settings: { label: "Settings", icon: "gear-six", description: "Inspect MikroKhoros Web status and supported behavior." },
+  settings: { label: "Settings", icon: "gear-six", description: "Inspect mikrokhoros Web status and supported behavior." },
 };
 const MAX_PINS_PER_WORLD = 12;
 const FOLLOW_INTERVAL_MS = 1800;
@@ -1431,7 +1431,7 @@ async function loadWorld({
 } = {}) {
   const sequence = ++state.loadingSequence;
   if (!quiet) {
-    setStatus("Opening World…", "Reading the selected MikroKhoros world.");
+    setStatus("Opening World…", "Reading the selected mikrokhoros world.");
     closeActiveSurface({ restoreFocus: false });
   }
 
@@ -3509,9 +3509,9 @@ function webErrorMessage(status) {
   if (status === 409) return "The requested resource is busy or changed. Refresh the action context and try again.";
   if (status === 410) return "The prepared action expired, was already used, or its product state changed. Prepare it again.";
   if (status === 400 || status === 422) return "The form or action context is invalid. Review the fields and try again.";
-  if (status === 413) return "The request is too large for the MikroKhoros Web boundary.";
-  if (status === 415) return "This request body is not supported by MikroKhoros Web.";
-  if (status === 503) return "MikroKhoros Web is temporarily unavailable.";
+  if (status === 413) return "The request is too large for the mikrokhoros Web boundary.";
+  if (status === 415) return "This request body is not supported by mikrokhoros Web.";
+  if (status === 503) return "mikrokhoros Web is temporarily unavailable.";
   return "The action could not be completed. Refresh its context and try again.";
 }
 
@@ -4318,7 +4318,7 @@ async function start() {
 start();
 
 /*
- * MikroKhoros Web projections
+ * mikrokhoros Web projections
  *
  * The World is intentionally the only spatial surface. These projections make
  * the desktop product legible as a set of human domains; capabilities remain a
@@ -4610,7 +4610,7 @@ function restoreWorkspaceScroll(view = state.webView, key = workspaceScrollKey(v
 }
 
 function normalizedDomainSnapshot(view, value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("MikroKhoros Web returned an invalid view.");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("mikrokhoros Web returned an invalid view.");
   const arrays = {
     agentManager: ["agents"],
     inventory: ["folders", "sources"],
@@ -4619,7 +4619,7 @@ function normalizedDomainSnapshot(view, value) {
     settings: ["groups", "adapters"],
   };
   for (const key of arrays[view] || []) {
-    if (!Array.isArray(value[key])) throw new Error("MikroKhoros Web returned an incomplete view.");
+    if (!Array.isArray(value[key])) throw new Error("mikrokhoros Web returned an incomplete view.");
   }
   return value;
 }
@@ -5092,7 +5092,7 @@ function renderDomainView() {
   const snapshot = domainSnapshotFor(view);
   const status = nativeState().domainStatus;
   const meta = WEB_VIEW_META[view] || WEB_VIEW_META.agentManager;
-  elements.workspaceEyebrow.textContent = "MikroKhoros Web";
+  elements.workspaceEyebrow.textContent = "mikrokhoros Web";
   elements.workspaceTitle.textContent = meta.label;
   elements.workspaceDescription.textContent = meta.description;
   elements.workspaceState.hidden = !status.loading && !status.error;
@@ -6089,7 +6089,7 @@ function renderPackages(snapshot) {
   const overview = node("dl", "native-detail-grid");
   overview.append(
     valueLine("Package", `${item.id}@${item.version}`, { mono: true }),
-    valueLine("Runtime", item.runtime || "MikroKhoros object runtime"),
+    valueLine("Runtime", item.runtime || "mikrokhoros object runtime"),
     valueLine("Management", `${item.management?.fieldCount || 0} fields · ${item.management?.actionCount || 0} actions · ${item.management?.viewCount || 0} views`),
     valueLine("Installation", installed ? "Installed" : "Not installed"),
     ...(item.contentHash ? [valueLine("Content hash", item.contentHash, { mono: true })] : []),
@@ -6247,7 +6247,7 @@ function renderSettings(snapshot) {
   const selected = nativeState().domainSelections.settings?.setting;
   const section = settingsSections(snapshot).find((item) => item.id === selected) || settingsSections(snapshot)[0];
   if (!section) {
-    elements.workspaceContent.append(noContent("No settings", "MikroKhoros Web did not expose any configurable settings.", "gear-six"));
+    elements.workspaceContent.append(noContent("No settings", "mikrokhoros Web did not expose any configurable settings.", "gear-six"));
     return;
   }
   if (section.id === "diagnostics") {
@@ -6267,7 +6267,7 @@ function renderSettings(snapshot) {
   }
   elements.workspaceContent.append(renderDetailHeader({
     title: section.label,
-    subtitle: section.id === "product" ? "Local product identity and selected World" : "MikroKhoros Web settings",
+    subtitle: section.id === "product" ? "Local product identity and selected World" : "mikrokhoros Web settings",
     actions: sectionActions,
   }));
 
@@ -6603,7 +6603,7 @@ function switchWebView(view, { historyMode = "push", focusMain = false } = {}) {
   const appTriggerIcon = elements.appViewTrigger.querySelector(".control-icon");
   appTriggerLabel.textContent = meta.label;
   appTriggerIcon.src = `/icons/phosphor/${meta.icon}.svg`;
-  elements.appViewTrigger.setAttribute("aria-label", `Choose MikroKhoros Web view. Current view: ${meta.label}`);
+  elements.appViewTrigger.setAttribute("aria-label", `Choose mikrokhoros Web view. Current view: ${meta.label}`);
   document.title = `mikrokhoros · ${meta.label}`;
   for (const row of elements.appViewMenu.querySelectorAll("[data-app-view]")) {
     const selected = row.dataset.appView === view;

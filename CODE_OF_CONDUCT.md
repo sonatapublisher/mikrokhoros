@@ -2,7 +2,7 @@
 
 ## Our commitment
 
-MikroKhoros contributors, maintainers, and participants commit to making project
+mikrokhoros contributors, maintainers, and participants commit to making project
 spaces respectful, welcoming, and harassment-free for everyone, regardless of
 background, identity, experience, ability, appearance, or viewpoint.
 
@@ -35,4 +35,4 @@ involved. Platform-wide abuse may also be reported to the repository host.
 ## Scope
 
 This policy applies in repository issues, pull requests, reviews, discussions,
-project chat, events, and public representation of MikroKhoros.
+project chat, events, and public representation of mikrokhoros.

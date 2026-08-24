@@ -1,20 +1,20 @@
-# MikroKhoros Web UX decisions
+# mikrokhoros Web UX decisions
 
-Status: canonical rationale for the implemented MikroKhoros Web interface
+Status: canonical rationale for the implemented mikrokhoros Web interface
 
-This document records why MikroKhoros Web is organized as it is. Product
+This document records why mikrokhoros Web is organized as it is. Product
 behavior remains authoritative in `design.md`, security boundaries in `security.md`,
-visual rules in `ui-design-draft.txt`, and live operations in the exhaustive command
-catalog. The products below are interaction references, not MikroKhoros domain or
+visual rules in `ui-design.md`, and live operations in the exhaustive command
+catalog. The products below are interaction references, not mikrokhoros domain or
 visual-design dependencies.
 
 ## Association model
 
-| Reference pattern | MikroKhoros relationship | Adopted rule |
+| Reference pattern | mikrokhoros relationship | Adopted rule |
 | --- | --- | --- |
 | VS Code keeps a dominant editor, a primary sidebar, a searchable Command Palette, and a movable bottom Panel for Output and Terminal content. | A world is the dominant spatial work surface; human commands and their output are supporting tools. | World retains the canvas, the catalog-derived command field floats at its bottom edge, and Output, Agent, and Object context share one resizable and minimizable panel. Commands stay searchable and keyboard reachable. |
 | Blender divides task work into Areas and gives each editor a prominent main Region with contextual Regions around it. | World, Agent Manager, Inventory, Packages, and Templates are different kinds of work, while selected objects and command output are contextual. | Each primary view has one dominant work region. Contextual information uses bounded panels and overlays instead of permanently subdividing every view. |
-| Godot's Inspector follows the selected object and renders the properties that object exposes, with search and grouped sections. | MikroKhoros packages declare `ObjectManagementInterface`; package identity supplies data and behavior rather than host-authored product screens. | Selecting an object opens one host-owned, schema-rendered interface. The host owns controls, validation, focus, confirmation, and encoding; package-specific screens are not hard-coded. |
+| Godot's Inspector follows the selected object and renders the properties that object exposes, with search and grouped sections. | mikrokhoros packages declare `ObjectManagementInterface`; package identity supplies data and behavior rather than host-authored product screens. | Selecting an object opens one host-owned, schema-rendered interface. The host owns controls, validation, focus, confirmation, and encoding; package-specific screens are not hard-coded. |
 | Home Assistant distinguishes devices from their entities and organizes large user-owned collections with explicit areas, labels, filters, and selectors. | Agent identities, Inventory sources, packages, templates, deployed objects, and exact worlds have different ownership and lifecycle scopes. | Agent Manager remains a user-global identity catalog. Inventory remains a user-global source catalog with an explicit exact-world activity scope. World presence never replaces either global catalog. |
 | Backstage presents a centralized catalog of typed entities and their relationships, while a template describes both parameters and steps. | Packages and trusted templates are user-global definitions; applying or deploying them creates or changes exact-world state. | Packages and Templates are global catalog views. A world selector appears inside an action only when that action needs an exact target. Neither view owns a persistent world picker. |
 | Grafana alert history combines a scoped event list, filters, expandable detail, and a live operational view. | Object reports belong to one exact world and can be listed, inspected, or followed. | Notifications are a quick exact-world report preview. Inventory exposes report history and an explicit follow mode with bounded output and clear start/stop state. |
@@ -45,7 +45,7 @@ The interaction references are the official [VS Code user-interface guide](https
 
 ## Product information architecture
 
-The MikroKhoros Web menu contains exactly five primary destinations, in this order:
+The mikrokhoros Web menu contains exactly five primary destinations, in this order:
 
 1. World
 2. Agent Manager
@@ -104,7 +104,7 @@ therefore contain their target selector in the action form; Create World is comp
 overflow work.
 
 Settings owns product status, configuration, validation, diagnostics, adapters, and
-the running local-host projection. Running `web` from within MikroKhoros Web is
+the running local-host projection. Running `web` from within mikrokhoros Web is
 represented as current host status rather than recursive host creation.
 
 Each non-World destination reads a purpose-built bounded projection at

@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ final class WorldPersistenceTests: XCTestCase {
     let runtime = try testWorldRuntime()
     let agent = try runtime.createAgent(name: "agent")
     _ = try runtime.addAgent(agent)
-    let secret = "PRIVATE_PROMPT_FRAGMENT"
+    let secret = "sensitive-model-fragment"
     let turn = try runtime.run("launch \(secret)", for: agent)
     XCTAssertEqual(turn.status, .error)
 

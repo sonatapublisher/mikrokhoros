@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 import Foundation
 import MikroKhoros
 
-/// The stable top-level MikroKhoros Web surfaces. These values are deliberately
+/// The stable top-level mikrokhoros Web surfaces. These values are deliberately
 /// independent of any particular transport (HTML, terminal, or a native host).
 public enum WebView: String, CaseIterable, Codable, Sendable {
   case world
@@ -526,7 +526,7 @@ public enum WebCapabilityError: Error, Equatable, Sendable {
   case invalidPlan
 }
 
-/// Service-layer boundary consumed by MikroKhoros Web and future native hosts. Implementations
+/// Service-layer boundary consumed by mikrokhoros Web and future native hosts. Implementations
 /// may use the CLI command catalog internally, but this protocol does not
 /// expose CLI types or process execution to its callers.
 public protocol WebCapabilityServing: Sendable {

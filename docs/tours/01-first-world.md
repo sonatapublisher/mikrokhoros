@@ -4,7 +4,7 @@ This tour creates the complete built-in environment, examines its structure, use
 the agent's Eye, and posts a collaborative objective. It needs no AI provider or API
 key.
 
-## 1. Initialize MikroKhoros
+## 1. Initialize mikrokhoros
 
 ```bash
 khoros init

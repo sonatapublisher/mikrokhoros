@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public final class WorldCatalogStore: @unchecked Sendable {
       if document.worlds.isEmpty {
         throw MikroKhorosError.runtime(
           "world.not_initialized",
-          "MikroKhoros has no world",
+          "mikrokhoros has no world",
           suggestions: ["run `khoros init` or `khoros world create`"]
         )
       }

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright © 2026 MikroKhoros contributors.
+# Copyright © 2026 mikrokhoros contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,4 +33,4 @@ if ! grep -Fq 'mikrokhoros-pre-commit' "$hook"; then
   printf '\n%s\n' "$invocation" >>"$hook"
 fi
 chmod +x "$hook"
-printf 'installed MikroKhoros checks in %s\n' "$hook"
+printf 'installed mikrokhoros checks in %s\n' "$hook"

@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "bae5497fe435c73650ff907d4f84bdf9a504b496",
+  "sourceTree": "3ac7f5976881632e0e91e2bbfc1385d34b447b89",
+  "sourceRevisionPolicy": "This immutable revision is the exact launch-source commit represented by this fact sheet.",
+  "claimAuthority": {
+    "canonical": "docs/public-facts.json",
+    "runtime": [
+      ".github/workflows/ci.yml",
+      "Package.swift",
+      "Sources/",
+      "Tests/",
+      "docs/design.md",
+      "docs/security.md"
+    ]
+  },
+  "canonical": {
+    "publicName": "mikrokhoros",
+    "repositorySlug": "mikrokhoros",
+    "repositoryURL": "https://github.com/sonatapublisher/mikrokhoros",
+    "productURL": "https://mikrokhoros.org/",
+    "executable": "khoros"
+  },
+  "wordmark": {
+    "text": "mikrokhoros",
+    "kind": "text wordmark"
+  },
+  "product": {
+    "name": "mikrokhoros",
+    "slug": "mikrokhoros",
+    "executable": "khoros",
+    "description": "Open source Swift runtime for persistent object worlds where AI agents observe, act through bounded tools, face verified consequences, and leave replayable trajectories.",
+    "openSource": true,
+    "license": "Apache-2.0",
+    "lifecycle": "pre-release",
+    "stableRelease": false
+  },
+  "runtime": {
+    "language": "Swift",
+    "swiftToolsVersion": "6.1",
+    "platforms": {
+      "macOS": {
+        "minimum": "13+",
+        "support": "supported",
+        "evidence": "Package.swift"
+      },
+      "Linux": {
+        "minimum": "Swift 6.1+",
+        "support": "supported",
+        "evidence": ".github/workflows/ci.yml"
+      },
+      "Windows": {
+        "minimum": "Swift 6.1+",
+        "support": "supported",
+        "evidence": ".github/workflows/ci.yml"
+      }
+    },
+    "webSurface": {
+      "name": "mikrokhoros Web",
+      "kind": "native loopback browser interface",
+      "executable": "khoros"
+    }
+  },
+  "urls": {
+    "repository": "https://github.com/sonatapublisher/mikrokhoros",
+    "homepage": "https://mikrokhoros.org/",
+    "license": "https://www.apache.org/licenses/LICENSE-2.0"
+  },
+  "assetReview": {
+    "baselineRevision": "4c993ecb86c73b18512e94fb0787ae36660bbe87",
+    "geometryUnchanged": true,
+    "colorsUnchanged": true
+  },
+  "approvedAssets": [
+    {
+      "path": "assets/mikrokhoros-logo.png",
+      "sha256": "cae4292b970468a9ce7930c07e2cbc5d3fb4271c8020eb776322812975c1ed1e",
+      "width": 448,
+      "height": 448,
+      "role": "icon",
+      "provenance": "tracked repository asset; reviewed without geometry or color changes"
+    },
+    {
+      "path": "assets/mikrokhoros-world-map.png",
+      "sha256": "617e65dcb6b119b0bdd195fc1955c105541ab593aa041bdef29a4a08359dfe39",
+      "width": 1024,
+      "height": 683,
+      "role": "concept illustration",
+      "provenance": "tracked repository asset; reviewed without geometry or color changes"
+    },
+    {
+      "path": "assets/mikrokhoros-amphitheatre.png",
+      "sha256": "0e6e10f94f61ad44c9a0fa8cf7e3d969eff7a9e2328dea980f2c47e15d0b0e00",
+      "width": 1024,
+      "height": 683,
+      "role": "concept illustration",
+      "provenance": "tracked repository asset; reviewed without geometry or color changes"
+    },
+    {
+      "path": "docs/assets/design-v2-template-view.png",
+      "sha256": "5c959b63501c684aa4061626eb5d9e189fa080c2effcb39981a4fdd4bb2847a7",
+      "width": 1280,
+      "height": 853,
+      "role": "design reference",
+      "provenance": "tracked repository asset; reviewed without geometry or color changes"
+    }
+  ],
+  "allowedCTAs": [
+    {
+      "id": "source",
+      "label": "View source",
+      "url": "https://github.com/sonatapublisher/mikrokhoros"
+    },
+    {
+      "id": "docs",
+      "label": "Read the docs",
+      "url": "https://github.com/sonatapublisher/mikrokhoros/tree/main/docs"
+    },
+    {
+      "id": "install",
+      "label": "Install khoros",
+      "url": "https://github.com/sonatapublisher/mikrokhoros#install-khoros"
+    },
+    {
+      "id": "web",
+      "label": "Open mikrokhoros Web",
+      "url": "https://github.com/sonatapublisher/mikrokhoros#open-mikrokhoros-web"
+    }
+  ]
+}

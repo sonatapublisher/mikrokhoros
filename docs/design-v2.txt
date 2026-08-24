@@ -1,11 +1,11 @@
-MikroKhoros Web design v2
+mikrokhoros Web design v2
 
 Status: canonical browser-interface brief
 Command: khoros web
 Platforms: macOS, Linux, and native Windows
 Runtime authority: ../README.md, design.md, security.md, and the exhaustive
 human command catalog
-Visual authority: ui-design-draft.txt plus the values fixed in this document
+Visual authority: ui-design.md plus the values fixed in this document
 
 
 1. PRODUCT MODEL
@@ -33,7 +33,7 @@ definition shared with the CLI.
 
 1.1 DELIVERY BOUNDARY
 
-The native `khoros` executable serves MikroKhoros Web from typed domain projections and
+The native `khoros` executable serves mikrokhoros Web from typed domain projections and
 contextual actions. Each view presents the data, relationships, and tasks of one
 product domain.
 
@@ -147,7 +147,7 @@ The exhaustive command catalog remains the shared CLI execution contract and the
 searchable Help reference. It is internal web infrastructure: descriptors
 bind named controls to field validation, completion, confirmation, private reveal,
 download, report following, and refresh behavior. Descriptors never supply the
-MikroKhoros Web’s primary navigation, sidebars, default selection, or page structure.
+mikrokhoros Web’s primary navigation, sidebars, default selection, or page structure.
 
 Every action begins from the selected domain entity or a deliberately placed
 contextual control. A compact action sheet contains only the fields, consequence
@@ -276,7 +276,7 @@ World field
   when a colocated agent's held-object silhouette owns the visible body.
   Agent identity, held-object, standing-object, and selection states use the
   canonical centered, geometrically balanced symbol grammar from
-  docs/ui-design-draft.txt. Each silhouette has its own visually balanced 24px
+  docs/ui-design.md. Each silhouette has its own visually balanced 24px
   keyline. Filled area is retained as a quantitative reference, while apparent
   extent, density, negative space, and recognition determine final size. Every true
   filled-area centroid is normalized to (128,128).
@@ -491,7 +491,7 @@ Template definition
   Canonical source roles.
   All template-deployed objects as individual rows.
   Parent space and requested local coordinate for every object.
-  A neutral Phosphor Cube for every declaration; deterministic MikroKhoros identity
+  A neutral Phosphor Cube for every declaration; deterministic mikrokhoros identity
   begins only with the instantiated object.
 
 default-khoros objects
@@ -716,7 +716,7 @@ Monospace
 - Reading-heavy content may use 12px.
 - The spacing scale is 4, 6, 8, 12, 16, and 24px.
 - Interface icons are vendored Phosphor Bold at 14 to 16px. Identity silhouettes
-  use the original project-owned MikroKhoros Identity Shapes set.
+  use the original project-owned mikrokhoros Identity Shapes set.
 - Search fields use the plain Phosphor Magnifying Glass; the Plus and Minus variants
   are reserved for explicit World zoom controls.
 - Controls grow horizontally for content and retain their 32px height.

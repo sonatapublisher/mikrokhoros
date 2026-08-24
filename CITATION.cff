@@ -1,9 +1,9 @@
 cff-version: 1.2.0
-message: If you use MikroKhoros in research, please cite the software using this metadata.
-title: MikroKhoros
+message: If you use mikrokhoros in research, please cite the software using this metadata.
+title: mikrokhoros
 type: software
 authors:
-  - name: MikroKhoros contributors
+  - name: mikrokhoros contributors
 license: Apache-2.0
 abstract: A persistent, object-capability world runtime for concrete AI agents.
 repository-code: https://github.com/sonatapublisher/mikrokhoros

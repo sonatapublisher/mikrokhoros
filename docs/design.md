@@ -1,12 +1,12 @@
-# MikroKhoros runtime and Object SDK design
+# mikrokhoros runtime and Object SDK design
 
 This document is the canonical engineering contract for the implemented product,
-including its CLI and MikroKhoros Web browser interface. Security invariants are
+including its CLI and mikrokhoros Web browser interface. Security invariants are
 specified in [`security.md`](security.md).
 
 ## 1. Product boundary
 
-MikroKhoros contains worlds. A world contains agents and objects. The human creates
+mikrokhoros contains worlds. A world contains agents and objects. The human creates
 and manages agents, chooses AI profiles, installs object packages, owns Inventory
 source objects, deploys concrete copies, and reads administrative state.
 
@@ -27,7 +27,7 @@ are separate interfaces:
 ## 2. Canonical object layers
 
 ```text
-MikroKhoros Object SDK
+mikrokhoros Object SDK
   developer APIs, schemas, capability services, and runtime contracts
                           ↓ used to build
 Object package
@@ -301,7 +301,7 @@ durability consumption, pickup lock, agent functions, or model-visible surface.
 ### 5.1 Human management contract
 
 `ObjectManagementInterface` supplies structured metadata for the CLI and local
-MikroKhoros Web:
+mikrokhoros Web:
 
 - `ManagementField`: text, integer, decimal, Boolean, choice, URL, filesystem path,
   or secret;
@@ -319,7 +319,7 @@ configure/deploy/inspect/delete controls.
 
 `WorldRuntime.managementInterface(for:)` returns the combined base and
 object-defined description as structured data. The CLI renders that value directly;
-MikroKhoros Web consumes the same service for its selected exact object panel.
+mikrokhoros Web consumes the same service for its selected exact object panel.
 
 Configuration updates are atomic. Every submitted field is declared, non-secret
 values match their type, URL values use HTTP(S), paths are structurally valid, and
@@ -389,7 +389,7 @@ Authority is separated by call site:
   retained emitters expire when that invocation returns; and
 - trusted built-in Swift objects use an internal complete runtime context.
 
-`ObjectInvocationIdentity` is constructed by MikroKhoros from registered runtime
+`ObjectInvocationIdentity` is constructed by mikrokhoros from registered runtime
 objects. It binds invocation, concrete object, agent, world, and optional lineage.
 Caller-provided names and arguments cannot replace these values.
 
@@ -942,10 +942,10 @@ mediation at runtime services remains the authorization boundary.
 
 See [`security.md`](security.md) for the full threat model and verification matrix.
 
-## 20. MikroKhoros Web
+## 20. mikrokhoros Web
 
 `khoros web` serves a native macOS, Linux, or Windows loopback host from the same
-`khoros` executable as the CLI. MikroKhoros Web is a browser interface, not a
+`khoros` executable as the CLI. mikrokhoros Web is a browser interface, not a
 separate `.app` bundle or Node process. It has five primary views in one custom menu:
 World, Agent Manager, Inventory, Packages, and Templates. Settings is fixed in the
 sidebar footer, and Help is a searchable global overlay. All rows are operational.
@@ -977,7 +977,7 @@ a command to `CommandKind` is a compile-time exhaustiveness obligation for safe
 execution and Help coverage. A disabled descriptor remains searchable reference
 material and cannot be executed through the browser gateway.
 
-MikroKhoros Web is built from five typed domain projections:
+mikrokhoros Web is built from five typed domain projections:
 
 - `GET /api/v1/agents` supplies user-global identity, assignment,
   active-presence, visual, exact-equipment-link, and content-free pending-work
@@ -1249,7 +1249,7 @@ generic error.
 
 Stable and explicit-port startup never retries on another port. After a bind
 collision, a bounded loopback-only `HEAD /` probe may classify a reachable listener
-as MikroKhoros Web through `x-mikrokhoros-listener: khoros-web/1` or as another local
+as mikrokhoros Web through `x-mikrokhoros-listener: khoros-web/1` or as another local
 service so the CLI can give useful recovery guidance. The marker is advisory only:
 it grants no authority, carries no session, and never causes the new process to
 attach to an existing listener. A bind failure without a confirmed reachable
@@ -1324,7 +1324,7 @@ requests return only bounded generic status bodies. `agent add` remains distinct
 provider processing. Successful mutations refresh only the relevant authoritative
 projections.
 
-The visual and interaction contract is [`ui-design-draft.txt`](ui-design-draft.txt),
+The visual and interaction contract is [`ui-design.md`](ui-design.md),
 the complete view and command placement is [`design-v2.txt`](design-v2.txt), and the
 source-backed association rationale is [`web-ux-decisions.md`](web-ux-decisions.md).
 World-required forms retain the temporary exact-target semantics of `--world` and

@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public final class CLIWorldCommandConsoleService: WorldCommandConsoleServing,
     do {
       userArguments = try Self.userArguments(from: request.source)
     } catch {
-      return Self.rejected("Enter one complete MikroKhoros command line.")
+      return Self.rejected("Enter one complete mikrokhoros command line.")
     }
 
     let globals: CommandGlobalOptions
@@ -165,7 +165,7 @@ public final class CLIWorldCommandConsoleService: WorldCommandConsoleServing,
     do {
       parsed = try CommandParser.parse(commandArguments)
     } catch {
-      return Self.rejected("This is not a complete MikroKhoros command.")
+      return Self.rejected("This is not a complete mikrokhoros command.")
     }
     guard WorldCommandConsolePolicy.allows(parsed.kind) else {
       return Self.rejected(

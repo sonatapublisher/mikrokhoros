@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -733,7 +733,7 @@ final class ConsoleTests: XCTestCase {
     io.reset()
     let batchStatus = await CommandExecutor.execute(arguments: [], io: io)
     XCTAssertEqual(batchStatus, 0)
-    XCTAssertTrue(io.output.contains("MikroKhoros"))
+    XCTAssertTrue(io.output.contains("mikrokhoros"))
     io.reset()
     let contextualHelpStatus = await CommandExecutor.execute(
       arguments: ["--workspace", "/tmp/workspace.json", "--help"],

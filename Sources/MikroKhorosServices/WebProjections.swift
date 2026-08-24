@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 import Foundation
 import MikroKhoros
 
-/// Bounded, domain-native read models for MikroKhoros Web. These snapshots
+/// Bounded, domain-native read models for mikrokhoros Web. These snapshots
 /// are deliberately independent of the human CLI renderer: a host reads the
 /// canonical stores and receives only public product metadata.
 public final class WebProjectionService: @unchecked Sendable {

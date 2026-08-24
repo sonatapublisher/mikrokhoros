@@ -2461,7 +2461,7 @@ body.is-resizing-sidebar * {
   }
 }
 
-/* Domain-native MikroKhoros Web surfaces */
+/* Domain-native mikrokhoros Web surfaces */
 
 .domain-sidebar {
   display: grid;
@@ -3717,7 +3717,7 @@ body.is-resizing-sidebar * {
   }
 }
 
-/* MikroKhoros Web workspaces */
+/* mikrokhoros Web workspaces */
 
 .sidebar-footer {
   display: grid;

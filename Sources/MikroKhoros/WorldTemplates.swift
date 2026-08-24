@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -747,7 +747,7 @@ extension WorldTemplateDefinition {
       id: "default-khoros",
       version: "1.0.0",
       displayName: "Default Khoros",
-      summary: "The built-in collaborative facilities for a MikroKhoros world.",
+      summary: "The built-in collaborative facilities for a mikrokhoros world.",
       components: [
         try! WorldTemplateComponentDefinition(
           key: DefaultKhorosComponent.athena.rawValue,

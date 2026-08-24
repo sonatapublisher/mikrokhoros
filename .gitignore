@@ -10,7 +10,7 @@ xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
 
-# Local MikroKhoros state and repository tooling
+# Local mikrokhoros state and repository tooling
 .mikrokhoros/
 .gitnexus/
 

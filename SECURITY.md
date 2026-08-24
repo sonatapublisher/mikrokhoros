@@ -1,6 +1,6 @@
 # Security policy
 
-MikroKhoros is an early-stage agent runtime. Security reports are welcome and should
+mikrokhoros is an early-stage agent runtime. Security reports are welcome and should
 be handled privately until a fix and disclosure plan are ready.
 
 ## Supported versions
@@ -36,7 +36,7 @@ Response times are best effort until the project has a formal security team.
 
 ## In-scope examples
 
-- escaping the MikroKhoros action language into an operating-system shell;
+- escaping the mikrokhoros action language into an operating-system shell;
 - bypassing object capability, pickup-lock, possession, identity, or payment checks;
 - cross-agent or cross-workspace data exposure;
 - credential values entering a workspace, prompt, error, log, or object surface;

@@ -1,4 +1,4 @@
-// Copyright © 2026 MikroKhoros contributors.
+// Copyright © 2026 mikrokhoros contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -687,7 +687,7 @@ extension CommandExecutor {
     case .alreadyRunning:
       return .runtime(
         "web.host_already_running",
-        "this MikroKhoros web host is already running",
+        "this mikrokhoros web host is already running",
         suggestions: ["use the launch URL printed by the running host"]
       )
     case .invalidPort:
@@ -705,7 +705,7 @@ extension CommandExecutor {
       switch listener {
       case .mikroKhoros:
         message =
-          "port \(port) is already used by a local service that identifies as MikroKhoros Web"
+          "port \(port) is already used by a local service that identifies as mikrokhoros Web"
         suggestions = [
           "return to the terminal that started the existing host and use its launch URL",
           "use `khoros web --available-port` to start a separate host",

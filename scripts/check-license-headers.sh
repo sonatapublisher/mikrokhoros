@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright © 2026 MikroKhoros contributors.
+# Copyright © 2026 mikrokhoros contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ for file in $files; do
     *) continue ;;
   esac
   header=$(sed -n '1,24p' "$file")
-  if ! printf '%s\n' "$header" | grep -Fq "$marker Copyright © 2026 MikroKhoros contributors." \
+  if ! printf '%s\n' "$header" | grep -Fq "$marker Copyright © 2026 mikrokhoros contributors." \
     || ! printf '%s\n' "$header" | grep -Fq "$marker Licensed under the Apache License, Version 2.0 (the \"License\");" \
     || ! printf '%s\n' "$header" | grep -Fq "$marker   https://www.apache.org/licenses/LICENSE-2.0" \
     || ! printf '%s\n' "$header" | grep -Fq "$marker limitations under the License."

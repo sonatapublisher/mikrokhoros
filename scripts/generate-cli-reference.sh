@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright © 2026 MikroKhoros contributors.
+# Copyright © 2026 mikrokhoros contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ else
 fi
 
 {
-  printf '# MikroKhoros CLI reference\n\n'
+  printf '# mikrokhoros CLI reference\n\n'
   printf '> Generated from the exhaustive command catalog by '
   printf '%s\n\n' \
     "\`scripts/generate-cli-reference.sh\`. Do not edit command entries by hand."

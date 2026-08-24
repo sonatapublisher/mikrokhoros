@@ -1,10 +1,10 @@
-# MikroKhoros CLI reference
+# mikrokhoros CLI reference
 
 > Generated from the exhaustive command catalog by `scripts/generate-cli-reference.sh`. Do not edit command entries by hand.
 
 ```text
 Show command help.
-MikroKhoros — persistent multi-agent world runtime
+mikrokhoros — persistent multi-agent world runtime
 Usage:
 khoros [--config <file>] [--world <world-selector>]
 [--output <auto|human|yaml|json>] [--color <auto|always|never>] <command>
@@ -13,7 +13,7 @@ Command groups:
 help [<topic>]... [--all]
 Show command help.
 web [--port <port>] [--available-port]
-Start MikroKhoros Web.
+Start mikrokhoros Web.
 init
 Create the complete default-khoros product setup without prompts.
 status
@@ -149,7 +149,7 @@ Run a restock rule manually.
 inventory restock delete <rule-id> [--yes]
 Delete a restock rule.
 world list [--all]
-List worlds in this MikroKhoros application.
+List worlds in this mikrokhoros application.
 world use <world>
 Select the current world.
 world create [--name <name>] [--template <template>] [--yes]
