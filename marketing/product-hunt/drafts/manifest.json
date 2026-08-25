@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "product": "mikrokhoros",
+  "status": "draft",
+  "baselineRevision": "bdf247be974ded9e97c3380dbfb2eb646503d960",
+  "canvas": {
+    "width": 1270,
+    "height": 760,
+    "format": "png",
+    "maximumBytes": 3000000
+  },
+  "sourceAssets": [
+    {
+      "path": "assets/mikrokhoros-logo.png",
+      "sha256": "cae4292b970468a9ce7930c07e2cbc5d3fb4271c8020eb776322812975c1ed1e"
+    }
+  ],
+  "runtimeCapture": {
+    "sourceRevision": "bdf247be974ded9e97c3380dbfb2eb646503d960",
+    "sourceTree": "4de9e4d4008c647284d01fb0e23dedda6922329d",
+    "executable": "khoros",
+    "initialization": "fresh isolated khoros init",
+    "interface": "native loopback mikrokhoros Web",
+    "externalModelConfigured": false,
+    "providerCalls": 0
+  },
+  "captureInputs": [
+    {
+      "path": "marketing/product-hunt/captures/runtime-world.png",
+      "surface": "World with named default-khoros objects",
+      "width": 1270,
+      "height": 760,
+      "bytes": 114570,
+      "sha256": "ff7cb2c6c3b7eeac91b439eb8d3614d28fcfc4e2abe1b6dc5e4ad7eef5a934b7"
+    },
+    {
+      "path": "marketing/product-hunt/captures/runtime-object-menu.png",
+      "surface": "World with Athena object action menu",
+      "width": 1270,
+      "height": 760,
+      "bytes": 117965,
+      "sha256": "a9d9619e25b1f7d0c93e1725db7e28a0378e937dd831e4d644b1d66f51cb74b0"
+    }
+  ],
+  "conceptVisuals": [
+    {
+      "path": "marketing/product-hunt/assets/persistent-world-visual.png",
+      "purpose": "Persistent world structure, locality, bounded perception, object identity, contained resources, and replayable trajectory",
+      "provenance": "AI-assisted conceptual visualization from canonical public product facts; no third-party source artwork",
+      "containsProductUI": false,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1722676,
+      "sha256": "14c4979fb6aabc49f766bc4985008da1ed28c8511aa32d05139c66975a604095"
+    }
+  ],
+  "exports": [
+    {
+      "path": "01-actions-become-consequences.png",
+      "sha256": "337dd52aea02f17d6b91c17ae127b2a8e381471847b0b7f61bef7ce649effc18",
+      "bytes": 129598
+    },
+    {
+      "path": "02-agents-act-worlds-answer.png",
+      "sha256": "3e23eb47aa505d796f336f43b9fa88b6c5a5d68f92c44adebb165d5d84fbcc47",
+      "bytes": 74537
+    },
+    {
+      "path": "03-a-place-agents-understand.png",
+      "sha256": "f1dd03b23437e5b076bef5267e76a6c381688217a3a939ce8d867e529d05e9d3",
+      "bytes": 1036060
+    },
+    {
+      "path": "04-objects-are-first-class.png",
+      "sha256": "71ec61170714ef881e0a9e5f815167a49c08d07f196dcab11e5712e3bbd9fff9",
+      "bytes": 76036
+    },
+    {
+      "path": "05-full-cli-local-web.png",
+      "sha256": "04f0e0350c335d7fc538767eddb021b92dd7e972fc78d1f98225e5a340fc937c",
+      "bytes": 145211
+    },
+    {
+      "path": "06-free-to-use.png",
+      "sha256": "733acd1b015fbd2aa1e12bdc745e4674230b2ff9c5359aa249c314a12cb817a3",
+      "bytes": 105686
+    }
+  ]
+}
