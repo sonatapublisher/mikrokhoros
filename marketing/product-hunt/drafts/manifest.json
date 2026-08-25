@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "product": "mikrokhoros",
   "status": "draft",
-  "sourceRevision": "bdf247be974ded9e97c3380dbfb2eb646503d960",
+  "baselineRevision": "bdf247be974ded9e97c3380dbfb2eb646503d960",
   "canvas": {
     "width": 1270,
     "height": 760,
