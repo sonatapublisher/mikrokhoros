@@ -9,7 +9,7 @@ This folder owns the HTML source and review PNGs for the `mikrokhoros` Product H
 - Product facts: [`../../docs/public-facts.json`](../../docs/public-facts.json).
 - Product behavior: [`../../README.md`](../../README.md) and [`../../docs/design.md`](../../docs/design.md).
 - Approved brand asset: the checksum-pinned product icon in the public fact sheet.
-- Product imagery: three checksum-pinned captures from the running native `khoros` product.
+- Product imagery: two checksum-pinned captures from the running native `khoros` product and one checksum-pinned conceptual world-model visualization.
 - Current implementation branch baseline: `bdf247be974ded9e97c3380dbfb2eb646503d960`.
 
 Every frame is local-only HTML/CSS. It has no remote font, remote image, analytics, form, cookie, or network dependency.
@@ -18,12 +18,12 @@ Every frame is local-only HTML/CSS. It has no remote font, remote image, analyti
 
 1. **Actions become consequences.** A standalone product promise with the initialized `default-khoros` World view.
 2. **Agents act. Worlds answer.** The observation-to-consequence loop.
-3. **A place an agent can understand.** The live trusted-template view shows packages, placements, and coordinates.
+3. **A place an agent can understand.** A purpose-built world-model visualization shows locality, bounded perception, connected facilities, contained resources, object identity, and a replayable trajectory.
 4. **Objects are first-class.** Object SDK → package → Inventory → world-object lifecycle.
 5. **Full CLI. Local Web.** The command surface sits beside a captured World object interaction from the same native runtime.
 6. **Open source. Free to use.** Apache-2.0, supported platforms, repository, and first local commands.
 
-Frames 1, 3, and 5 identify their imagery as captured pre-release product output. The frame 5 command block is explicitly scoped to macOS and Linux; Windows installation remains the documented PowerShell path.
+Frames 1 and 5 identify their imagery as captured pre-release product output. Frame 3 identifies its image as a conceptual visualization reviewed against the implemented persistent-world model. The frame 5 command block is explicitly scoped to macOS and Linux; Windows installation remains the documented PowerShell path.
 
 ## Runtime capture provenance
 
@@ -36,6 +36,13 @@ Frames 1, 3, and 5 identify their imagery as captured pre-release product output
 - Provider calls: none.
 
 The captured state contains one unprofiled local agent, five canonical Inventory sources, and the `default-khoros` world template. The launch token, filesystem path, and generated runtime identifiers are not part of the gallery copy.
+
+## Concept-visual provenance
+
+- Purpose: communicate the implemented persistent-world structure at gallery scale.
+- Source authority: the canonical public fact sheet, product README, runtime design, and `default-khoros` facility layout.
+- Method: AI-assisted conceptual visualization with no third-party source artwork.
+- Review boundary: the image is illustrative evidence of product concepts, not a product screenshot, hosted world, stable release, or runtime output.
 
 ## Render
 

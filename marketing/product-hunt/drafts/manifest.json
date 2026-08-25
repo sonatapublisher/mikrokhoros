@@ -34,20 +34,24 @@
       "sha256": "ff7cb2c6c3b7eeac91b439eb8d3614d28fcfc4e2abe1b6dc5e4ad7eef5a934b7"
     },
     {
-      "path": "marketing/product-hunt/captures/runtime-templates.png",
-      "surface": "Templates with default-khoros placements",
-      "width": 1270,
-      "height": 760,
-      "bytes": 173776,
-      "sha256": "d7216f61e3568f04691c85af7298cd67d56141f5f4af7210c60d8518b4a4902a"
-    },
-    {
       "path": "marketing/product-hunt/captures/runtime-object-menu.png",
       "surface": "World with Athena object action menu",
       "width": 1270,
       "height": 760,
       "bytes": 117965,
       "sha256": "a9d9619e25b1f7d0c93e1725db7e28a0378e937dd831e4d644b1d66f51cb74b0"
+    }
+  ],
+  "conceptVisuals": [
+    {
+      "path": "marketing/product-hunt/assets/persistent-world-visual.png",
+      "purpose": "Persistent world structure, locality, bounded perception, object identity, contained resources, and replayable trajectory",
+      "provenance": "AI-assisted conceptual visualization from canonical public product facts; no third-party source artwork",
+      "containsProductUI": false,
+      "width": 1270,
+      "height": 760,
+      "bytes": 1628793,
+      "sha256": "222c9cbb49077c4dca6e4de1e52117d72dd367298cdf06933bdb0e4be1ed201d"
     }
   ],
   "exports": [
@@ -63,8 +67,8 @@
     },
     {
       "path": "03-a-place-agents-understand.png",
-      "sha256": "b71ebb0e5ec7f3daf16a30e2cd30e3241d6b22f0a093f85bdca2643e4a0842a9",
-      "bytes": 167565
+      "sha256": "6243b29a1d0815f8c8cb1eb58a3a1f5dd84e81e5327b0fe5741b35af3f2c6520",
+      "bytes": 636802
     },
     {
       "path": "04-objects-are-first-class.png",
