@@ -8,21 +8,34 @@ This folder owns the HTML source and review PNGs for the `mikrokhoros` Product H
 - Gallery count: six still frames.
 - Product facts: [`../../docs/public-facts.json`](../../docs/public-facts.json).
 - Product behavior: [`../../README.md`](../../README.md) and [`../../docs/design.md`](../../docs/design.md).
-- Approved assets: three checksum-pinned gallery inputs selected from the four approved images in the public fact sheet.
+- Approved brand asset: the checksum-pinned product icon in the public fact sheet.
+- Product imagery: three checksum-pinned captures from the running native `khoros` product.
 - Current implementation branch baseline: `bdf247be974ded9e97c3380dbfb2eb646503d960`.
 
 Every frame is local-only HTML/CSS. It has no remote font, remote image, analytics, form, cookie, or network dependency.
 
 ## Narrative order
 
-1. **Actions become consequences.** A standalone product promise with the persistent-world illustration.
+1. **Actions become consequences.** A standalone product promise with the initialized `default-khoros` World view.
 2. **Agents act. Worlds answer.** The observation-to-consequence loop.
-3. **A place an agent can understand.** Locality, facilities, paths, resources, objects, and records.
+3. **A place an agent can understand.** The live trusted-template view shows packages, placements, and coordinates.
 4. **Objects are first-class.** Object SDK → package → Inventory → world-object lifecycle.
-5. **Full CLI. Local Web.** The two human surfaces owned by the native `khoros` runtime.
+5. **Full CLI. Local Web.** The command surface sits beside a captured World object interaction from the same native runtime.
 6. **Open source. Free to use.** Apache-2.0, supported platforms, repository, and first local commands.
 
-The illustrations in frames 1 and 3 are labelled as concept illustrations. The interface image in frame 5 is labelled as a pre-release product-interface reference. Its command block is explicitly scoped to macOS and Linux; Windows installation remains the documented PowerShell path.
+Frames 1, 3, and 5 identify their imagery as captured pre-release product output. The frame 5 command block is explicitly scoped to macOS and Linux; Windows installation remains the documented PowerShell path.
+
+## Runtime capture provenance
+
+- Runtime source: public `main` revision `bdf247be974ded9e97c3380dbfb2eb646503d960`.
+- Executable: release `khoros` built from the checked-out Swift package.
+- State: a new isolated `MIKROKHOROS_HOME` initialized with `khoros init`.
+- Interface: the native loopback `mikrokhoros Web` surface opened from the one-time launch URL printed by `khoros web`.
+- Capture canvas: `1270×760` CSS pixels at 1× device scale.
+- External model configuration: none.
+- Provider calls: none.
+
+The captured state contains one unprofiled local agent, five canonical Inventory sources, and the `default-khoros` world template. The launch token, filesystem path, and generated runtime identifiers are not part of the gallery copy.
 
 ## Render
 
@@ -35,7 +48,7 @@ marketing/product-hunt/index.html?frame=1
 Set the browser viewport to exactly `1270×760` CSS pixels and capture the viewport at 1× device scale. Repeat for `frame=1` through `frame=6`.
 
 The review files belong in [`drafts/`](./drafts/), named in narrative order. Each PNG must remain under Product Hunt's 3 MB limit.
-[`drafts/manifest.json`](./drafts/manifest.json) binds each review export to its dimensions, byte size, SHA-256 digest, baseline revision, and approved source assets.
+[`drafts/manifest.json`](./drafts/manifest.json) binds each review export to its dimensions, byte size, SHA-256 digest, baseline revision, approved brand source, and runtime-capture inputs.
 
 ## Review boundary
 

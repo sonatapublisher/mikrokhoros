@@ -186,10 +186,10 @@ h1 {
 
 .frame--hero .hero-world {
   position: absolute;
-  top: 118px;
+  top: 175px;
   right: 52px;
-  width: 520px;
-  height: 510px;
+  width: 540px;
+  height: 378px;
   margin: 0;
   overflow: hidden;
   background: var(--paper);
@@ -200,8 +200,10 @@ h1 {
 
 .frame--hero .hero-world img {
   width: 100%;
-  height: 456px;
+  height: 324px;
   object-fit: cover;
+  transform: scale(1.72);
+  transform-origin: 65% 36%;
 }
 
 .frame--hero .hero-world figcaption {
@@ -359,22 +361,24 @@ h1 {
 
 .world-figure {
   position: absolute;
-  inset: 0 470px 0 0;
+  top: 150px;
+  left: 42px;
+  width: 750px;
+  height: 449px;
   margin: 0;
-}
-
-.world-figure::after {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  content: "";
-  background: rgba(18, 18, 16, 0.12);
+  overflow: hidden;
+  background: var(--canvas);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 22px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
 }
 
 .world-figure img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: scale(1.34);
+  transform-origin: 72% 42%;
 }
 
 .world-copy {
@@ -573,10 +577,10 @@ h1 {
 
 .interface-figure {
   position: absolute;
-  top: 130px;
+  top: 142px;
   right: 46px;
   width: 700px;
-  height: 510px;
+  height: 490px;
   margin: 0;
   overflow: hidden;
   background: #ffffff;
@@ -587,34 +591,16 @@ h1 {
 
 .interface-figure img {
   width: 700px;
-  height: 466px;
+  height: 446px;
   object-fit: cover;
-  object-position: left top;
+  object-position: center top;
+  transform: scale(1.45);
+  transform-origin: 67% 36%;
 }
 
-.interface-chrome {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  height: 34px;
-  padding: 0 14px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-}
-
-.interface-chrome span {
-  width: 8px;
-  height: 8px;
-  background: var(--line-strong);
-  border-radius: 50%;
-}
-
-.interface-chrome b {
-  margin-left: auto;
-  color: var(--ink-soft);
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
+.canonical-platform-case,
+.platform-strip .canonical-platform-case {
+  text-transform: none;
 }
 
 .interface-figure figcaption {

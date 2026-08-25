@@ -13,21 +13,48 @@
     {
       "path": "assets/mikrokhoros-logo.png",
       "sha256": "cae4292b970468a9ce7930c07e2cbc5d3fb4271c8020eb776322812975c1ed1e"
+    }
+  ],
+  "runtimeCapture": {
+    "sourceRevision": "bdf247be974ded9e97c3380dbfb2eb646503d960",
+    "sourceTree": "4de9e4d4008c647284d01fb0e23dedda6922329d",
+    "executable": "khoros",
+    "initialization": "fresh isolated khoros init",
+    "interface": "native loopback mikrokhoros Web",
+    "externalModelConfigured": false,
+    "providerCalls": 0
+  },
+  "captureInputs": [
+    {
+      "path": "marketing/product-hunt/captures/runtime-world.png",
+      "surface": "World with named default-khoros objects",
+      "width": 1270,
+      "height": 760,
+      "bytes": 114570,
+      "sha256": "ff7cb2c6c3b7eeac91b439eb8d3614d28fcfc4e2abe1b6dc5e4ad7eef5a934b7"
     },
     {
-      "path": "assets/mikrokhoros-world-map.png",
-      "sha256": "617e65dcb6b119b0bdd195fc1955c105541ab593aa041bdef29a4a08359dfe39"
+      "path": "marketing/product-hunt/captures/runtime-templates.png",
+      "surface": "Templates with default-khoros placements",
+      "width": 1270,
+      "height": 760,
+      "bytes": 173776,
+      "sha256": "d7216f61e3568f04691c85af7298cd67d56141f5f4af7210c60d8518b4a4902a"
     },
     {
-      "path": "docs/assets/design-v2-template-view.png",
-      "sha256": "5c959b63501c684aa4061626eb5d9e189fa080c2effcb39981a4fdd4bb2847a7"
+      "path": "marketing/product-hunt/captures/runtime-object-menu.png",
+      "surface": "World with Athena object action menu",
+      "width": 1270,
+      "height": 760,
+      "bytes": 117965,
+      "sha256": "a9d9619e25b1f7d0c93e1725db7e28a0378e937dd831e4d644b1d66f51cb74b0"
     }
   ],
   "exports": [
     {
       "path": "01-actions-become-consequences.png",
-      "sha256": "0d155540a33ffc85dc0083afe07477ae6f885dc23dd7449383ebf34ef895f51c",
-      "bytes": 639773
+      "sha256": "337dd52aea02f17d6b91c17ae127b2a8e381471847b0b7f61bef7ce649effc18",
+      "bytes": 129598
     },
     {
       "path": "02-agents-act-worlds-answer.png",
@@ -36,8 +63,8 @@
     },
     {
       "path": "03-a-place-agents-understand.png",
-      "sha256": "2a3d2c26d797e1ffe88584d9b6c431d96f27844d8d444c354145e9be4769c8f2",
-      "bytes": 1291971
+      "sha256": "b71ebb0e5ec7f3daf16a30e2cd30e3241d6b22f0a093f85bdca2643e4a0842a9",
+      "bytes": 167565
     },
     {
       "path": "04-objects-are-first-class.png",
@@ -46,13 +73,13 @@
     },
     {
       "path": "05-full-cli-local-web.png",
-      "sha256": "8ca5476f2702e5a2d4cf95c76f63b9d0c83f9fe145a478674b9a2ccadde5e4d0",
-      "bytes": 274655
+      "sha256": "04f0e0350c335d7fc538767eddb021b92dd7e972fc78d1f98225e5a340fc937c",
+      "bytes": 145211
     },
     {
       "path": "06-free-to-use.png",
-      "sha256": "6354c27d97727ed3d00e620c5dab3d581750b577e57504b162bda27e58484133",
-      "bytes": 105770
+      "sha256": "733acd1b015fbd2aa1e12bdc745e4674230b2ff9c5359aa249c314a12cb817a3",
+      "bytes": 105686
     }
   ]
 }
