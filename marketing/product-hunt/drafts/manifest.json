@@ -48,10 +48,10 @@
       "purpose": "Persistent world structure, locality, bounded perception, object identity, contained resources, and replayable trajectory",
       "provenance": "AI-assisted conceptual visualization from canonical public product facts; no third-party source artwork",
       "containsProductUI": false,
-      "width": 1270,
-      "height": 760,
-      "bytes": 1628793,
-      "sha256": "222c9cbb49077c4dca6e4de1e52117d72dd367298cdf06933bdb0e4be1ed201d"
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1722676,
+      "sha256": "14c4979fb6aabc49f766bc4985008da1ed28c8511aa32d05139c66975a604095"
     }
   ],
   "exports": [
@@ -67,8 +67,8 @@
     },
     {
       "path": "03-a-place-agents-understand.png",
-      "sha256": "6243b29a1d0815f8c8cb1eb58a3a1f5dd84e81e5327b0fe5741b35af3f2c6520",
-      "bytes": 636802
+      "sha256": "f1dd03b23437e5b076bef5267e76a6c381688217a3a939ce8d867e529d05e9d3",
+      "bytes": 1036060
     },
     {
       "path": "04-objects-are-first-class.png",
