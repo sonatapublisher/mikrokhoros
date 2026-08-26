@@ -48,10 +48,14 @@ RESOURCE_INVENTORY_PATH = "docs/shipped-resource-inventory.json"
 PRODUCT_ROOT = "Mikro" + "Khoros"
 
 DESCRIPTION = (
-    "Open source Swift runtime for persistent object worlds where AI agents "
-    "observe, act through bounded tools, face verified consequences, and leave "
-    "replayable trajectories."
+    "Open source AI agent harness for object-first worlds. Every persistent world "
+    "capability an agent can invoke is an exact concrete object with declared "
+    "functions, identity, state, location, authority, and history; the runtime "
+    "enforces locality, possession, permissions, bounded actions, and replayable "
+    "trajectories."
 )
+CATEGORY = "AI agent harness"
+PRIMARY_STATEMENT = "An open source AI agent harness for object-first worlds."
 REPOSITORY_URL = "https://github.com/sonatapublisher/mikrokhoros"
 HOMEPAGE_URL = "https://mikrokhoros.org/"
 LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
@@ -427,6 +431,8 @@ def expected_facts_shape() -> dict[str, Any]:
             "name": "mikrokhoros",
             "slug": "mikrokhoros",
             "executable": "khoros",
+            "category": CATEGORY,
+            "primaryStatement": PRIMARY_STATEMENT,
             "description": DESCRIPTION,
             "openSource": True,
             "license": "Apache-2.0",

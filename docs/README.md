@@ -26,7 +26,7 @@ detail when needed.
 | [`object-sdk.md`](object-sdk.md) | Canonical | Package, adapter, management, composition, and capability API guide |
 | [`design.md`](design.md) | Canonical | Implemented runtime, CLI, mikrokhoros Web, and future boundaries |
 | [`security.md`](security.md) | Canonical | Threat model, controls, validation, and known limitations |
-| [`public-facts.json`](public-facts.json) | Machine-readable contract | Canonical public name, slug, executable, description, license, lifecycle, URLs, and launch-source identity |
+| [`public-facts.json`](public-facts.json) | Machine-readable contract | Canonical public name, slug, executable, category, primary statement, description, license, lifecycle, URLs, and launch-source identity |
 | [`shipped-resource-inventory.json`](shipped-resource-inventory.json) | Asset inventory | Hashes and roles for every shipped font, SVG icon/identity shape, and bundled license |
 
 ## Browser interface artifacts

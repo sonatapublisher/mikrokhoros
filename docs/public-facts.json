@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "229c88349fa56f8741975652dc377ec2861da56d",
-  "sourceTree": "51819ffd6c4318bfb7d3d22cfae013d922a2459e",
+  "sourceRevision": "9e30b9312f1ca7ab1063a31d25d2c1c9990ec342",
+  "sourceTree": "1cb9b840d295c90116deaeef9941faabd1e5a263",
   "sourceRevisionPolicy": "This immutable revision is the exact launch-source commit represented by this fact sheet.",
   "claimAuthority": {
     "canonical": "docs/public-facts.json",
@@ -29,7 +29,9 @@
     "name": "mikrokhoros",
     "slug": "mikrokhoros",
     "executable": "khoros",
-    "description": "Open source Swift runtime for persistent object worlds where AI agents observe, act through bounded tools, face verified consequences, and leave replayable trajectories.",
+    "category": "AI agent harness",
+    "primaryStatement": "An open source AI agent harness for object-first worlds.",
+    "description": "Open source AI agent harness for object-first worlds. Every persistent world capability an agent can invoke is an exact concrete object with declared functions, identity, state, location, authority, and history; the runtime enforces locality, possession, permissions, bounded actions, and replayable trajectories.",
     "openSource": true,
     "license": "Apache-2.0",
     "lifecycle": "pre-release",

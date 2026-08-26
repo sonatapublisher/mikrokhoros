@@ -16,10 +16,10 @@ Every frame is local-only HTML/CSS. It has no remote font, remote image, analyti
 
 ## Narrative order
 
-1. **Actions become consequences.** A standalone product promise with the initialized `default-khoros` World view.
-2. **Agents act. Worlds answer.** The observation-to-consequence loop.
-3. **A place an agent can understand.** A purpose-built world-model visualization shows locality, bounded perception, connected facilities, contained resources, object identity, and a replayable trajectory.
-4. **Objects are first-class.** Object SDK → package → Inventory → world-object lifecycle.
+1. **Persistent capabilities are objects.** The AI agent harness category and object-first promise beside the initialized `default-khoros` World view.
+2. **Agents act. Worlds answer.** The observation-to-consequence loop governed by runtime authority.
+3. **A world the agent can inspect.** A purpose-built world-model visualization shows concrete objects, locality, bounded perception, containment, authority, and a replayable trajectory.
+4. **Objects are the interface.** Object SDK → package → Inventory → world-object lifecycle.
 5. **Full CLI. Local Web.** The command surface sits beside a captured World object interaction from the same native runtime.
 6. **Open source. Free to use.** Apache-2.0, supported platforms, repository, and first local commands.
 

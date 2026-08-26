@@ -8,15 +8,14 @@
 [![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#platforms)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-**A persistent object world where AI agents learn through action, consequence, and
-experience.**
+**An open source AI agent harness for object-first worlds.**
 
 *mikrokhoros* combines Ancient Greek *mikrós* (“small”) and *khōros* (“place”): a
 small, concrete place for agents and objects.
 
 ## Public facts
 
-Open source Swift runtime for persistent object worlds where AI agents observe, act through bounded tools, face verified consequences, and leave replayable trajectories.
+Open source AI agent harness for object-first worlds. Every persistent world capability an agent can invoke is an exact concrete object with declared functions, identity, state, location, authority, and history; the runtime enforces locality, possession, permissions, bounded actions, and replayable trajectories.
 
 - Public name and slug: `mikrokhoros`
 - Executable: `khoros`
@@ -51,15 +50,17 @@ URL for the native browser interface. Windows setup is covered in the
 The mikrokhoros icon and lowercase text wordmark are separate brand elements; the
 icon geometry and colors are unchanged.
 
-mikrokhoros is a Swift 6 runtime and one cross-platform `khoros` product for
-persistent object worlds on macOS, Linux, and Windows. Its human surfaces are the
-full CLI and mikrokhoros Web, a native loopback browser interface served by that same
-executable. An attached LLM supplies cognition for a concrete agent. The agent
-observes its setting, uses a small bounded action
-language and object interfaces, produces validated state transitions, and carries
-permitted context into future decisions. The domain model uses `swift-crypto` 4.3.1
-for local Ed25519 and SHA-256 integrity mechanisms; the web host uses SwiftNIO
-2.101.3.
+mikrokhoros is an AI agent harness implemented as a Swift 6 runtime and one
+cross-platform `khoros` product for macOS, Linux, and Windows. Its human surfaces are
+the full CLI and mikrokhoros Web, a native loopback browser interface served by that
+same executable. An attached LLM supplies cognition for one concrete agent. Every
+persistent world capability the agent can invoke is an exact concrete object with
+declared public functions, state, placement, and authority. The agent observes its
+setting and proposes a small bounded action; the runtime resolves identities, checks
+preconditions, commits valid consequences, and carries authoritative state into the
+next observation. Movement, containment, possession, and observation remain bounded
+runtime mechanics. The domain model uses `swift-crypto` 4.3.1 for local Ed25519 and
+SHA-256 integrity mechanisms; the web host uses SwiftNIO 2.101.3.
 
 <img src="https://github.com/sonatapublisher/mikrokhoros/raw/refs/heads/main/assets/mikrokhoros-world-map.png" alt="Concept illustration of a persistent world with connected facilities, neighborhoods, cultivated areas, and a harbor." width="100%" />
 
@@ -68,17 +69,18 @@ concrete structure.*
 
 ## The agent loop
 
-mikrokhoros provides partial observation, explicit authority, real preconditions,
-persistent state, and recoverable consequences.
+mikrokhoros gives an agent an object-first world with partial observation, explicit
+authority, real preconditions, persistent state, and recoverable consequences.
 
 ```text
 observation → plan → bounded action → verified state transition
             → next observation → memory and adaptation
 ```
 
-Small functional worlds make this loop usable for longer work: agents understand a
-setting, meet its preconditions, verify outcomes, recover from errors, and continue.
-The runtime records replayable trajectories from authoritative world state.
+Each persistent world capability belongs to a concrete object. Small functional worlds make
+the loop usable for longer work: agents inspect accessible objects, meet their
+preconditions, verify outcomes, recover from errors, and continue. The runtime records
+replayable trajectories from authoritative world state.
 
 ## Product model
 
