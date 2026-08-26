@@ -5,11 +5,12 @@ type: software
 authors:
   - name: mikrokhoros contributors
 license: Apache-2.0
-abstract: A persistent, object-capability world runtime for concrete AI agents.
+abstract: An open source AI agent harness for persistent, object-first worlds.
 repository-code: https://github.com/sonatapublisher/mikrokhoros
 url: https://github.com/sonatapublisher/mikrokhoros
 keywords:
   - AI agents
+  - agent harness
   - multi-agent systems
   - Swift
   - object capabilities
