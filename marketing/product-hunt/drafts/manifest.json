@@ -57,8 +57,8 @@
   "exports": [
     {
       "path": "01-actions-become-consequences.png",
-      "sha256": "44b731bfb4c5d90152ae4ee8b3d9f4179eca7a42b17f0ff35cb50480ab962bac",
-      "bytes": 121694
+      "sha256": "4c6c237d534c1a34562f976aea4c70309a2e424b97b86599bbe964519f8db862",
+      "bytes": 127353
     },
     {
       "path": "02-agents-act-worlds-answer.png",

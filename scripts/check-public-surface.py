@@ -48,10 +48,11 @@ RESOURCE_INVENTORY_PATH = "docs/shipped-resource-inventory.json"
 PRODUCT_ROOT = "Mikro" + "Khoros"
 
 DESCRIPTION = (
-    "Open source AI agent harness for object-first worlds. Every persistent "
-    "capability an agent can inspect or invoke is a concrete object with identity, "
-    "state, location, authority, and history; bounded actions produce "
-    "runtime-verified consequences and replayable trajectories."
+    "Open source AI agent harness for object-first worlds. Every persistent world "
+    "capability an agent can invoke is an exact concrete object with declared "
+    "functions, identity, state, location, authority, and history; the runtime "
+    "enforces locality, possession, permissions, bounded actions, and replayable "
+    "trajectories."
 )
 CATEGORY = "AI agent harness"
 PRIMARY_STATEMENT = "An open source AI agent harness for object-first worlds."

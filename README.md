@@ -15,7 +15,7 @@ small, concrete place for agents and objects.
 
 ## Public facts
 
-Open source AI agent harness for object-first worlds. Every persistent capability an agent can inspect or invoke is a concrete object with identity, state, location, authority, and history; bounded actions produce runtime-verified consequences and replayable trajectories.
+Open source AI agent harness for object-first worlds. Every persistent world capability an agent can invoke is an exact concrete object with declared functions, identity, state, location, authority, and history; the runtime enforces locality, possession, permissions, bounded actions, and replayable trajectories.
 
 - Public name and slug: `mikrokhoros`
 - Executable: `khoros`
@@ -54,7 +54,7 @@ mikrokhoros is an AI agent harness implemented as a Swift 6 runtime and one
 cross-platform `khoros` product for macOS, Linux, and Windows. Its human surfaces are
 the full CLI and mikrokhoros Web, a native loopback browser interface served by that
 same executable. An attached LLM supplies cognition for one concrete agent. Every
-persistent capability the agent can inspect or invoke is an exact world object with
+persistent world capability the agent can invoke is an exact concrete object with
 declared public functions, state, placement, and authority. The agent observes its
 setting and proposes a small bounded action; the runtime resolves identities, checks
 preconditions, commits valid consequences, and carries authoritative state into the
@@ -77,7 +77,7 @@ observation → plan → bounded action → verified state transition
             → next observation → memory and adaptation
 ```
 
-Each persistent capability belongs to a concrete object. Small functional worlds make
+Each persistent world capability belongs to a concrete object. Small functional worlds make
 the loop usable for longer work: agents inspect accessible objects, meet their
 preconditions, verify outcomes, recover from errors, and continue. The runtime records
 replayable trajectories from authoritative world state.

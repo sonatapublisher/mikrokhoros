@@ -16,7 +16,7 @@ Every frame is local-only HTML/CSS. It has no remote font, remote image, analyti
 
 ## Narrative order
 
-1. **Every capability is an object.** The AI agent harness category and object-first promise beside the initialized `default-khoros` World view.
+1. **Persistent capabilities are objects.** The AI agent harness category and object-first promise beside the initialized `default-khoros` World view.
 2. **Agents act. Worlds answer.** The observation-to-consequence loop governed by runtime authority.
 3. **A world the agent can inspect.** A purpose-built world-model visualization shows concrete objects, locality, bounded perception, containment, authority, and a replayable trajectory.
 4. **Objects are the interface.** Object SDK → package → Inventory → world-object lifecycle.
